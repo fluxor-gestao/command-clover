@@ -195,8 +195,8 @@ function DashboardPage() {
                 <YAxis fontSize={11} tickFormatter={(v: number) => brlCompact(v)} />
                 <Tooltip formatter={(value: number) => brl(value)} />
                 <Legend />
-                <Bar dataKey="previsto" name="Previsto" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="recebido" name="Recebido" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="previsto" name="Previsto" fill="oklch(0.446 0.03 256.802)" radius={[4, 4, 0, 0]} fillOpacity={0.3} />
+                <Bar dataKey="recebido" name="Recebido" fill="oklch(0.696 0.17 162.48)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
