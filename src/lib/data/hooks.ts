@@ -247,6 +247,8 @@ export function useInvalidateAll() {
   return () => {
     for (const key of [
       "portfolio-summary",
+      "portfolio-metrics",
+      "received-in-month",
       "operations",
       "operation",
       "installments",
