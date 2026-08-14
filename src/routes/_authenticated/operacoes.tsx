@@ -86,9 +86,21 @@ function OperationsPage() {
   const status = searchParams.status || "TODOS";
   const category = searchParams.category || "TODAS";
 
-  const setSearch = (v: string) => navigate({ search: (prev) => ({ ...prev, search: v || undefined }) });
-  const setStatus = (v: string) => navigate({ search: (prev) => ({ ...prev, status: v === "TODOS" ? undefined : v }) });
-  const setCategory = (v: string) => navigate({ search: (prev) => ({ ...prev, category: v === "TODAS" ? undefined : v }) });
+  const setSearch = (v: string) => navigate({ 
+    to: ".", 
+    search: (prev: any) => ({ ...prev, search: v || undefined }),
+    replace: true 
+  });
+  const setStatus = (v: string) => navigate({ 
+    to: ".", 
+    search: (prev: any) => ({ ...prev, status: v === "TODOS" ? undefined : v }),
+    replace: true
+  });
+  const setCategory = (v: string) => navigate({ 
+    to: ".", 
+    search: (prev: any) => ({ ...prev, category: v === "TODAS" ? undefined : v }),
+    replace: true
+  });
 
   const filtered = useMemo(() => {
     return (operations.data ?? []).filter((op) => {
