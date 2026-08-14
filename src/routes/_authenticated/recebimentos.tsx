@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Search, Receipt, History, RotateCcw, Edit2, Calendar, Building2, Plus, ArrowRight } from "lucide-react";
 import { z } from "zod";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
