@@ -22,16 +22,27 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = Route.useNavigate();
+
   return (
-    <main className="flex min-h-screen flex-col bg-background">
-      <div className="flex flex-1 items-center justify-center px-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Área em branco
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+      <div className="max-w-md space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Nova Era
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Pronta para receber seus comandos.
+          <p className="text-lg text-muted-foreground">
+            Sistema de Gestão de Investimentos
           </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <button
+            onClick={() => navigate({ to: "/auth" })}
+            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            Acessar Sistema
+          </button>
         </div>
       </div>
     </main>
