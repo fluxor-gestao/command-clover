@@ -71,22 +71,15 @@ function AuthPage() {
     toast.success("Conta criada. Verifique seu e-mail se a confirmação estiver ativa.");
   };
 
-  const signInGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Não foi possível entrar com Google.");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
-  };
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="items-center text-center">
+          <img
+            src={logoAsset.url}
+            alt="Nova Era Imóveis e Seguros"
+            className="mx-auto h-24 w-24 object-contain"
+          />
           <CardTitle className="text-xl">Nova Era · Gestão de Investimentos</CardTitle>
           <CardDescription>
             Acesso restrito à diretoria e ao time financeiro.
@@ -131,14 +124,6 @@ function AuthPage() {
               </TabsContent>
             ))}
           </Tabs>
-          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            ou
-            <span className="h-px flex-1 bg-border" />
-          </div>
-          <Button variant="outline" className="w-full" onClick={signInGoogle}>
-            Entrar com Google
-          </Button>
         </CardContent>
       </Card>
     </main>
