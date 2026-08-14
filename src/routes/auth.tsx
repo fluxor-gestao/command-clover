@@ -160,8 +160,20 @@ function AuthPage() {
                       className="h-11 border-none bg-muted/50 focus:ring-1 rounded-xl px-4"
                     />
                   </div>
+                  {feedback && (
+                    <p
+                      role="alert"
+                      className={
+                        feedback.kind === "error"
+                          ? "rounded-xl bg-destructive/10 px-4 py-3 text-xs font-medium text-destructive"
+                          : "rounded-xl bg-primary/10 px-4 py-3 text-xs font-medium text-primary"
+                      }
+                    >
+                      {feedback.text}
+                    </p>
+                  )}
                   <Button type="submit" className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={loading}>
-                    {tab === "entrar" ? "Acessar Sistema" : "Cadastrar Agora"}
+                    {loading ? "Processando..." : tab === "entrar" ? "Acessar Sistema" : "Cadastrar Agora"}
                   </Button>
                 </form>
               </TabsContent>
