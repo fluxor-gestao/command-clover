@@ -196,7 +196,7 @@ function NewOperationDialog() {
     let maturity = "—";
     if (form.first_due_date && count > 0) {
       const date = new Date(form.first_due_date);
-      date.setMonth(date.setMonth(new Date(form.first_due_date).getMonth() + (count - 1)));
+      date.setMonth(new Date(form.first_due_date).getMonth() + (count - 1));
       maturity = dateBR(date.toISOString().split("T")[0]);
     }
 
