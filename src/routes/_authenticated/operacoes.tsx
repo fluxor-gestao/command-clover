@@ -40,10 +40,10 @@ export const Route = createFileRoute("/_authenticated/operacoes")({
 });
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  ATIVA: { label: "Ativa", variant: "default" },
+  EM_DIA: { label: "Em dia", variant: "default" },
   INADIMPLENTE: { label: "Inadimplente", variant: "destructive" },
-  EM_REVISAO: { label: "Em revisão", variant: "outline" },
-  ENCERRADA: { label: "Encerrada", variant: "secondary" },
+  LIQUIDADA: { label: "Liquidada", variant: "secondary" },
+};
 };
 
 function OperationsPage() {
@@ -55,7 +55,7 @@ function OperationsPage() {
   const filtered = useMemo(() => {
     return (operations.data ?? []).filter((op) => {
       const matchSearch = (op.reference ?? "").toLowerCase().includes(search.toLowerCase());
-      const matchStatus = status === "TODOS" || op.computed_status === status;
+      const matchStatus = status === "TODOS" || op.financial_status === status;
       const matchCategory = category === "TODAS" || op.category === category;
       return matchSearch && matchStatus && matchCategory;
     });
@@ -90,10 +90,9 @@ function OperationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="TODOS">Todas as situações</SelectItem>
-                <SelectItem value="ATIVA">Ativa</SelectItem>
+                <SelectItem value="EM_DIA">Em dia</SelectItem>
                 <SelectItem value="INADIMPLENTE">Inadimplente</SelectItem>
-                <SelectItem value="EM_REVISAO">Em revisão</SelectItem>
-                <SelectItem value="ENCERRADA">Encerrada</SelectItem>
+                <SelectItem value="LIQUIDADA">Liquidada</SelectItem>
               </SelectContent>
             </Select>
             <Select value={category} onValueChange={setCategory}>
@@ -128,7 +127,7 @@ function OperationsPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((op) => {
-                const badge = STATUS_CONFIG[op.computed_status ?? "ATIVA"] ?? STATUS_CONFIG["ATIVA"]!;
+                const badge = STATUS_CONFIG[op.financial_status ?? "EM_DIA"] ?? STATUS_CONFIG["ATIVA"]!;
                 return (
                   <TableRow key={op.operation_id}>
                     <TableCell className="font-medium">
