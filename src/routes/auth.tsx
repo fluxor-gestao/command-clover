@@ -31,11 +31,26 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+function translateAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
+  if (m.includes("email not confirmed")) return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
+  if (m.includes("already registered") || m.includes("already been registered"))
+    return "Este e-mail já possui conta. Use a aba Entrar.";
+  if (m.includes("rate limit") || m.includes("too many"))
+    return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
+  if (m.includes("password")) return "Senha inválida: use ao menos 6 caracteres.";
+  if (m.includes("failed to fetch") || m.includes("network"))
+    return "Falha de conexão com o servidor. Verifique sua internet.";
+  return message;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: "error" | "success"; text: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -46,10 +61,22 @@ function AuthPage() {
   const signIn = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setFeedback(null);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const text = translateAuthError(error.message);
+      setFeedback({ kind: "error", text });
+      toast.error(text);
+      return;
+    }
+    if (!data.session) {
+      const text = "Não foi possível abrir a sessão. Tente novamente.";
+      setFeedback({ kind: "error", text });
+      toast.error(text);
       return;
     }
     navigate({ to: "/dashboard" });
@@ -58,17 +85,26 @@ function AuthPage() {
   const signUp = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
+    setFeedback(null);
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
       password,
       options: { emailRedirectTo: `${window.location.origin}/dashboard` },
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const text = translateAuthError(error.message);
+      setFeedback({ kind: "error", text });
+      toast.error(text);
       return;
     }
-    toast.success("Conta criada. Verifique seu e-mail se a confirmação estiver ativa.");
+    if (data.session) {
+      navigate({ to: "/dashboard" });
+      return;
+    }
+    const text = "Conta criada. Confirme seu e-mail para acessar o sistema.";
+    setFeedback({ kind: "success", text });
+    toast.success(text);
   };
 
   return (
@@ -124,8 +160,20 @@ function AuthPage() {
                       className="h-11 border-none bg-muted/50 focus:ring-1 rounded-xl px-4"
                     />
                   </div>
+                  {feedback && (
+                    <p
+                      role="alert"
+                      className={
+                        feedback.kind === "error"
+                          ? "rounded-xl bg-destructive/10 px-4 py-3 text-xs font-medium text-destructive"
+                          : "rounded-xl bg-primary/10 px-4 py-3 text-xs font-medium text-primary"
+                      }
+                    >
+                      {feedback.text}
+                    </p>
+                  )}
                   <Button type="submit" className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={loading}>
-                    {tab === "entrar" ? "Acessar Sistema" : "Cadastrar Agora"}
+                    {loading ? "Processando..." : tab === "entrar" ? "Acessar Sistema" : "Cadastrar Agora"}
                   </Button>
                 </form>
               </TabsContent>
