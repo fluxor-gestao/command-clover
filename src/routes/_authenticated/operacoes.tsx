@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Info, Calculator, TrendingUp, Calendar } from "lucide-react";
 
@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ReferenceCombobox } from "@/components/import/ReferenceCombobox";
 import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hooks";
 import { brl, dateBR, pct } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/operacoes")({
   head: () => ({
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/operacoes")({
   component: OperationsPage,
 });
 
-const STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   ATIVA: { label: "Ativa", variant: "default" },
   INADIMPLENTE: { label: "Inadimplente", variant: "destructive" },
   EM_REVISAO: { label: "Em revisão", variant: "outline" },
@@ -127,7 +128,7 @@ function OperationsPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((op) => {
-                const badge = STATUS_LABEL[op.computed_status ?? "ATIVA"] ?? STATUS_LABEL["ATIVA"]!;
+                const badge = STATUS_CONFIG[op.computed_status ?? "ATIVA"] ?? STATUS_CONFIG["ATIVA"]!;
                 return (
                   <TableRow key={op.operation_id}>
                     <TableCell className="font-medium">
@@ -195,7 +196,7 @@ function NewOperationDialog() {
     let maturity = "—";
     if (form.first_due_date && count > 0) {
       const date = new Date(form.first_due_date);
-      date.setMonth(date.getMonth() + (count - 1));
+      date.setMonth(date.setMonth(new Date(form.first_due_date).getMonth() + (count - 1)));
       maturity = dateBR(date.toISOString().split("T")[0]);
     }
 
@@ -262,9 +263,6 @@ function NewOperationDialog() {
                 onChange={(v) => setForm({ ...form, reference_id: v })} 
                 categoryId={form.category_id}
               />
-              <p className="text-[10px] text-muted-foreground">
-                Busque uma referência existente ou digite para criar uma nova.
-              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -328,8 +326,7 @@ function NewOperationDialog() {
               <Label htmlFor="notes">Observações</Label>
               <Textarea
                 id="notes"
-                placeholder="Detalhes internos, observações ou ressalvas..."
-                className="min-h-[100px]"
+                placeholder="Detalhes internos..."
                 value={form.notes}
                 onChange={(event) => setForm({ ...form, notes: event.target.value })}
               />
@@ -369,14 +366,6 @@ function NewOperationDialog() {
                     {summary.maturity}
                   </span>
                 </div>
-                
-                <div className="mt-4 p-3 rounded-lg bg-primary/5 text-[11px] text-primary leading-relaxed flex gap-2">
-                  <Info className="h-4 w-4 shrink-0" />
-                  <span>
-                    Ao salvar, o sistema gerará automaticamente {form.installment_count || "0"} parcelas 
-                    de {brl(Number(form.installment_value) || 0)} cada, iniciando em {dateBR(form.first_due_date) || "—"}.
-                  </span>
-                </div>
               </CardContent>
             </Card>
 
@@ -387,7 +376,7 @@ function NewOperationDialog() {
                   <SelectValue placeholder="Opcional" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(categories.data ?? []).map((category) => (
+                  {(categories.data ?? []).map((category: any) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
