@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Info, Calculator, TrendingUp, Calendar } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { ReferenceCombobox } from "@/components/import/ReferenceCombobox";
 import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hooks";
 import { brl, dateBR, pct } from "@/lib/format";
 
@@ -31,13 +33,6 @@ export const Route = createFileRoute("/_authenticated/operacoes")({
         content:
           "Cadastro e acompanhamento das operações de investimento: capital aplicado, parcelas, retorno e situação de cada contrato.",
       },
-      { property: "og:title", content: "Operações · Nova Era Investimentos" },
-      {
-        property: "og:description",
-        content: "Gestão completa das operações da carteira Nova Era.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: OperationsPage,
@@ -124,7 +119,7 @@ function OperationsPage() {
                 <TableHead className="text-right">Investido</TableHead>
                 <TableHead className="text-right">Recebido</TableHead>
                 <TableHead className="text-right">A recuperar</TableHead>
-                <TableHead className="text-right">Vencido</TableHead>
+                <TableHead className="text-right text-destructive">Vencido</TableHead>
                 <TableHead className="text-right">Retorno</TableHead>
                 <TableHead>Últ. venc.</TableHead>
                 <TableHead>Situação</TableHead>
@@ -148,7 +143,7 @@ function OperationsPage() {
                     <TableCell className="text-right">{brl(op.total_invested)}</TableCell>
                     <TableCell className="text-right">{brl(op.total_received)}</TableCell>
                     <TableCell className="text-right">{brl(op.capital_to_recover)}</TableCell>
-                    <TableCell className="text-right text-destructive">{brl(op.overdue_receivable)}</TableCell>
+                    <TableCell className="text-right text-destructive font-medium">{brl(op.overdue_receivable)}</TableCell>
                     <TableCell className="text-right">{pct(op.recovery_percentage)}</TableCell>
                     <TableCell>{dateBR(op.last_installment_due)}</TableCell>
                     <TableCell>
@@ -159,8 +154,8 @@ function OperationsPage() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-sm text-muted-foreground">
-                    Nenhuma operação encontrada com os filtros atuais.
+                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                    Nenhuma operação encontrada.
                   </TableCell>
                 </TableRow>
               )}
@@ -177,7 +172,7 @@ function NewOperationDialog() {
   const create = useCreateOperation();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    reference: "",
+    reference_id: "",
     category_id: "",
     due_day: "",
     initial_capital: "",
@@ -189,12 +184,34 @@ function NewOperationDialog() {
     notes: "",
   });
 
+  const summary = useMemo(() => {
+    const capital = Number(form.initial_capital) || 0;
+    const count = Number(form.installment_count) || 0;
+    const value = Number(form.installment_value) || 0;
+    const total = count * value;
+    const profit = total - capital;
+    const roi = capital > 0 ? profit / capital : 0;
+    
+    let maturity = "—";
+    if (form.first_due_date && count > 0) {
+      const date = new Date(form.first_due_date);
+      date.setMonth(date.getMonth() + (count - 1));
+      maturity = dateBR(date.toISOString().split("T")[0]);
+    }
+
+    return { total, profit, roi, maturity };
+  }, [form.initial_capital, form.installment_count, form.installment_value, form.first_due_date]);
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!form.reference_id) {
+      toast.error("Selecione ou crie uma referência para a operação.");
+      return;
+    }
+
     try {
       await create.mutateAsync({
-        reference: form.reference.trim(),
-        category_id: form.category_id || null,
+        reference_id: form.reference_id,
         due_day: form.due_day ? Number(form.due_day) : null,
         initial_capital: Number(form.initial_capital || 0),
         investment_date: form.investment_date || null,
@@ -207,7 +224,7 @@ function NewOperationDialog() {
       toast.success("Operação cadastrada e cronograma gerado.");
       setOpen(false);
       setForm({
-        reference: "",
+        reference_id: "",
         category_id: "",
         due_day: "",
         initial_capital: "",
@@ -228,110 +245,161 @@ function NewOperationDialog() {
       <DialogTrigger asChild>
         <Button>Nova operação</Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Nova operação</DialogTitle>
           <DialogDescription>
-            Informe o contrato. Com primeiro vencimento, quantidade e valor da parcela o cronograma é gerado
-            automaticamente.
+            Vincule a operação a uma referência e informe os valores do contrato.
           </DialogDescription>
         </DialogHeader>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="reference">Referência *</Label>
-            <Input
-              id="reference"
-              required
-              value={form.reference}
-              onChange={(event) => setForm({ ...form, reference: event.target.value })}
-            />
+        
+        <form className="grid gap-6 md:grid-cols-2" onSubmit={submit}>
+          <div className="space-y-4 md:col-span-1">
+            <div className="space-y-2">
+              <Label>Referência do Ativo / Contrato *</Label>
+              <ReferenceCombobox 
+                value={form.reference_id} 
+                onChange={(v) => setForm({ ...form, reference_id: v })} 
+                categoryId={form.category_id}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Busque uma referência existente ou digite para criar uma nova.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="initial_capital">Capital investido (R$) *</Label>
+                <Input
+                  id="initial_capital"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={form.initial_capital}
+                  onChange={(event) => setForm({ ...form, initial_capital: event.target.value })}
+                  placeholder="0,00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="investment_date">Data investimento</Label>
+                <Input
+                  id="investment_date"
+                  type="date"
+                  value={form.investment_date}
+                  onChange={(event) => setForm({ ...form, investment_date: event.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="first_due_date">1º venc.</Label>
+                <Input
+                  id="first_due_date"
+                  type="date"
+                  value={form.first_due_date}
+                  onChange={(event) => setForm({ ...form, first_due_date: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="installment_count">Qtd. parc.</Label>
+                <Input
+                  id="installment_count"
+                  type="number"
+                  min={1}
+                  value={form.installment_count}
+                  onChange={(event) => setForm({ ...form, installment_count: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="installment_value">Vlr. parc.</Label>
+                <Input
+                  id="installment_value"
+                  type="number"
+                  step="0.01"
+                  value={form.installment_value}
+                  onChange={(event) => setForm({ ...form, installment_value: event.target.value })}
+                  placeholder="0,00"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Detalhes internos, observações ou ressalvas..."
+                className="min-h-[100px]"
+                value={form.notes}
+                onChange={(event) => setForm({ ...form, notes: event.target.value })}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Categoria</Label>
-            <Select value={form.category_id} onValueChange={(value) => setForm({ ...form, category_id: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {(categories.data ?? []).map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          <div className="space-y-4 md:col-span-1">
+            <Card className="bg-muted/50 border-dashed">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Calculator className="h-4 w-4" />
+                  Resumo da Operação
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Total contratado:</span>
+                  <span className="font-semibold">{brl(summary.total)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Lucro bruto previsto:</span>
+                  <span className={cn("font-semibold", summary.profit >= 0 ? "text-green-600" : "text-destructive")}>
+                    {brl(summary.profit)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-t pt-2">
+                  <span className="text-muted-foreground">ROI (Retorno s/ Inv.):</span>
+                  <Badge variant={summary.roi >= 0 ? "outline" : "destructive"} className="font-mono">
+                    <TrendingUp className="mr-1 h-3 w-3" />
+                    {pct(summary.roi)}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Previsão de quitação:</span>
+                  <span className="flex items-center gap-1 font-medium">
+                    <Calendar className="h-3 w-3" />
+                    {summary.maturity}
+                  </span>
+                </div>
+                
+                <div className="mt-4 p-3 rounded-lg bg-primary/5 text-[11px] text-primary leading-relaxed flex gap-2">
+                  <Info className="h-4 w-4 shrink-0" />
+                  <span>
+                    Ao salvar, o sistema gerará automaticamente {form.installment_count || "0"} parcelas 
+                    de {brl(Number(form.installment_value) || 0)} cada, iniciando em {dateBR(form.first_due_date) || "—"}.
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-2">
+              <Label>Categoria para filtro</Label>
+              <Select value={form.category_id} onValueChange={(value) => setForm({ ...form, category_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Opcional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(categories.data ?? []).map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="initial_capital">Capital investido (R$) *</Label>
-            <Input
-              id="initial_capital"
-              type="number"
-              step="0.01"
-              required
-              value={form.initial_capital}
-              onChange={(event) => setForm({ ...form, initial_capital: event.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="investment_date">Data do investimento</Label>
-            <Input
-              id="investment_date"
-              type="date"
-              value={form.investment_date}
-              onChange={(event) => setForm({ ...form, investment_date: event.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="due_day">Dia de vencimento</Label>
-            <Input
-              id="due_day"
-              type="number"
-              min={1}
-              max={31}
-              value={form.due_day}
-              onChange={(event) => setForm({ ...form, due_day: event.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="first_due_date">1º vencimento</Label>
-            <Input
-              id="first_due_date"
-              type="date"
-              value={form.first_due_date}
-              onChange={(event) => setForm({ ...form, first_due_date: event.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="installment_count">Qtd. de parcelas</Label>
-            <Input
-              id="installment_count"
-              type="number"
-              min={1}
-              value={form.installment_count}
-              onChange={(event) => setForm({ ...form, installment_count: event.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="installment_value">Valor da parcela (R$)</Label>
-            <Input
-              id="installment_value"
-              type="number"
-              step="0.01"
-              value={form.installment_value}
-              onChange={(event) => setForm({ ...form, installment_value: event.target.value })}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-            />
-          </div>
+
           <DialogFooter className="md:col-span-2">
-            <Button type="submit" disabled={create.isPending}>
-              Salvar operação
+            <Button type="submit" className="w-full md:w-auto" disabled={create.isPending}>
+              Confirmar e Gerar Operação
             </Button>
           </DialogFooter>
         </form>
