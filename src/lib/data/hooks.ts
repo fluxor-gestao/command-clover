@@ -22,7 +22,7 @@ export function usePortfolioSummary() {
   return useQuery({
     queryKey: ["portfolio-summary"],
     queryFn: async () =>
-      unwrap(await supabase.from("v_portfolio_summary").select("*").maybeSingle()),
+      unwrapOne(await supabase.from("v_portfolio_summary").select("*").maybeSingle()),
   });
 }
 
@@ -40,7 +40,7 @@ export function useOperation(operationId: string) {
   return useQuery({
     queryKey: ["operation", operationId],
     queryFn: async () =>
-      unwrap(
+      unwrapOne(
         await supabase.from("v_operation_position").select("*").eq("operation_id", operationId).maybeSingle(),
       ),
     enabled: Boolean(operationId),
