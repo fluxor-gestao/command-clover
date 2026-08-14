@@ -79,20 +79,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       <Sidebar collapsible="icon">
         <SidebarHeader className="py-6">
-          <div className={cn("flex flex-col px-2 transition-all", isCollapsed && "items-center px-0")}>
-            {!isCollapsed ? (
-              <>
+          <div className={cn("flex items-center gap-3 px-2 transition-all", isCollapsed && "justify-center px-0")}>
+            <img
+              src={logoAsset.url}
+              alt="Nova Era"
+              className={cn("object-contain shrink-0", isCollapsed ? "h-8 w-8" : "h-10 w-10")}
+            />
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0">
                 <span className="text-xs font-bold tracking-[0.2em] text-sidebar-foreground/50 uppercase">
                   Nova Era
                 </span>
-                <span className="text-sm font-semibold text-sidebar-foreground mt-0.5">
+                <span className="text-sm font-semibold text-sidebar-foreground mt-0.5 truncate">
                   Gestão de Investimentos
                 </span>
-              </>
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-                NE
               </div>
+            )}
+
             )}
           </div>
         </SidebarHeader>
