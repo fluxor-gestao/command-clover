@@ -56,9 +56,9 @@ function ReceiptsPage() {
     const today = todayISO();
     
     return {
-      overdue: list.filter(r => r.due_date < today),
+      overdue: list.filter(r => r.due_date && r.due_date < today),
       current: list.filter(r => r.due_date === today),
-      future: list.filter(r => r.due_date > today),
+      future: list.filter(r => r.due_date && r.due_date > today),
     };
   }, [installments.data]);
 
