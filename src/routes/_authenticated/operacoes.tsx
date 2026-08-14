@@ -2,6 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories, useCreateOperation, useOperations, useUpdatePortfolioMembership } from "@/lib/data/hooks";
+
 import {
   Info,
   Calculator,
@@ -17,7 +20,9 @@ import {
   X,
   Trash2,
   Building2,
+  Star,
 } from "lucide-react";
+
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ReferenceCombobox } from "@/components/import/ReferenceCombobox";
-import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hooks";
+
 import { brl, dateBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -110,6 +115,9 @@ function OperationsPage() {
       return matchSearch && matchStatus && matchCategory;
     });
   }, [operations.data, search, status, category]);
+
+  const currentYear = new Date().getFullYear();
+
 
   const categories = [...new Set((operations.data ?? []).map((op) => op.category).filter(Boolean))] as string[];
 
@@ -192,6 +200,7 @@ function OperationsPage() {
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="sticky left-0 bg-muted/30 z-20 text-[10px] uppercase font-bold tracking-wider">Referência</TableHead>
+                    <TableHead className="text-[10px] uppercase font-bold tracking-wider">Carteira 2026</TableHead>
                     <TableHead className="text-[10px] uppercase font-bold tracking-wider">Categoria</TableHead>
                     <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider">Investido</TableHead>
                     <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider">Recebido</TableHead>
@@ -200,6 +209,7 @@ function OperationsPage() {
                     <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider">Retorno</TableHead>
                     <TableHead className="text-[10px] uppercase font-bold tracking-wider">Vencimento</TableHead>
                     <TableHead className="text-[10px] uppercase font-bold tracking-wider">Status</TableHead>
+
                     <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider pr-4">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -218,8 +228,12 @@ function OperationsPage() {
                           </Link>
                         </TableCell>
                         <TableCell>
+                          <PortfolioToggle operationId={op.operation_id!} year={2026} />
+                        </TableCell>
+                        <TableCell>
                           <span className="text-xs text-muted-foreground">{op.category ?? "—"}</span>
                         </TableCell>
+
                         <TableCell className="text-right font-mono text-xs">{brl(op.total_invested)}</TableCell>
                         <TableCell className="text-right font-mono text-xs text-success">{brl(op.total_received)}</TableCell>
                         <TableCell className="text-right font-mono text-xs font-semibold">{brl(op.capital_to_recover)}</TableCell>
@@ -271,6 +285,8 @@ function OperationsPage() {
     </div>
   );
 }
+
+
 
 function NewOperationDialog() {
   const categories = useCategories();
@@ -538,3 +554,36 @@ function OperationActions({ operation }: { operation: any }) {
     </DropdownMenu>
   );
 }
+
+function PortfolioToggle({ operationId, year }: { operationId: string; year: number }) {
+  const { data: operations } = useOperations();
+  const updateMembership = useUpdatePortfolioMembership();
+  
+  const op = operations?.find(o => o.operation_id === operationId);
+  // O backend ainda não retorna memberships na view, mas podemos simular ou usar o hook específico
+  const isActive = false; // Mock - implementar via hook real de memberships se necessário
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn(
+        "h-7 w-7 p-0 rounded-full",
+        isActive ? "text-amber-500 hover:text-amber-600" : "text-muted-foreground/30 hover:text-muted-foreground"
+      )}
+      onClick={() => {
+        toast.promise(
+          updateMembership.mutateAsync({ operationId, year, isActive: !isActive }),
+          {
+            loading: "Atualizando carteira...",
+            success: isActive ? "Removido da carteira gerencial." : "Adicionado à carteira gerencial.",
+            error: "Falha ao atualizar carteira.",
+          }
+        );
+      }}
+    >
+      <Star className={cn("size-4", isActive && "fill-current")} />
+    </Button>
+  );
+}
+
