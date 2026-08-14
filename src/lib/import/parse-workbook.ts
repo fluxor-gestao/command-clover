@@ -272,6 +272,7 @@ class OperationIndex {
       installments: [],
       contributions: [],
       incomplete: false,
+      sheets: [],
     };
     this.map.set(key, created);
     return created;
@@ -297,8 +298,10 @@ function upsertInstallment(op: OperationBucket, installment: ParsedInstallment) 
     ...current,
     expected: Math.max(current.expected, installment.expected),
     received: Math.max(current.received, installment.received),
+    overdue: Math.max(current.overdue, installment.overdue),
   };
 }
+
 
 function parseAnnualSheet(
   sheet: Worksheet,
