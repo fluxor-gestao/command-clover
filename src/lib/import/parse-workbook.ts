@@ -276,7 +276,12 @@ function parseAnnualSheet(
     }
 
     // Título de seção (categoria)
-    if (colA && !colB && Number.isNaN(Number(colA)) && colA.length > 4) {
+    if (
+      colA &&
+      (!colB || normalizeText(colB) === normalizeText(colA)) &&
+      Number.isNaN(Number(colA)) &&
+      colA.length > 4
+    ) {
       section = colA;
       // Blocos de patrimônio/imóveis não são recebíveis: os valores são preços de ativos
       skipSection = /IMOVEIS|TITULARES|PATRIMONIO|RECEBIVEIS/.test(normalizeText(colA));
