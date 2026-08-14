@@ -121,7 +121,10 @@ function ReferencesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">Editar</Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm">Editar</Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">Excluir</Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
