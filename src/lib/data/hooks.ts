@@ -27,7 +27,7 @@ export function usePortfolioSummary() {
     queryFn: async (): Promise<PortfolioSummary | null> => {
       const { data, error } = await supabase.from("v_portfolio_summary").select("*").maybeSingle();
       if (error) throw new Error(error.message);
-      return data;
+      return data as PortfolioSummary | null;
     },
   });
 }
@@ -82,6 +82,35 @@ export function useCategories() {
     queryKey: ["categories"],
     queryFn: async () =>
       unwrap(await supabase.from("investment_categories").select("*").order("name")),
+  });
+}
+
+export function useReferences(options?: { activeOnly?: boolean }) {
+  return useQuery({
+    queryKey: ["references", options],
+    queryFn: async () => {
+      let query = supabase.from("investment_references").select("*, investment_categories(name)");
+      if (options?.activeOnly) query = query.eq("active", true).is("archived_at", null);
+      return unwrap(await query.order("name"));
+    },
+  });
+}
+
+export function useCreateReference() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; category_id?: string | null; description?: string | null }) => {
+      const { data, error } = await supabase
+        .from("investment_references")
+        .insert({ ...input, source: "SISTEMA" })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["references"] });
+    },
   });
 }
 
@@ -163,6 +192,7 @@ export function useInvalidateAll() {
       "imports",
       "import-issues",
       "audit-log",
+      "references",
     ]) {
       queryClient.invalidateQueries({ queryKey: [key] });
     }
@@ -170,8 +200,7 @@ export function useInvalidateAll() {
 }
 
 export interface OperationInput {
-  reference: string;
-  category_id: string | null;
+  reference_id: string;
   due_day: number | null;
   initial_capital: number;
   investment_date: string | null;
