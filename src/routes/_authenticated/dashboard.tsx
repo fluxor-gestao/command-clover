@@ -102,42 +102,38 @@ function DashboardPage() {
       </header>
 
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Link to="/operacoes" className="block">
-          <Kpi
-            title="Capital investido"
-            value={brl(s?.total_invested)}
-            hint={`${s?.total_operations ?? 0} operações`}
-            icon={<Wallet className="size-4" />}
-            primary
-          />
-        </Link>
-        <Link to="/recebimentos" className="block">
-          <Kpi
-            title="Capital recebido"
-            value={brl(s?.total_received)}
-            hint={`${pct(s?.recovery_percentage)} do capital`}
-            icon={<ArrowDownRight className="size-4" />}
-            primary
-          />
-        </Link>
-        <Link to="/operacoes" search={{ status: "EM_DIA" }} className="block">
-          <Kpi
-            title="Capital a Recuperar"
-            value={brl(s?.capital_to_recover)}
-            hint="Saldo pendente do aporte"
-            icon={<ArrowUpRight className="size-4" />}
-            primary
-          />
-        </Link>
-        <Link to="/parcelas" search={{ status: "A_VENCER" }} className="block">
-          <Kpi
-            title="Total a Receber"
-            value={brl(s?.total_a_receber)}
-            hint="Projeção total futura"
-            icon={<TrendingUp className="size-4" />}
-            primary
-          />
-        </Link>
+        <Kpi
+          title="Capital investido"
+          value={brl(s?.total_invested)}
+          hint={`${s?.total_operations ?? 0} operações`}
+          icon={<Wallet className="size-4" />}
+          primary
+          onClick={() => navigate({ to: "/operacoes" })}
+        />
+        <Kpi
+          title="Capital recebido"
+          value={brl(s?.total_received)}
+          hint={`${pct(s?.recovery_percentage)} do capital`}
+          icon={<ArrowDownRight className="size-4" />}
+          primary
+          onClick={() => navigate({ to: "/recebimentos" })}
+        />
+        <Kpi
+          title="Capital a Recuperar"
+          value={brl(s?.capital_to_recover)}
+          hint="Saldo pendente do aporte"
+          icon={<ArrowUpRight className="size-4" />}
+          primary
+          onClick={() => navigate({ to: "/operacoes" })}
+        />
+        <Kpi
+          title="Total a Receber"
+          value={brl(s?.total_a_receber)}
+          hint="Projeção total futura"
+          icon={<TrendingUp className="size-4" />}
+          primary
+          onClick={() => navigate({ to: "/parcelas" })}
+        />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -145,27 +141,27 @@ function DashboardPage() {
           title="Lucro realizado"
           value={brl(s?.realized_profit)}
           hint="Sobre capital retornado"
+          onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Resultado Projetado"
           value={brl(s?.projected_result)}
           hint="Expectativa total"
+          onClick={() => navigate({ to: "/relatorios" })}
         />
-        <Link to="/parcelas" search={{ status: "VENCIDA" }} className="block">
-          <Kpi
-            title="Inadimplência"
-            value={brl(s?.overdue_receivable)}
-            hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
-            tone="destructive"
-          />
-        </Link>
-        <Link to="/recebimentos" className="block">
-          <Kpi
-            title="Recebido no mês"
-            value={brl(monthRow?.recebido ?? 0)}
-            hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
-          />
-        </Link>
+        <Kpi
+          title="Inadimplência"
+          value={brl(s?.overdue_receivable)}
+          hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
+          tone="destructive"
+          onClick={() => navigate({ to: "/parcelas", search: { status: "VENCIDA" } })}
+        />
+        <Kpi
+          title="Recebido no mês"
+          value={brl(monthRow?.recebido ?? 0)}
+          hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
+          onClick={() => navigate({ to: "/relatorios" })}
+        />
       </section>
 
       <Card className="border-none shadow-sm bg-card/50">
@@ -313,6 +309,7 @@ function Kpi({
   icon,
   tone,
   primary,
+  onClick,
 }: {
   title: string;
   value: string;
@@ -320,13 +317,18 @@ function Kpi({
   icon?: React.ReactNode;
   tone?: "destructive";
   primary?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <Card className={cn(
-      "border-none shadow-sm transition-all hover:shadow-md",
-      primary ? "bg-primary text-primary-foreground" : "bg-card",
-      tone === "destructive" && !primary && "bg-destructive/5"
-    )}>
+    <Card 
+      onClick={onClick}
+      className={cn(
+        "border-none shadow-sm transition-all hover:shadow-md",
+        onClick && "cursor-pointer active:scale-[0.98]",
+        primary ? "bg-primary text-primary-foreground" : "bg-card",
+        tone === "destructive" && !primary && "bg-destructive/5"
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className={cn(
           "text-xs font-bold uppercase tracking-wider",
