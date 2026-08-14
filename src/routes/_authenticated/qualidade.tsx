@@ -38,6 +38,17 @@ function QualityPage() {
         <p className="text-sm text-muted-foreground">{issues.data?.length ?? 0} apontamentos registrados.</p>
       </header>
 
+      <Tabs defaultValue="apontamentos" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="apontamentos">Apontamentos</TabsTrigger>
+          <TabsTrigger value="homologacao">Homologação financeira</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="homologacao">
+          <HomologacaoFinanceira />
+        </TabsContent>
+
+        <TabsContent value="apontamentos">
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Apontamentos</CardTitle>
