@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedParcelasRouteImport } from './routes/_authenticated/parcelas'
+import { Route as AuthenticatedRecebimentosRouteImport } from './routes/_authenticated/recebimentos'
 import { Route as AuthenticatedOperacoesIdRouteImport } from './routes/_authenticated/operacoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +47,12 @@ const AuthenticatedParcelasRoute = AuthenticatedParcelasRouteImport.update({
   path: '/parcelas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecebimentosRoute =
+  AuthenticatedRecebimentosRouteImport.update({
+    id: '/recebimentos',
+    path: '/recebimentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOperacoesIdRoute =
   AuthenticatedOperacoesIdRouteImport.update({
     id: '/$id',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
+  '/recebimentos': typeof AuthenticatedRecebimentosRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRoutesByTo {
@@ -67,6 +75,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
+  '/recebimentos': typeof AuthenticatedRecebimentosRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRoutesById {
@@ -77,15 +86,28 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/_authenticated/parcelas': typeof AuthenticatedParcelasRoute
+  '/_authenticated/recebimentos': typeof AuthenticatedRecebimentosRoute
   '/_authenticated/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/dashboard' | '/operacoes' | '/parcelas' | '/operacoes/$id'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/operacoes'
+    | '/parcelas'
+    | '/recebimentos'
+    | '/operacoes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/auth' | '/dashboard' | '/operacoes' | '/parcelas' | '/operacoes/$id'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/operacoes'
+    | '/parcelas'
+    | '/recebimentos'
+    | '/operacoes/$id'
   id:
     | '__root__'
     | '/'
@@ -94,6 +116,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/operacoes'
     | '/_authenticated/parcelas'
+    | '/_authenticated/recebimentos'
     | '/_authenticated/operacoes/$id'
   fileRoutesById: FileRoutesById
 }
@@ -147,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedParcelasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recebimentos': {
+      id: '/_authenticated/recebimentos'
+      path: '/recebimentos'
+      fullPath: '/recebimentos'
+      preLoaderRoute: typeof AuthenticatedRecebimentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/operacoes/$id': {
       id: '/_authenticated/operacoes/$id'
       path: '/$id'
@@ -175,12 +205,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRouteWithChildren
   AuthenticatedParcelasRoute: typeof AuthenticatedParcelasRoute
+  AuthenticatedRecebimentosRoute: typeof AuthenticatedRecebimentosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRouteWithChildren,
   AuthenticatedParcelasRoute: AuthenticatedParcelasRoute,
+  AuthenticatedRecebimentosRoute: AuthenticatedRecebimentosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
