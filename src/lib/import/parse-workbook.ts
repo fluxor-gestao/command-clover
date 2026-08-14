@@ -254,9 +254,10 @@ interface OperationBucket extends ParsedOperation {
 class OperationIndex {
   private map = new Map<string, OperationBucket>();
 
-  get(reference: string, category: string): OperationBucket {
-    const key = normalizeReference(reference);
+  get(reference: string, category: string, keyOverride?: string): OperationBucket {
+    const key = keyOverride ?? normalizeReference(reference);
     const existing = this.map.get(key);
+
     if (existing) return existing;
     const created: OperationBucket = {
       key,
