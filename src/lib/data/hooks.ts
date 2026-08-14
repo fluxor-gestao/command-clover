@@ -216,7 +216,7 @@ export function useRegisterReceipt() {
         p_operation_id: payload.operationId,
         p_receipt_date: payload.receiptDate,
         p_allocations: payload.allocations,
-        p_notes: payload.notes ?? undefined,
+        ...(payload.notes ? { p_notes: payload.notes } : {}),
       });
       if (error) throw new Error(error.message);
       return data;
