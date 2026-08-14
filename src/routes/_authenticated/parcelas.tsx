@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { useMemo, useState } from "react";
 import { Receipt, MoreHorizontal } from "lucide-react";
 
@@ -10,7 +11,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useInstallments } from "@/lib/data/hooks";
 import { brl, dateBR } from "@/lib/format";
 
+const searchSchema = z.object({
+  search: z.string().optional(),
+  status: z.string().optional(),
+  competence: z.string().optional(),
+});
+
 export const Route = createFileRoute("/_authenticated/parcelas")({
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Parcelas · Nova Era Investimentos" },
@@ -29,10 +37,17 @@ export const Route = createFileRoute("/_authenticated/parcelas")({
 });
 
 function InstallmentsPage() {
+  const navigate = useNavigate();
+  const searchParams = Route.useSearch();
   const installments = useInstallments();
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("TODAS");
-  const [competence, setCompetence] = useState("TODAS");
+  
+  const search = searchParams.search || "";
+  const status = searchParams.status || "TODAS";
+  const competence = searchParams.competence || "TODAS";
+
+  const setSearch = (v: string) => navigate({ to: ".", search: (prev: any) => ({ ...prev, search: v || undefined }), replace: true });
+  const setStatus = (v: string) => navigate({ to: ".", search: (prev: any) => ({ ...prev, status: v === "TODAS" ? undefined : v }), replace: true });
+  const setCompetence = (v: string) => navigate({ to: ".", search: (prev: any) => ({ ...prev, competence: v === "TODAS" ? undefined : v }), replace: true });
 
   const rows = installments.data ?? [];
   const competences = useMemo(
