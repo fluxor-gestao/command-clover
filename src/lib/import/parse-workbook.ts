@@ -786,5 +786,3 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
 
   return { operations, issues: enrichedIssues, baseline, readiness, stats };
 }
-
-}
