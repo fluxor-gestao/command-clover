@@ -210,7 +210,7 @@ export async function importParseResult(
           source_row: issue.row,
           reference: issue.reference,
           issue_type: issue.issueType,
-          description: issue.description,
+          description: `[${issue.severity ?? "INFORMATIVO"}] ${issue.description}`,
         })),
       );
       if (error) throw new Error(error.message);
