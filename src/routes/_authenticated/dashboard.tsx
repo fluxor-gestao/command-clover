@@ -274,7 +274,7 @@ function DashboardPage() {
                 {topOverdue.map((op) => (
                   <TableRow key={op.operation_id}>
                     <TableCell className="font-medium">{op.reference}</TableCell>
-                    <TableCell className="text-right text-destructive">{brl(op.overdue_receivable)}</TableCell>
+                    <TableCell className="text-right text-destructive font-bold tabular-nums">{brl(op.overdue_receivable)}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant="outline">{op.overdue_installments ?? 0}</Badge>
                     </TableCell>
