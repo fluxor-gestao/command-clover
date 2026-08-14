@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -49,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 const CHART_COLORS = ["oklch(0.696 0.17 162.48)", "oklch(0.446 0.03 256.802)", "oklch(0.129 0.042 264.695)", "oklch(0.92 0.004 286.32)", "oklch(0.85 0.01 264.695)"];
 
 function DashboardPage() {
+  const navigate = useNavigate();
   const summary = usePortfolioSummary();
   const operations = useOperations();
   const flow = useMonthlyFlow();
@@ -101,34 +102,42 @@ function DashboardPage() {
       </header>
 
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Kpi
-          title="Capital investido"
-          value={brl(s?.total_invested)}
-          hint={`${s?.total_operations ?? 0} operações`}
-          icon={<Wallet className="size-4" />}
-          primary
-        />
-        <Kpi
-          title="Capital recebido"
-          value={brl(s?.total_received)}
-          hint={`${pct(s?.recovery_percentage)} do capital`}
-          icon={<ArrowDownRight className="size-4" />}
-          primary
-        />
-        <Kpi
-          title="Capital a Recuperar"
-          value={brl(s?.capital_to_recover)}
-          hint="Saldo pendente do aporte"
-          icon={<ArrowUpRight className="size-4" />}
-          primary
-        />
-        <Kpi
-          title="Total a Receber"
-          value={brl(s?.total_a_receber)}
-          hint="Projeção total futura"
-          icon={<TrendingUp className="size-4" />}
-          primary
-        />
+        <Link to="/operacoes" className="block">
+          <Kpi
+            title="Capital investido"
+            value={brl(s?.total_invested)}
+            hint={`${s?.total_operations ?? 0} operações`}
+            icon={<Wallet className="size-4" />}
+            primary
+          />
+        </Link>
+        <Link to="/recebimentos" className="block">
+          <Kpi
+            title="Capital recebido"
+            value={brl(s?.total_received)}
+            hint={`${pct(s?.recovery_percentage)} do capital`}
+            icon={<ArrowDownRight className="size-4" />}
+            primary
+          />
+        </Link>
+        <Link to="/operacoes" search={{ status: "EM_DIA" }} className="block">
+          <Kpi
+            title="Capital a Recuperar"
+            value={brl(s?.capital_to_recover)}
+            hint="Saldo pendente do aporte"
+            icon={<ArrowUpRight className="size-4" />}
+            primary
+          />
+        </Link>
+        <Link to="/parcelas" search={{ status: "A_VENCER" }} className="block">
+          <Kpi
+            title="Total a Receber"
+            value={brl(s?.total_a_receber)}
+            hint="Projeção total futura"
+            icon={<TrendingUp className="size-4" />}
+            primary
+          />
+        </Link>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -142,17 +151,21 @@ function DashboardPage() {
           value={brl(s?.projected_result)}
           hint="Expectativa total"
         />
-        <Kpi
-          title="Inadimplência"
-          value={brl(s?.overdue_receivable)}
-          hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
-          tone="destructive"
-        />
-        <Kpi
-          title="Recebido no mês"
-          value={brl(monthRow?.recebido ?? 0)}
-          hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
-        />
+        <Link to="/parcelas" search={{ status: "VENCIDA" }} className="block">
+          <Kpi
+            title="Inadimplência"
+            value={brl(s?.overdue_receivable)}
+            hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
+            tone="destructive"
+          />
+        </Link>
+        <Link to="/recebimentos" className="block">
+          <Kpi
+            title="Recebido no mês"
+            value={brl(monthRow?.recebido ?? 0)}
+            hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
+          />
+        </Link>
       </section>
 
       <Card className="border-none shadow-sm bg-card/50">
@@ -272,7 +285,11 @@ function DashboardPage() {
                   </TableRow>
                 )}
                 {topOverdue.map((op) => (
-                  <TableRow key={op.operation_id}>
+                  <TableRow 
+                    key={op.operation_id} 
+                    className="group cursor-pointer transition-colors hover:bg-muted/50"
+                    onClick={() => navigate({ to: "/operacoes/$id", params: { id: op.operation_id ?? "" } })}
+                  >
                     <TableCell className="font-medium">{op.reference}</TableCell>
                     <TableCell className="text-right text-destructive font-bold tabular-nums">{brl(op.overdue_receivable)}</TableCell>
                     <TableCell className="text-right">
