@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Receipt, MoreHorizontal } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,8 +118,9 @@ function InstallmentsPage() {
                 <TableHead className="text-right">Recebido</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>
                 <TableHead className="text-right">Atraso</TableHead>
-                <TableHead>Situação</TableHead>
-              </TableRow>
+                 <TableHead>Situação</TableHead>
+                 <TableHead className="text-right">Ações</TableHead>
+               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 500).map((row) => (
@@ -133,11 +135,23 @@ function InstallmentsPage() {
                   <TableCell className="text-right">
                     {(row.days_overdue ?? 0) > 0 ? `${row.days_overdue} dias` : "—"}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={row.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
-                      {row.financial_status}
-                    </Badge>
-                  </TableCell>
+                   <TableCell>
+                     <Badge variant={row.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
+                       {row.financial_status}
+                     </Badge>
+                   </TableCell>
+                   <TableCell className="text-right">
+                     <div className="flex justify-end gap-1">
+                       <Link 
+                         to="/recebimentos" 
+                         search={{ operationId: row.operation_id ?? undefined }}
+                         className="inline-flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
+                         title="Registrar recebimento"
+                       >
+                         <Receipt className="h-4 w-4" />
+                       </Link>
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
