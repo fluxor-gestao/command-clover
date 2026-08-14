@@ -171,13 +171,14 @@ export function useReferences(options?: { activeOnly?: boolean; year?: number })
 export function usePortfolioMemberships(year: number) {
   return useQuery({
     queryKey: ["portfolio-memberships", year],
-    queryFn: async () =>
-      unwrap(
-        await supabase
-          .from("v_portfolio_memberships" as any)
-          .select("*")
-          .eq("portfolio_year", year),
-      ),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_portfolio_memberships" as any)
+        .select("*")
+        .eq("portfolio_year", year);
+      if (error) throw new Error(error.message);
+      return (data as any[]) ?? [];
+    },
   });
 }
 

@@ -534,6 +534,69 @@ export type Database = {
           },
         ]
       }
+      portfolio_memberships: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          operation_id: string
+          portfolio_year: number
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          operation_id: string
+          portfolio_year: number
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          operation_id?: string
+          portfolio_year?: number
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_memberships_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "investment_operations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_memberships_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "v_operation_position"
+            referencedColumns: ["operation_id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_installments: {
@@ -605,6 +668,39 @@ export type Database = {
         }
         Relationships: []
       }
+      v_portfolio_memberships: {
+        Row: {
+          category_name: string | null
+          created_at: string | null
+          id: string | null
+          initial_capital: number | null
+          investment_date: string | null
+          is_active: boolean | null
+          operation_id: string | null
+          operation_status: string | null
+          portfolio_year: number | null
+          reference: string | null
+          reference_name: string | null
+          source: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_memberships_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "investment_operations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_memberships_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "v_operation_position"
+            referencedColumns: ["operation_id"]
+          },
+        ]
+      }
       v_portfolio_summary: {
         Row: {
           capital_to_recover: number | null
@@ -655,6 +751,13 @@ export type Database = {
           year: number
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       register_receipt: {
         Args: {
           p_allocations: Json
@@ -666,7 +769,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -793,6 +896,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
