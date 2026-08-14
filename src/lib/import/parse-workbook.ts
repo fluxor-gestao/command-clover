@@ -349,8 +349,9 @@ function parseAnnualSheet(
       colA.length > 4
     ) {
       section = colA;
-      // Blocos de patrimônio/imóveis não são recebíveis: os valores são preços de ativos
-      skipSection = /IMOVEIS|TITULARES|PATRIMONIO|RECEBIVEIS/.test(normalizeText(colA));
+      // Somente blocos de patrimônio (ativos, não recebíveis) são ignorados
+      skipSection = /^(IMOVEIS|TITULARES|PATRIMONIO)\b/.test(normalizeText(colA));
+
       return;
     }
     if (skipSection) return;
