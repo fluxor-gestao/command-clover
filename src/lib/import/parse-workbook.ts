@@ -394,7 +394,7 @@ function parseAnnualSheet(
     }
     seenReferences.add(refKey);
 
-    const displayReference = duplicated ? `${reference.trim()} (linha ${rowNumber})` : reference;
+    const displayReference = duplicated ? `${reference.trim()} (${sheet.name} linha ${rowNumber})` : reference;
     const op = index.get(
       displayReference,
       categoryFromSection(section),
