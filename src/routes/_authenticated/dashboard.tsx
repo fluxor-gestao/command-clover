@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const CHART_COLORS = ["oklch(0.696 0.17 162.48)", "oklch(0.446 0.03 256.802)", "oklch(0.129 0.042 264.695)", "oklch(0.92 0.004 286.32)", "oklch(0.85 0.01 264.695)"];
 
 function DashboardPage() {
   const summary = usePortfolioSummary();
