@@ -29,7 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCategories, useReferences, useCreateReference } from "@/lib/data/hooks";
-import { cn } from "@/lib/utils";
+import { cn, normalizeString } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/referencias")({
   head: () => ({
@@ -128,6 +128,7 @@ function ReferencesPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="text-[10px] uppercase font-bold tracking-wider">Referência</TableHead>
                   <TableHead className="text-[10px] uppercase font-bold tracking-wider">Categoria</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-wider text-right">Ops.</TableHead>
                   <TableHead className="text-[10px] uppercase font-bold tracking-wider">Status</TableHead>
                   <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider pr-4">Ações</TableHead>
                 </TableRow>
@@ -145,6 +146,9 @@ function ReferencesPage() {
                     </TableCell>
                     <TableCell>
                       <span className="text-xs text-muted-foreground">{(ref as any).investment_categories?.name ?? "—"}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-[10px]">{ref.operations_count || 0}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge 
@@ -209,6 +213,17 @@ function NewReferenceDialog() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const normalizedName = normalizeString(form.name);
+    const exists = (references.data ?? []).some(
+      (r) => normalizeString(r.name) === normalizedName
+    );
+
+    if (exists) {
+      toast.error("Já existe uma referência com este nome (mesmo que com acentos ou maiúsculas diferentes).");
+      return;
+    }
+
     try {
       await create.mutateAsync(form);
       toast.success("Referência cadastrada com sucesso.");

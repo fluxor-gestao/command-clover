@@ -79,7 +79,7 @@ export function useReferences(options?: { activeOnly?: boolean }) {
   return useQuery({
     queryKey: ["references", options],
     queryFn: async () => {
-      let query = supabase.from("investment_references").select("*, investment_categories(name)");
+      let query = supabase.from("investment_references").select("*, investment_categories(name), operations_count:investment_operations(count)");
       if (options?.activeOnly) query = query.eq("active", true).is("archived_at", null);
       return unwrap(await query.order("name"));
     },
