@@ -50,7 +50,7 @@ function OperationDetail() {
         <Metric label="A vencer" value={brl(op?.future_receivable)} />
         <Metric label="Vencido" value={brl(op?.overdue_receivable)} />
         <Metric label="Parcelas em atraso" value={String(op?.overdue_installments ?? 0)} />
-        <Metric label="Situação" value={op?.computed_status ?? "—"} />
+        <Metric label="Situação" value={op?.financial_status ?? "—"} />
       </div>
 
       <Card>

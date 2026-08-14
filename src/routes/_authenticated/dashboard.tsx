@@ -95,7 +95,7 @@ function DashboardPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard executivo</h1>
         <p className="text-sm text-muted-foreground">
-          Posição consolidada da carteira — dados calculados a partir das parcelas e recebimentos registrados.
+          Indicadores oficiais da carteira — Auditoria financeira consolidada.
         </p>
       </header>
 
@@ -125,6 +125,12 @@ function DashboardPage() {
           icon={<TrendingUp className="size-4 text-muted-foreground" />}
         />
         <Kpi
+          title="Resultado Projetado"
+          value={brl(s?.projected_result)}
+          hint="Expectativa total de lucro"
+          icon={<TrendingUp className="size-4 text-primary" />}
+        />
+        <Kpi
           title="A receber (futuro)"
           value={brl(s?.future_receivable)}
           hint="Parcelas com vencimento em aberto"
@@ -142,8 +148,8 @@ function DashboardPage() {
           hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
         />
         <Kpi
-          title="Operações em revisão"
-          value={String(s?.review_operations ?? 0)}
+          title="Total a Receber"
+          value={brl(s?.total_a_receber)}
           hint={`${s?.closed_operations ?? 0} encerradas`}
         />
       </section>

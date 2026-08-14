@@ -587,56 +587,40 @@ export type Database = {
       }
       v_operation_position: {
         Row: {
-          cancelled_at: string | null
           capital_to_recover: number | null
           category: string | null
-          category_id: string | null
-          computed_status: string | null
-          contracted_total: number | null
-          contracted_total_calc: number | null
-          description: string | null
-          due_day: number | null
-          first_due_date: string | null
-          first_installment_due: string | null
+          financial_status: string | null
           future_receivable: number | null
-          import_status: string | null
           initial_capital: number | null
-          installment_count: number | null
-          installment_value: number | null
-          investment_date: string | null
           last_installment_due: string | null
-          notes: string | null
-          open_installments: number | null
           operation_id: string | null
+          outstanding_amount: number | null
           overdue_installments: number | null
           overdue_receivable: number | null
-          projected_result: number | null
-          receipts_count: number | null
           recovery_percentage: number | null
           reference: string | null
-          source: string | null
-          status: string | null
-          total_installments: number | null
+          total_contributions: number | null
           total_invested: number | null
-          total_invested_contributions: number | null
           total_received: number | null
         }
         Relationships: []
       }
       v_portfolio_summary: {
         Row: {
-          active_operations: number | null
           capital_to_recover: number | null
           closed_operations: number | null
           future_receivable: number | null
           overdue_installments: number | null
           overdue_operations: number | null
           overdue_receivable: number | null
+          projected_result: number | null
           realized_profit: number | null
           recovery_percentage: number | null
           review_operations: number | null
+          total_a_receber: number | null
           total_invested: number | null
           total_operations: number | null
+          total_previsto_carteira: number | null
           total_received: number | null
         }
         Relationships: []
