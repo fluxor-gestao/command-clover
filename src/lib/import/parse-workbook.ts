@@ -284,10 +284,10 @@ function parseAnnualSheet(
     if (!reference) return;
     const normalized = normalizeText(reference);
     if (
-      normalized.startsWith("SUB-TOTAL") ||
-      normalized.startsWith("SUBTOTAL") ||
-      normalized.startsWith("TOTAL") ||
-      normalized === "REFERENCIA"
+      /^(SUB[- ]?TOTA|TOTA|QT\.|RECEBIVEIS|IMOVEIS)/.test(normalized) ||
+      normalized.includes("TOTAL") ||
+      normalized === "REFERENCIA" ||
+      normalized === "-"
     ) {
       return;
     }
