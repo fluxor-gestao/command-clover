@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/operacoes", label: "Operações", icon: Building2 },
+  { to: "/referencias", label: "Referências", icon: Building2 },
   { to: "/parcelas", label: "Parcelas", icon: CalendarClock },
   { to: "/recebimentos", label: "Recebimentos", icon: Wallet },
   { to: "/aportes", label: "Aportes", icon: PiggyBank },

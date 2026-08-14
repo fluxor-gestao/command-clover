@@ -19,6 +19,7 @@ import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedParcelasRouteImport } from './routes/_authenticated/parcelas'
 import { Route as AuthenticatedQualidadeRouteImport } from './routes/_authenticated/qualidade'
 import { Route as AuthenticatedRecebimentosRouteImport } from './routes/_authenticated/recebimentos'
+import { Route as AuthenticatedReferenciasRouteImport } from './routes/_authenticated/referencias'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedOperacoesIdRouteImport } from './routes/_authenticated/operacoes.$id'
 
@@ -72,6 +73,12 @@ const AuthenticatedRecebimentosRoute =
     path: '/recebimentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReferenciasRoute =
+  AuthenticatedReferenciasRouteImport.update({
+    id: '/referencias',
+    path: '/referencias',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/parcelas': typeof AuthenticatedParcelasRoute
   '/qualidade': typeof AuthenticatedQualidadeRoute
   '/recebimentos': typeof AuthenticatedRecebimentosRoute
+  '/referencias': typeof AuthenticatedReferenciasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/parcelas': typeof AuthenticatedParcelasRoute
   '/qualidade': typeof AuthenticatedQualidadeRoute
   '/recebimentos': typeof AuthenticatedRecebimentosRoute
+  '/referencias': typeof AuthenticatedReferenciasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
@@ -122,6 +131,7 @@ export interface FileRoutesById {
   '/_authenticated/parcelas': typeof AuthenticatedParcelasRoute
   '/_authenticated/qualidade': typeof AuthenticatedQualidadeRoute
   '/_authenticated/recebimentos': typeof AuthenticatedRecebimentosRoute
+  '/_authenticated/referencias': typeof AuthenticatedReferenciasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/parcelas'
     | '/qualidade'
     | '/recebimentos'
+    | '/referencias'
     | '/relatorios'
     | '/operacoes/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/parcelas'
     | '/qualidade'
     | '/recebimentos'
+    | '/referencias'
     | '/relatorios'
     | '/operacoes/$id'
   id:
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/parcelas'
     | '/_authenticated/qualidade'
     | '/_authenticated/recebimentos'
+    | '/_authenticated/referencias'
     | '/_authenticated/relatorios'
     | '/_authenticated/operacoes/$id'
   fileRoutesById: FileRoutesById
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRecebimentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/referencias': {
+      id: '/_authenticated/referencias'
+      path: '/referencias'
+      fullPath: '/referencias'
+      preLoaderRoute: typeof AuthenticatedReferenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -285,6 +305,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedParcelasRoute: typeof AuthenticatedParcelasRoute
   AuthenticatedQualidadeRoute: typeof AuthenticatedQualidadeRoute
   AuthenticatedRecebimentosRoute: typeof AuthenticatedRecebimentosRoute
+  AuthenticatedReferenciasRoute: typeof AuthenticatedReferenciasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
 }
 
@@ -296,6 +317,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedParcelasRoute: AuthenticatedParcelasRoute,
   AuthenticatedQualidadeRoute: AuthenticatedQualidadeRoute,
   AuthenticatedRecebimentosRoute: AuthenticatedRecebimentosRoute,
+  AuthenticatedReferenciasRoute: AuthenticatedReferenciasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
 }
 

@@ -3,7 +3,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
-export type PortfolioSummary = Database["public"]["Views"]["v_portfolio_summary"]["Row"];
+export type PortfolioSummary = Database["public"]["Views"]["v_portfolio_summary"]["Row"] & {
+  recovery_percentage?: number | null;
+  capital_to_recover?: number | null;
+  realized_profit?: number | null;
+  future_receivable?: number | null;
+  overdue_receivable?: number | null;
+  overdue_installments?: number | null;
+  overdue_operations?: number | null;
+  review_operations?: number | null;
+  closed_operations?: number | null;
+};
 export type OperationPosition = Database["public"]["Views"]["v_operation_position"]["Row"];
 
 const unwrap = <T,>({ data, error }: { data: T[] | null; error: { message: string } | null }): T[] => {
@@ -17,7 +27,7 @@ export function usePortfolioSummary() {
     queryFn: async (): Promise<PortfolioSummary | null> => {
       const { data, error } = await supabase.from("v_portfolio_summary").select("*").maybeSingle();
       if (error) throw new Error(error.message);
-      return data;
+      return data as PortfolioSummary | null;
     },
   });
 }
@@ -72,6 +82,35 @@ export function useCategories() {
     queryKey: ["categories"],
     queryFn: async () =>
       unwrap(await supabase.from("investment_categories").select("*").order("name")),
+  });
+}
+
+export function useReferences(options?: { activeOnly?: boolean }) {
+  return useQuery({
+    queryKey: ["references", options],
+    queryFn: async () => {
+      let query = supabase.from("investment_references").select("*, investment_categories(name)");
+      if (options?.activeOnly) query = query.eq("active", true).is("archived_at", null);
+      return unwrap(await query.order("name"));
+    },
+  });
+}
+
+export function useCreateReference() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; category_id?: string | null; description?: string | null }) => {
+      const { data, error } = await supabase
+        .from("investment_references")
+        .insert({ ...input, source: "SISTEMA" })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["references"] });
+    },
   });
 }
 
@@ -153,6 +192,7 @@ export function useInvalidateAll() {
       "imports",
       "import-issues",
       "audit-log",
+      "references",
     ]) {
       queryClient.invalidateQueries({ queryKey: [key] });
     }
@@ -160,8 +200,7 @@ export function useInvalidateAll() {
 }
 
 export interface OperationInput {
-  reference: string;
-  category_id: string | null;
+  reference_id: string;
   due_day: number | null;
   initial_capital: number;
   investment_date: string | null;
@@ -178,7 +217,7 @@ export function useCreateOperation() {
     mutationFn: async (input: OperationInput) => {
       const { data, error } = await supabase
         .from("investment_operations")
-        .insert({ ...input, source: "SISTEMA", import_status: "VALIDADO" })
+        .insert({ ...input, reference: "", source: "SISTEMA", import_status: "VALIDADO" })
         .select("id")
         .single();
       if (error) throw new Error(error.message);
