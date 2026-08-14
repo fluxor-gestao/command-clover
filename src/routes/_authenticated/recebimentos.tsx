@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, Receipt, History, RotateCcw, Edit2 } from "lucide-react";
+import { Search, Receipt, History, RotateCcw, Edit2, Calendar, Building2, Plus, ArrowRight } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -80,23 +80,36 @@ function ReceiptsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Recebimentos</h1>
-        <p className="text-sm text-muted-foreground">Baixa de parcelas e gestão de fluxo de entrada.</p>
+    <div className="space-y-8">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-white">
+            <Receipt className="size-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Fluxo de Recebimentos</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Gestão de entradas e baixas de parcelas</p>
+          </div>
+        </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-7 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Lançar Recebimento
-              </CardTitle>
-              <CardDescription>Selecione a operação e distribua o valor nas parcelas em aberto.</CardDescription>
+      <div className="grid gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-6">
+          <Card className="border-none shadow-sm overflow-hidden bg-card/50">
+            <CardHeader className="bg-muted/30 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Novo Lançamento</CardTitle>
+                  <CardDescription>Selecione a operação para distribuir o recebimento</CardDescription>
+                </div>
+                {totalAllocated > 0 && (
+                  <Badge variant="outline" className="h-6 border-success/30 text-success bg-success/5 font-bold tabular-nums">
+                    {brl(totalAllocated)}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form className="space-y-6" onSubmit={submit}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
