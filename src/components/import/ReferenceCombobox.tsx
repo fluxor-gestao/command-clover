@@ -42,7 +42,7 @@ export function ReferenceCombobox({ value, onChange, categoryId }: ReferenceComb
     try {
       const newRef = await create.mutateAsync({ 
         name: search.trim(),
-        category_id: categoryId
+        category_id: categoryId ?? null
       });
       onChange(newRef.id);
       setOpen(false);

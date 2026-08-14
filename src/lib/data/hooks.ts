@@ -217,7 +217,7 @@ export function useCreateOperation() {
     mutationFn: async (input: OperationInput) => {
       const { data, error } = await supabase
         .from("investment_operations")
-        .insert({ ...input, source: "SISTEMA", import_status: "VALIDADO" })
+        .insert({ ...input, reference: "", source: "SISTEMA", import_status: "VALIDADO" })
         .select("id")
         .single();
       if (error) throw new Error(error.message);
