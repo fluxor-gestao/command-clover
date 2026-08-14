@@ -50,40 +50,77 @@ const CHART_COLORS = ["oklch(0.696 0.17 162.48)", "oklch(0.446 0.03 256.802)", "
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const summary = usePortfolioSummary();
-  const operations = useOperations();
-  const flow = useMonthlyFlow();
-
-  const s = summary.data;
   const today = todayISO();
   const currentMonth = today.slice(0, 7);
+
+  const [scopeValue, setScopeValue] = useState(today.slice(0, 4));
+  const scope = scopeFromValue(scopeValue);
+  const year = "year" in scope ? scope.year : null;
+
+  const metrics = usePortfolioMetrics(scope);
+  const operations = useOperations();
+  const installments = useInstallments();
+  const flow = useMonthlyFlow();
   const receivedInMonth = useReceivedInMonth(currentMonth);
 
-  const monthly = (flow.data ?? []).map((row) => ({
-    competence: competenceBR(row.competence),
-    raw: row.competence ?? "",
-    previsto: Number(row.expected ?? 0),
-    recebido: Number(row.received ?? 0),
-    inadimplente: Number(row.overdue ?? 0),
-  }));
+  const s = metrics.data;
+
+  const monthly = (flow.data ?? [])
+    .filter((row) => (year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year)))
+    .map((row) => ({
+      competence: competenceBR(row.competence),
+      raw: row.competence ?? "",
+      previsto: Number(row.expected ?? 0),
+      recebido: Number(row.received ?? 0),
+      inadimplente: Number(row.overdue ?? 0),
+    }));
 
   const monthRow = monthly.find((row) => row.raw.slice(0, 7) === currentMonth);
 
+  const scopedInstallments = (installments.data ?? []).filter((row) =>
+    year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year),
+  );
+
+  const scopedOperationIds = new Set(scopedInstallments.map((row) => row.operation_id));
+
+  const overdueByOperation = scopedInstallments.reduce<Record<string, { amount: number; count: number }>>(
+    (acc, row) => {
+      const outstanding = Number(row.outstanding_amount ?? 0);
+      if (outstanding <= 0 || !row.operation_id) return acc;
+      if (String(row.due_date ?? "") >= today) return acc;
+      acc[row.operation_id] ??= { amount: 0, count: 0 };
+      acc[row.operation_id]!.amount += outstanding;
+      acc[row.operation_id]!.count += 1;
+      return acc;
+    },
+    {},
+  );
+
+  const scopedOperations = (operations.data ?? []).filter(
+    (op) => year === null || (op.operation_id != null && scopedOperationIds.has(op.operation_id)),
+  );
+
   const byCategory = Object.values(
-    (operations.data ?? []).reduce<Record<string, { name: string; value: number }>>((acc, op) => {
+    scopedOperations.reduce<Record<string, { name: string; value: number }>>((acc, op) => {
       const name = op.category ?? "Sem categoria";
       acc[name] ??= { name, value: 0 };
-      acc[name]!.value += Number(op.total_invested ?? 0);
+      acc[name]!.value += Number(op.initial_capital ?? 0) + Number(op.total_contributions ?? 0);
       return acc;
     }, {}),
   ).sort((a, b) => b.value - a.value);
 
-  const topOverdue = [...(operations.data ?? [])]
-    .filter((op) => Number(op.overdue_receivable ?? 0) > 0)
-    .sort((a, b) => Number(b.overdue_receivable ?? 0) - Number(a.overdue_receivable ?? 0))
+  const topOverdue = scopedOperations
+    .map((op) => ({
+      operation_id: op.operation_id,
+      reference: op.reference,
+      overdue_receivable: op.operation_id ? (overdueByOperation[op.operation_id]?.amount ?? 0) : 0,
+      overdue_installments: op.operation_id ? (overdueByOperation[op.operation_id]?.count ?? 0) : 0,
+    }))
+    .filter((op) => op.overdue_receivable > 0)
+    .sort((a, b) => b.overdue_receivable - a.overdue_receivable)
     .slice(0, 8);
 
-  if (summary.isLoading) {
+  if (metrics.isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
