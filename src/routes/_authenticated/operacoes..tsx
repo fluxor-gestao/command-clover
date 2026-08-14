@@ -38,7 +38,7 @@ import { useInstallments, useOperation, useGenerateSchedule } from "@/lib/data/h
 import { brl, dateBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/operacoes/$id")({
+export const Route = createFileRoute("/_authenticated/operacoes/")({
   head: () => ({
     meta: [
       { title: "Detalhe da operação · Nova Era" },

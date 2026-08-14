@@ -21,6 +21,7 @@ import { Route as AuthenticatedQualidadeRouteImport } from './routes/_authentica
 import { Route as AuthenticatedRecebimentosRouteImport } from './routes/_authenticated/recebimentos'
 import { Route as AuthenticatedReferenciasRouteImport } from './routes/_authenticated/referencias'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes.'
 import { Route as AuthenticatedOperacoesIdRouteImport } from './routes/_authenticated/operacoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -84,6 +85,11 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedOperacoesRoute,
+} as any)
 const AuthenticatedOperacoesIdRoute =
   AuthenticatedOperacoesIdRouteImport.update({
     id: '/$id',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/recebimentos': typeof AuthenticatedRecebimentosRoute
   '/referencias': typeof AuthenticatedReferenciasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/operacoes/': typeof AuthenticatedOperacoesRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRoutesByTo {
@@ -111,12 +118,12 @@ export interface FileRoutesByTo {
   '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
-  '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
   '/qualidade': typeof AuthenticatedQualidadeRoute
   '/recebimentos': typeof AuthenticatedRecebimentosRoute
   '/referencias': typeof AuthenticatedReferenciasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/operacoes': typeof AuthenticatedOperacoesRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRoutesById {
@@ -133,6 +140,7 @@ export interface FileRoutesById {
   '/_authenticated/recebimentos': typeof AuthenticatedRecebimentosRoute
   '/_authenticated/referencias': typeof AuthenticatedReferenciasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/operacoes/': typeof AuthenticatedOperacoesRoute
   '/_authenticated/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRouteTypes {
@@ -149,6 +157,7 @@ export interface FileRouteTypes {
     | '/recebimentos'
     | '/referencias'
     | '/relatorios'
+    | '/operacoes/'
     | '/operacoes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -157,12 +166,12 @@ export interface FileRouteTypes {
     | '/aportes'
     | '/dashboard'
     | '/importacao'
-    | '/operacoes'
     | '/parcelas'
     | '/qualidade'
     | '/recebimentos'
     | '/referencias'
     | '/relatorios'
+    | '/operacoes'
     | '/operacoes/$id'
   id:
     | '__root__'
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recebimentos'
     | '/_authenticated/referencias'
     | '/_authenticated/relatorios'
+    | '/_authenticated/operacoes/'
     | '/_authenticated/operacoes/$id'
   fileRoutesById: FileRoutesById
 }
@@ -273,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operacoes/': {
+      id: '/_authenticated/operacoes/'
+      path: '/'
+      fullPath: '/operacoes/'
+      preLoaderRoute: typeof AuthenticatedOperacoesRouteImport
+      parentRoute: typeof AuthenticatedOperacoesRoute
+    }
     '/_authenticated/operacoes/$id': {
       id: '/_authenticated/operacoes/$id'
       path: '/$id'
@@ -284,11 +301,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedOperacoesRouteChildren {
+  AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
   AuthenticatedOperacoesIdRoute: typeof AuthenticatedOperacoesIdRoute
 }
 
 const AuthenticatedOperacoesRouteChildren: AuthenticatedOperacoesRouteChildren =
   {
+    AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
     AuthenticatedOperacoesIdRoute: AuthenticatedOperacoesIdRoute,
   }
 
