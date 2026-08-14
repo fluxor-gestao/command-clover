@@ -22,6 +22,58 @@ export function usePortfolioSummary() {
   });
 }
 
+export type PortfolioScope = { year: number } | { scope: "all" };
+
+export interface PortfolioMetrics {
+  scope_year: number | null;
+  total_invested: number;
+  total_received: number;
+  capital_to_recover: number;
+  total_previsto_carteira: number;
+  total_a_receber: number;
+  overdue_receivable: number;
+  future_receivable: number;
+  realized_profit: number;
+  projected_result: number;
+  recovery_percentage: number;
+  total_operations: number;
+  overdue_installments: number;
+  total_installments: number;
+}
+
+/** Camada única de agregação financeira: por ano ou carteira completa. */
+export function getPortfolioMetricsKey(scope: PortfolioScope) {
+  return ["portfolio-metrics", "year" in scope ? scope.year : "all"] as const;
+}
+
+export function usePortfolioMetrics(scope: PortfolioScope) {
+  return useQuery({
+    queryKey: getPortfolioMetricsKey(scope),
+    queryFn: async (): Promise<PortfolioMetrics | null> => {
+      const { data, error } = await supabase.rpc("get_portfolio_metrics" as never, {
+        p_year: "year" in scope ? scope.year : null,
+      } as never);
+      if (error) throw new Error(error.message);
+      const row = (data as PortfolioMetrics[] | null)?.[0] ?? null;
+      if (!row) return null;
+      return Object.fromEntries(
+        Object.entries(row).map(([key, value]) => [key, key === "scope_year" ? value : Number(value ?? 0)]),
+      ) as unknown as PortfolioMetrics;
+    },
+  });
+}
+
+export function usePortfolioYears() {
+  return useQuery({
+    queryKey: ["portfolio-years"],
+    queryFn: async (): Promise<number[]> => {
+      const { data, error } = await supabase.rpc("get_portfolio_years" as never);
+      if (error) throw new Error(error.message);
+      return ((data as { year: number }[] | null) ?? []).map((row) => Number(row.year));
+    },
+  });
+}
+
 /** Soma dos recebimentos efetivos (data real) dentro do mês informado (YYYY-MM). */
 export function useReceivedInMonth(month: string) {
   return useQuery({
@@ -195,6 +247,8 @@ export function useInvalidateAll() {
   return () => {
     for (const key of [
       "portfolio-summary",
+      "portfolio-metrics",
+      "received-in-month",
       "operations",
       "operation",
       "installments",

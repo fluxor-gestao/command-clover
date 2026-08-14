@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Download, FileBarChart, PieChart, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useMonthlyFlow } from "@/lib/data/hooks";
+import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
+import { useMonthlyFlow, usePortfolioMetrics } from "@/lib/data/hooks";
 import { brl, competenceBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +31,14 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
 });
 
 function ReportsPage() {
+  const [scopeValue, setScopeValue] = useState(new Date().getFullYear().toString());
+  const scope = scopeFromValue(scopeValue);
+  const year = "year" in scope ? scope.year : null;
+  const metrics = usePortfolioMetrics(scope);
   const flow = useMonthlyFlow();
+  const rows = (flow.data ?? []).filter((row) =>
+    year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year),
+  );
 
   return (
     <div className="space-y-8">
@@ -43,10 +52,34 @@ function ReportsPage() {
             <p className="text-sm text-muted-foreground mt-0.5">Análise de performance e saúde da carteira</p>
           </div>
         </div>
-        <Button variant="outline" className="h-9 text-[10px] font-bold uppercase tracking-widest border-muted-foreground/20 bg-card/50">
-          <Download className="mr-2 size-3" /> Exportar Consolidado
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <YearScopeSelect value={scopeValue} onChange={setScopeValue} />
+          <Button variant="outline" className="h-9 text-[10px] font-bold uppercase tracking-widest border-muted-foreground/20 bg-card/50">
+            <Download className="mr-2 size-3" /> Exportar Consolidado
+          </Button>
+        </div>
       </header>
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Capital investido", value: brl(metrics.data?.total_invested) },
+          { label: "Total recebido", value: brl(metrics.data?.total_received) },
+          { label: "Total a receber", value: brl(metrics.data?.total_a_receber) },
+          { label: "Saldo inadimplente", value: brl(metrics.data?.overdue_receivable) },
+        ].map((item) => (
+          <Card key={item.label} className="border-none shadow-sm bg-card/50">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {item.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-bold tabular-nums">{item.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
+
 
       <Tabs defaultValue="fluxo" className="space-y-6">
         <TabsList className="h-11 p-1 bg-muted/50 rounded-xl w-full justify-start overflow-x-auto overflow-y-hidden">
@@ -78,7 +111,7 @@ function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(flow.data ?? []).map((row) => (
+                  {rows.map((row) => (
                     <TableRow key={row.competence} className="group hover:bg-muted/50 transition-colors border-border/40">
                       <TableCell className="font-bold py-4 pl-6">{competenceBR(row.competence)}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{row.installments_count ?? 0}</TableCell>

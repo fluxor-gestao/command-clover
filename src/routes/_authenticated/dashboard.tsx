@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -21,7 +22,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMonthlyFlow, useOperations, usePortfolioSummary, useReceivedInMonth } from "@/lib/data/hooks";
+import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
+import {
+  useInstallments,
+  useMonthlyFlow,
+  useOperations,
+  usePortfolioMetrics,
+  useReceivedInMonth,
+} from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -50,40 +58,77 @@ const CHART_COLORS = ["oklch(0.696 0.17 162.48)", "oklch(0.446 0.03 256.802)", "
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const summary = usePortfolioSummary();
-  const operations = useOperations();
-  const flow = useMonthlyFlow();
-
-  const s = summary.data;
   const today = todayISO();
   const currentMonth = today.slice(0, 7);
+
+  const [scopeValue, setScopeValue] = useState(today.slice(0, 4));
+  const scope = scopeFromValue(scopeValue);
+  const year = "year" in scope ? scope.year : null;
+
+  const metrics = usePortfolioMetrics(scope);
+  const operations = useOperations();
+  const installments = useInstallments();
+  const flow = useMonthlyFlow();
   const receivedInMonth = useReceivedInMonth(currentMonth);
 
-  const monthly = (flow.data ?? []).map((row) => ({
-    competence: competenceBR(row.competence),
-    raw: row.competence ?? "",
-    previsto: Number(row.expected ?? 0),
-    recebido: Number(row.received ?? 0),
-    inadimplente: Number(row.overdue ?? 0),
-  }));
+  const s = metrics.data;
+
+  const monthly = (flow.data ?? [])
+    .filter((row) => (year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year)))
+    .map((row) => ({
+      competence: competenceBR(row.competence),
+      raw: row.competence ?? "",
+      previsto: Number(row.expected ?? 0),
+      recebido: Number(row.received ?? 0),
+      inadimplente: Number(row.overdue ?? 0),
+    }));
 
   const monthRow = monthly.find((row) => row.raw.slice(0, 7) === currentMonth);
 
+  const scopedInstallments = (installments.data ?? []).filter((row) =>
+    year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year),
+  );
+
+  const scopedOperationIds = new Set(scopedInstallments.map((row) => row.operation_id));
+
+  const overdueByOperation = scopedInstallments.reduce<Record<string, { amount: number; count: number }>>(
+    (acc, row) => {
+      const outstanding = Number(row.outstanding_amount ?? 0);
+      if (outstanding <= 0 || !row.operation_id) return acc;
+      if (String(row.due_date ?? "") >= today) return acc;
+      acc[row.operation_id] ??= { amount: 0, count: 0 };
+      acc[row.operation_id]!.amount += outstanding;
+      acc[row.operation_id]!.count += 1;
+      return acc;
+    },
+    {},
+  );
+
+  const scopedOperations = (operations.data ?? []).filter(
+    (op) => year === null || (op.operation_id != null && scopedOperationIds.has(op.operation_id)),
+  );
+
   const byCategory = Object.values(
-    (operations.data ?? []).reduce<Record<string, { name: string; value: number }>>((acc, op) => {
+    scopedOperations.reduce<Record<string, { name: string; value: number }>>((acc, op) => {
       const name = op.category ?? "Sem categoria";
       acc[name] ??= { name, value: 0 };
-      acc[name]!.value += Number(op.total_invested ?? 0);
+      acc[name]!.value += Number(op.initial_capital ?? 0) + Number(op.total_contributions ?? 0);
       return acc;
     }, {}),
   ).sort((a, b) => b.value - a.value);
 
-  const topOverdue = [...(operations.data ?? [])]
-    .filter((op) => Number(op.overdue_receivable ?? 0) > 0)
-    .sort((a, b) => Number(b.overdue_receivable ?? 0) - Number(a.overdue_receivable ?? 0))
+  const topOverdue = scopedOperations
+    .map((op) => ({
+      operation_id: op.operation_id,
+      reference: op.reference,
+      overdue_receivable: op.operation_id ? (overdueByOperation[op.operation_id]?.amount ?? 0) : 0,
+      overdue_installments: op.operation_id ? (overdueByOperation[op.operation_id]?.count ?? 0) : 0,
+    }))
+    .filter((op) => op.overdue_receivable > 0)
+    .sort((a, b) => b.overdue_receivable - a.overdue_receivable)
     .slice(0, 8);
 
-  if (summary.isLoading) {
+  if (metrics.isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
@@ -95,11 +140,16 @@ function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard executivo</h1>
-        <p className="text-sm text-muted-foreground">
-          Indicadores oficiais da carteira — Auditoria financeira consolidada.
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard executivo</h1>
+          <p className="text-sm text-muted-foreground">
+            {year === null
+              ? "Carteira completa — consolidação histórica de todas as competências."
+              : `Controle gerencial ${year} — indicadores restritos às competências do ano.`}
+          </p>
+        </div>
+        <YearScopeSelect value={scopeValue} onChange={setScopeValue} />
       </header>
 
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

@@ -630,6 +630,31 @@ export type Database = {
     Functions: {
       cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined }
       generate_schedule: { Args: { p_operation_id: string }; Returns: number }
+      get_portfolio_metrics: {
+        Args: { p_year?: number }
+        Returns: {
+          capital_to_recover: number
+          future_receivable: number
+          overdue_installments: number
+          overdue_receivable: number
+          projected_result: number
+          realized_profit: number
+          recovery_percentage: number
+          scope_year: number
+          total_a_receber: number
+          total_installments: number
+          total_invested: number
+          total_operations: number
+          total_previsto_carteira: number
+          total_received: number
+        }[]
+      }
+      get_portfolio_years: {
+        Args: never
+        Returns: {
+          year: number
+        }[]
+      }
       register_receipt: {
         Args: {
           p_allocations: Json
