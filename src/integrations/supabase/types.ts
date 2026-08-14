@@ -587,13 +587,17 @@ export type Database = {
       }
       v_operation_position: {
         Row: {
+          capital_to_recover: number | null
           category: string | null
           financial_status: string | null
+          future_receivable: number | null
           initial_capital: number | null
+          last_installment_due: string | null
           operation_id: string | null
           outstanding_amount: number | null
           overdue_installments: number | null
           overdue_receivable: number | null
+          recovery_percentage: number | null
           reference: string | null
           total_contributions: number | null
           total_invested: number | null
