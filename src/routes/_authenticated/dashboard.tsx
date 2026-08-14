@@ -140,11 +140,16 @@ function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard executivo</h1>
-        <p className="text-sm text-muted-foreground">
-          Indicadores oficiais da carteira — Auditoria financeira consolidada.
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard executivo</h1>
+          <p className="text-sm text-muted-foreground">
+            {year === null
+              ? "Carteira completa — consolidação histórica de todas as competências."
+              : `Controle gerencial ${year} — indicadores restritos às competências do ano.`}
+          </p>
+        </div>
+        <YearScopeSelect value={scopeValue} onChange={setScopeValue} />
       </header>
 
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
