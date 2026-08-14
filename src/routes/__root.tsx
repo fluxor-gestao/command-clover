@@ -77,14 +77,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Nova Era · Gestão de Investimentos" },
+      {
+        name: "description",
+        content:
+          "Sistema de gestão e controle de investimentos da Imobiliária Nova Era.",
+      },
+      { property: "og:site_name", content: "Nova Era · Gestão de Investimentos" },
+      { property: "og:title", content: "Nova Era · Gestão de Investimentos" },
+      {
+        property: "og:description",
+        content:
+          "Sistema de gestão e controle de investimentos da Imobiliária Nova Era.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
