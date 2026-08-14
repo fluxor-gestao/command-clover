@@ -129,6 +129,7 @@ function ImportPage() {
                   <SelectValue placeholder="Aba a importar" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value={ALL_SHEETS}>Todas as abas (carga histórica completa)</SelectItem>
                   {sheets.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}
@@ -139,11 +140,42 @@ function ImportPage() {
             )}
           </div>
           {preview && (
-            <p className="text-xs text-muted-foreground">
-              Aba lida: <strong>{preview.stats.sheetsRead.join(", ") || "—"}</strong> · mês de referência{" "}
-              {competenceBR(`${preview.stats.referenceMonth}-01`)}
-            </p>
+            <>
+              <p className="text-xs text-muted-foreground">
+                Abas lidas: <strong>{preview.stats.sheetsRead.join(", ") || "—"}</strong> · mês de referência{" "}
+                {competenceBR(`${preview.stats.referenceMonth}-01`)}
+              </p>
+              {preview.stats.byYear.length > 0 && (
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Ano</th>
+                        <th className="px-3 py-2 text-right">Operações</th>
+                        <th className="px-3 py-2 text-right">Parcelas</th>
+                        <th className="px-3 py-2 text-right">Previsto</th>
+                        <th className="px-3 py-2 text-right">Recebido</th>
+                        <th className="px-3 py-2 text-right">Inadimplente</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.stats.byYear.map((row) => (
+                        <tr key={row.year} className="border-t">
+                          <td className="px-3 py-2">{row.year}</td>
+                          <td className="px-3 py-2 text-right">{row.operations}</td>
+                          <td className="px-3 py-2 text-right">{row.installments}</td>
+                          <td className="px-3 py-2 text-right">{currencyBR(row.expected)}</td>
+                          <td className="px-3 py-2 text-right">{currencyBR(row.received)}</td>
+                          <td className="px-3 py-2 text-right">{currencyBR(row.overdue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
+
         </CardContent>
       </Card>
 
