@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMonthlyFlow, useOperations, usePortfolioSummary } from "@/lib/data/hooks";
+import { useMonthlyFlow, useOperations, usePortfolioSummary, useReceivedInMonth } from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,7 @@ function DashboardPage() {
   const s = summary.data;
   const today = todayISO();
   const currentMonth = today.slice(0, 7);
+  const receivedInMonth = useReceivedInMonth(currentMonth);
 
   const monthly = (flow.data ?? []).map((row) => ({
     competence: competenceBR(row.competence),
@@ -146,7 +147,7 @@ function DashboardPage() {
         <Kpi
           title="Resultado Projetado"
           value={brl(s?.projected_result)}
-          hint="Expectativa total"
+          hint="Resultado esperado ao final da carteira"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
@@ -158,8 +159,8 @@ function DashboardPage() {
         />
         <Kpi
           title="Recebido no mês"
-          value={brl(monthRow?.recebido ?? 0)}
-          hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
+          value={brl(receivedInMonth.data ?? 0)}
+          hint={`Previsto no mês: ${brl(monthRow?.previsto ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>
