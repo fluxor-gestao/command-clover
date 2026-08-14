@@ -75,13 +75,14 @@ function AuthPage() {
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
       <Card className="w-full max-w-md border-none shadow-2xl bg-card/80 backdrop-blur-xl">
         <CardHeader className="items-center text-center pt-10 pb-6">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 transition-transform hover:scale-105 duration-300">
+          <div className="mb-6 flex h-24 w-24 items-center justify-center transition-transform hover:scale-105 duration-300">
             <img
               src={logoAsset.url}
-              alt="Nova Era"
-              className="h-12 w-12 object-contain brightness-0 invert"
+              alt="Nova Era Imóveis e Seguros"
+              className="h-24 w-24 object-contain drop-shadow-xl"
             />
           </div>
+
           <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
             NOVA ERA
           </CardTitle>
