@@ -308,11 +308,14 @@ function parseAnnualSheet(
   year: number,
   index: OperationIndex,
   issues: ParsedIssue[],
+  baseline: ParseBaseline,
+  referenceMonth: string,
 ) {
   let section = sheet.name;
   let skipSection = false;
   let monthColumns: { column: number; month: number }[] = [];
   let columns = { reference: 2, dueDay: 3, capital: 4 };
+  const seenReferences = new Set<string>();
 
   sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     const colA = cellText(row.getCell(1));
@@ -366,35 +369,92 @@ function parseAnnualSheet(
     }
     if (monthColumns.length === 0) return;
 
+    const refKey = normalizeReference(reference);
+    if (seenReferences.has(refKey)) {
+      issues.push({
+        sheet: sheet.name,
+        row: String(rowNumber),
+        reference,
+        issueType: "REFERENCIA_DUPLICADA",
+        description: "Referência repetida na mesma aba — os valores foram consolidados em uma única operação.",
+      });
+    }
+    seenReferences.add(refKey);
+
     const op = index.get(reference, categoryFromSection(section));
+    if (!op.sheets.includes(sheet.name)) op.sheets.push(sheet.name);
     const sectionCategory = categoryFromSection(section);
     if (op.category === "Outros" && sectionCategory !== "Outros") op.category = sectionCategory;
     const dueDay = cellNumber(row.getCell(columns.dueDay));
     if (dueDay !== null && dueDay > 0 && op.dueDay === null) op.dueDay = Math.round(dueDay);
+
+    // "Valor Emprestado" = capital investido (não é previsto nem recebido)
     const capital = cellNumber(row.getCell(columns.capital));
     if (capital !== null && capital > 0 && (op.initialCapital === null || capital > op.initialCapital)) {
       op.initialCapital = capital;
+      baseline.capitalTotal = round2(baseline.capitalTotal + capital);
     }
 
+    baseline.operationRows += 1;
+
     let hasValue = false;
+    let overdueRow = 0;
     for (const { column, month } of monthColumns) {
       const cell = row.getCell(column);
       const amount = cellNumber(cell);
-      if (amount === null || amount <= 0) continue;
+      if (amount === null || amount <= 0) {
+        const text = cellText(cell);
+        if (text && text.trim() && amount === null) {
+          issues.push({
+            sheet: sheet.name,
+            row: String(rowNumber),
+            reference,
+            issueType: "CELULA_NAO_INTERPRETADA",
+            description: `Célula ${cell.address} com conteúdo não numérico ("${text.slice(0, 40)}") ignorada.`,
+          });
+        }
+        continue;
+      }
       hasValue = true;
       const red = isRed(cell);
-      const competence = `${year}-${String(month).padStart(2, "0")}-01`;
+      const competenceKey = `${year}-${String(month).padStart(2, "0")}`;
+      const competence = `${competenceKey}-01`;
+      const isFuture = competenceKey > referenceMonth;
+      // vermelho em competência passada/corrente = saldo devedor; futuro = previsto a receber
+      const received = !red && !isFuture ? round2(amount) : 0;
+      const overdue = red && !isFuture ? round2(amount) : 0;
+      overdueRow += overdue;
+
+      baseline.monthlyCells += 1;
+      baseline.monthlyTotal = round2(baseline.monthlyTotal + amount);
+      baseline.receivedTotal = round2(baseline.receivedTotal + received);
+      baseline.overdueTotal = round2(baseline.overdueTotal + overdue);
+      baseline.toReceiveTotal = round2(baseline.toReceiveTotal + (isFuture ? round2(amount) : 0));
+
       upsertInstallment(op, {
         competence,
         dueDate: buildDueDate(year, month, op.dueDay),
         expected: round2(amount),
-        received: red ? 0 : round2(amount),
+        received,
+        overdue,
         sourceKey: `hist:${op.key}:${competence}`,
         sheet: sheet.name,
       });
     }
 
+    if (overdueRow > 0) {
+      issues.push({
+        sheet: sheet.name,
+        row: String(rowNumber),
+        reference,
+        issueType: "POSSIVEL_INADIMPLENCIA",
+        description: `Saldo devedor identificado por marcação em vermelho: ${overdueRow.toFixed(2)}.`,
+      });
+    }
+
     if (!hasValue && op.installments.length === 0 && capital === null) {
+      baseline.ignoredRows += 1;
+      baseline.operationRows -= 1;
       issues.push({
         sheet: sheet.name,
         row: String(rowNumber),
@@ -405,6 +465,7 @@ function parseAnnualSheet(
     }
   });
 }
+
 
 function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, issues: ParsedIssue[]) {
   let headerRow = 0;
