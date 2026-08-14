@@ -119,9 +119,16 @@ export async function importParseResult(
     }
 
     if (op.installments.length > 0) {
-      const rows = op.installments.map((inst, index) => ({
+      // Número determinístico por competência: estável entre importações de anos
+      // diferentes e sem colisão com a numeração antiga (1..N).
+      const numberFor = (competence: string) => {
+        const year = Number(competence.slice(0, 4));
+        const month = Number(competence.slice(5, 7));
+        return (year - 2000) * 12 + month;
+      };
+      const rows = op.installments.map((inst) => ({
         operation_id: operationId!,
-        installment_number: index + 1,
+        installment_number: numberFor(inst.competence),
         competence: inst.competence,
         due_date: inst.dueDate,
         expected_amount: inst.expected,
@@ -135,6 +142,7 @@ export async function importParseResult(
         .select("id, source_key, received_amount, due_date");
       if (instError) throw new Error(instError.message);
       installmentsCount += savedInstallments?.length ?? 0;
+
 
       const withReceipt = (savedInstallments ?? []).filter((i) => Number(i.received_amount) > 0);
       if (withReceipt.length > 0) {
