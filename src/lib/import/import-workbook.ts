@@ -2,7 +2,13 @@ import ExcelJS from "exceljs";
 
 import { supabase } from "@/integrations/supabase/client";
 
-import { normalizeReference, parseWorkbook, type ParseResult } from "./parse-workbook";
+import {
+  listAnnualSheets,
+  normalizeReference,
+  parseWorkbook,
+  type ParseOptions,
+  type ParseResult,
+} from "./parse-workbook";
 
 export interface ImportProgress {
   step: string;
@@ -19,12 +25,20 @@ export interface ImportOutcome {
   stats: ParseResult["stats"];
 }
 
-/** Lê a planilha no navegador e devolve o resultado normalizado (pré-visualização). */
-export async function readWorkbookFile(file: File): Promise<ParseResult> {
+/** Lista as abas anuais disponíveis no arquivo, sem gravar nada. */
+export async function inspectWorkbookFile(file: File): Promise<{ workbook: ExcelJS.Workbook; sheets: string[] }> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
-  return parseWorkbook(workbook);
+  return { workbook, sheets: listAnnualSheets(workbook) };
 }
+
+/** Lê a planilha no navegador e devolve o resultado normalizado (pré-visualização). */
+export async function readWorkbookFile(file: File, options?: ParseOptions): Promise<ParseResult> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await file.arrayBuffer());
+  return parseWorkbook(workbook, options);
+}
+
 
 /**
  * Carga idempotente: usa source_key em cada entidade, então reimportar o mesmo
