@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAportesRouteImport } from './routes/_authenticated/aportes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedParcelasRouteImport } from './routes/_authenticated/parcelas'
 import { Route as AuthenticatedRecebimentosRouteImport } from './routes/_authenticated/recebimentos'
@@ -41,6 +42,11 @@ const AuthenticatedAportesRoute = AuthenticatedAportesRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportacaoRoute = AuthenticatedImportacaoRouteImport.update({
+  id: '/importacao',
+  path: '/importacao',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/importacao': typeof AuthenticatedImportacaoRoute
   '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
   '/recebimentos': typeof AuthenticatedRecebimentosRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/importacao': typeof AuthenticatedImportacaoRoute
   '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
   '/recebimentos': typeof AuthenticatedRecebimentosRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/aportes': typeof AuthenticatedAportesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/_authenticated/parcelas': typeof AuthenticatedParcelasRoute
   '/_authenticated/recebimentos': typeof AuthenticatedRecebimentosRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/aportes'
     | '/dashboard'
+    | '/importacao'
     | '/operacoes'
     | '/parcelas'
     | '/recebimentos'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/aportes'
     | '/dashboard'
+    | '/importacao'
     | '/operacoes'
     | '/parcelas'
     | '/recebimentos'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/aportes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/importacao'
     | '/_authenticated/operacoes'
     | '/_authenticated/parcelas'
     | '/_authenticated/recebimentos'
@@ -173,6 +185,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/importacao': {
+      id: '/_authenticated/importacao'
+      path: '/importacao'
+      fullPath: '/importacao'
+      preLoaderRoute: typeof AuthenticatedImportacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/operacoes': {
@@ -223,6 +242,7 @@ const AuthenticatedOperacoesRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAportesRoute: typeof AuthenticatedAportesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRouteWithChildren
   AuthenticatedParcelasRoute: typeof AuthenticatedParcelasRoute
   AuthenticatedRecebimentosRoute: typeof AuthenticatedRecebimentosRoute
@@ -231,6 +251,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAportesRoute: AuthenticatedAportesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRouteWithChildren,
   AuthenticatedParcelasRoute: AuthenticatedParcelasRoute,
   AuthenticatedRecebimentosRoute: AuthenticatedRecebimentosRoute,
