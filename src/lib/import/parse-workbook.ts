@@ -12,10 +12,43 @@ import type { Workbook, Worksheet, Cell } from "exceljs";
 
 export type IssueType =
   | "CONTRATO_INCOMPLETO"
+  | "PARCELAS_NAO_IDENTIFICADAS"
+  | "PRIMEIRO_VENCIMENTO_AUSENTE"
   | "CAPITAL_NAO_IDENTIFICADO"
+  | "REFERENCIA_DUPLICADA"
   | "OPERACAO_NAO_ENCONTRADA"
   | "VALOR_INVALIDO"
+  | "CELULA_NAO_INTERPRETADA"
+  | "POSSIVEL_INADIMPLENCIA"
   | "LINHA_IGNORADA";
+
+export type IssueSeverity = "INFORMATIVO" | "ATENCAO" | "CRITICO";
+
+export const ISSUE_SEVERITY: Record<IssueType, IssueSeverity> = {
+  CONTRATO_INCOMPLETO: "ATENCAO",
+  PARCELAS_NAO_IDENTIFICADAS: "ATENCAO",
+  PRIMEIRO_VENCIMENTO_AUSENTE: "ATENCAO",
+  CAPITAL_NAO_IDENTIFICADO: "ATENCAO",
+  REFERENCIA_DUPLICADA: "CRITICO",
+  OPERACAO_NAO_ENCONTRADA: "CRITICO",
+  VALOR_INVALIDO: "CRITICO",
+  CELULA_NAO_INTERPRETADA: "INFORMATIVO",
+  POSSIVEL_INADIMPLENCIA: "INFORMATIVO",
+  LINHA_IGNORADA: "INFORMATIVO",
+};
+
+export const ISSUE_ACTION: Record<IssueType, string> = {
+  CONTRATO_INCOMPLETO: "Completar contrato na tela da operação após a importação.",
+  PARCELAS_NAO_IDENTIFICADAS: "Informar quantidade de parcelas na operação.",
+  PRIMEIRO_VENCIMENTO_AUSENTE: "Informar o primeiro vencimento da operação.",
+  CAPITAL_NAO_IDENTIFICADO: "Informar o capital investido (Valor Emprestado).",
+  REFERENCIA_DUPLICADA: "Conferir referências repetidas na planilha antes de importar.",
+  OPERACAO_NAO_ENCONTRADA: "Cadastrar a operação ou corrigir a referência na planilha.",
+  VALOR_INVALIDO: "Corrigir o valor na planilha de origem.",
+  CELULA_NAO_INTERPRETADA: "Nenhuma — célula ignorada com segurança.",
+  POSSIVEL_INADIMPLENCIA: "Conferir na tela de Parcelas após a importação.",
+  LINHA_IGNORADA: "Nenhuma — linha sem dados de recebível.",
+};
 
 export interface ParsedIssue {
   sheet: string;
@@ -23,6 +56,8 @@ export interface ParsedIssue {
   reference: string | null;
   issueType: IssueType;
   description: string;
+  severity?: IssueSeverity;
+  action?: string;
   raw?: Record<string, unknown>;
 }
 
@@ -31,6 +66,7 @@ export interface ParsedInstallment {
   dueDate: string; // YYYY-MM-DD
   expected: number;
   received: number;
+  overdue: number;
   sourceKey: string;
   sheet: string;
 }
@@ -56,13 +92,35 @@ export interface ParsedOperation {
   installments: ParsedInstallment[];
   contributions: ParsedContribution[];
   incomplete: boolean;
+  sheets: string[];
+}
+
+/** Totais lidos direto das células da planilha, sem passar pela normalização. */
+export interface ParseBaseline {
+  operationRows: number;
+  capitalTotal: number;
+  monthlyTotal: number;
+  receivedTotal: number;
+  overdueTotal: number;
+  toReceiveTotal: number;
+  monthlyCells: number;
+  ignoredRows: number;
 }
 
 export interface ParseResult {
   operations: ParsedOperation[];
   issues: ParsedIssue[];
+  baseline: ParseBaseline;
+  readiness: {
+    ready: number;
+    pending: number;
+    ignored: number;
+    critical: number;
+  };
   stats: {
     sheetsRead: string[];
+    availableSheets: string[];
+    referenceMonth: string;
     operations: number;
     installments: number;
     receivedInstallments: number;
@@ -71,9 +129,11 @@ export interface ParseResult {
     expectedTotal: number;
     receivedTotal: number;
     overdueTotal: number;
+    toReceiveTotal: number;
     investedTotal: number;
   };
 }
+
 
 const MONTHS: Record<string, number> = {
   JANEIRO: 1,
@@ -194,9 +254,10 @@ interface OperationBucket extends ParsedOperation {
 class OperationIndex {
   private map = new Map<string, OperationBucket>();
 
-  get(reference: string, category: string): OperationBucket {
-    const key = normalizeReference(reference);
+  get(reference: string, category: string, keyOverride?: string): OperationBucket {
+    const key = keyOverride ?? normalizeReference(reference);
     const existing = this.map.get(key);
+
     if (existing) return existing;
     const created: OperationBucket = {
       key,
@@ -212,6 +273,7 @@ class OperationIndex {
       installments: [],
       contributions: [],
       incomplete: false,
+      sheets: [],
     };
     this.map.set(key, created);
     return created;
@@ -237,19 +299,24 @@ function upsertInstallment(op: OperationBucket, installment: ParsedInstallment) 
     ...current,
     expected: Math.max(current.expected, installment.expected),
     received: Math.max(current.received, installment.received),
+    overdue: Math.max(current.overdue, installment.overdue),
   };
 }
+
 
 function parseAnnualSheet(
   sheet: Worksheet,
   year: number,
   index: OperationIndex,
   issues: ParsedIssue[],
+  baseline: ParseBaseline,
+  referenceMonth: string,
 ) {
   let section = sheet.name;
   let skipSection = false;
   let monthColumns: { column: number; month: number }[] = [];
   let columns = { reference: 2, dueDay: 3, capital: 4 };
+  const seenReferences = new Set<string>();
 
   sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     const colA = cellText(row.getCell(1));
@@ -283,8 +350,9 @@ function parseAnnualSheet(
       colA.length > 4
     ) {
       section = colA;
-      // Blocos de patrimônio/imóveis não são recebíveis: os valores são preços de ativos
-      skipSection = /IMOVEIS|TITULARES|PATRIMONIO|RECEBIVEIS/.test(normalizeText(colA));
+      // Somente blocos de patrimônio (ativos, não recebíveis) são ignorados
+      skipSection = /^(IMOVEIS|TITULARES|PATRIMONIO)\b/.test(normalizeText(colA));
+
       return;
     }
     if (skipSection) return;
@@ -303,35 +371,100 @@ function parseAnnualSheet(
     }
     if (monthColumns.length === 0) return;
 
-    const op = index.get(reference, categoryFromSection(section));
+    const refKey = normalizeReference(reference);
+    const duplicated = seenReferences.has(refKey);
+    if (duplicated) {
+      issues.push({
+        sheet: sheet.name,
+        row: String(rowNumber),
+        reference,
+        issueType: "REFERENCIA_DUPLICADA",
+        description:
+          "Referência repetida na mesma aba — registrada como operação separada identificada pela linha de origem.",
+      });
+    }
+    seenReferences.add(refKey);
+
+    const displayReference = duplicated ? `${reference.trim()} (linha ${rowNumber})` : reference;
+    const op = index.get(
+      displayReference,
+      categoryFromSection(section),
+      duplicated ? `${refKey}#${sheet.name}#${rowNumber}` : undefined,
+    );
+
+    if (!op.sheets.includes(sheet.name)) op.sheets.push(sheet.name);
     const sectionCategory = categoryFromSection(section);
     if (op.category === "Outros" && sectionCategory !== "Outros") op.category = sectionCategory;
     const dueDay = cellNumber(row.getCell(columns.dueDay));
     if (dueDay !== null && dueDay > 0 && op.dueDay === null) op.dueDay = Math.round(dueDay);
+
+    // "Valor Emprestado" = capital investido (não é previsto nem recebido)
     const capital = cellNumber(row.getCell(columns.capital));
     if (capital !== null && capital > 0 && (op.initialCapital === null || capital > op.initialCapital)) {
       op.initialCapital = capital;
+      baseline.capitalTotal = round2(baseline.capitalTotal + capital);
     }
 
+    baseline.operationRows += 1;
+
     let hasValue = false;
+    let overdueRow = 0;
     for (const { column, month } of monthColumns) {
       const cell = row.getCell(column);
       const amount = cellNumber(cell);
-      if (amount === null || amount <= 0) continue;
+      if (amount === null || amount <= 0) {
+        const text = cellText(cell);
+        if (text && text.trim() && amount === null) {
+          issues.push({
+            sheet: sheet.name,
+            row: String(rowNumber),
+            reference,
+            issueType: "CELULA_NAO_INTERPRETADA",
+            description: `Célula ${cell.address} com conteúdo não numérico ("${text.slice(0, 40)}") ignorada.`,
+          });
+        }
+        continue;
+      }
       hasValue = true;
       const red = isRed(cell);
-      const competence = `${year}-${String(month).padStart(2, "0")}-01`;
+      const competenceKey = `${year}-${String(month).padStart(2, "0")}`;
+      const competence = `${competenceKey}-01`;
+      const isFuture = competenceKey > referenceMonth;
+      // vermelho em competência passada/corrente = saldo devedor; futuro = previsto a receber
+      const received = !red && !isFuture ? round2(amount) : 0;
+      const overdue = red && !isFuture ? round2(amount) : 0;
+      overdueRow += overdue;
+
+      baseline.monthlyCells += 1;
+      baseline.monthlyTotal = round2(baseline.monthlyTotal + amount);
+      baseline.receivedTotal = round2(baseline.receivedTotal + received);
+      baseline.overdueTotal = round2(baseline.overdueTotal + overdue);
+      baseline.toReceiveTotal = round2(baseline.toReceiveTotal + (isFuture ? round2(amount) : 0));
+
       upsertInstallment(op, {
         competence,
         dueDate: buildDueDate(year, month, op.dueDay),
         expected: round2(amount),
-        received: red ? 0 : round2(amount),
+        received,
+        overdue,
         sourceKey: `hist:${op.key}:${competence}`,
         sheet: sheet.name,
       });
     }
 
+    if (overdueRow > 0) {
+      issues.push({
+        sheet: sheet.name,
+        row: String(rowNumber),
+        reference,
+        issueType: "POSSIVEL_INADIMPLENCIA",
+        description: `Saldo devedor identificado por marcação em vermelho: ${overdueRow.toFixed(2)}.`,
+      });
+    }
+
     if (!hasValue && op.installments.length === 0 && capital === null) {
+      baseline.ignoredRows += 1;
+      baseline.operationRows -= 1;
       issues.push({
         sheet: sheet.name,
         row: String(rowNumber),
@@ -342,6 +475,7 @@ function parseAnnualSheet(
     }
   });
 }
+
 
 function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, issues: ParsedIssue[]) {
   let headerRow = 0;
@@ -450,9 +584,11 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, issues: Par
       dueDate: buildDueDate(Number(yearText), Number(monthText), op.dueDay),
       expected: round2(amount),
       received: round2(amount),
+      overdue: 0,
       sourceKey: `hist:${op.key}:${monthStart}`,
       sheet: sheet.name,
     });
+
   });
 }
 
@@ -503,18 +639,50 @@ export function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function parseWorkbook(workbook: Workbook): ParseResult {
+export interface ParseOptions {
+  /** Abas anuais a considerar. Vazio/omitido = todas as encontradas. */
+  sheets?: string[];
+  /** Mês de referência (YYYY-MM) para separar recebido/inadimplente de previsto. */
+  referenceMonth?: string;
+}
+
+export function listAnnualSheets(workbook: Workbook): string[] {
+  const names: string[] = [];
+  workbook.eachSheet((sheet) => {
+    if (/RECEBER/.test(normalizeText(sheet.name)) && yearFromSheetName(sheet.name) !== null) {
+      names.push(sheet.name);
+    }
+  });
+  return names;
+}
+
+export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): ParseResult {
   const index = new OperationIndex();
   const issues: ParsedIssue[] = [];
   const sheetsRead: string[] = [];
+  const availableSheets = listAnnualSheets(workbook);
+  const referenceMonth = options.referenceMonth ?? new Date().toISOString().slice(0, 7);
+  const selected = options.sheets?.length ? new Set(options.sheets) : null;
+
+  const baseline: ParseBaseline = {
+    operationRows: 0,
+    capitalTotal: 0,
+    monthlyTotal: 0,
+    receivedTotal: 0,
+    overdueTotal: 0,
+    toReceiveTotal: 0,
+    monthlyCells: 0,
+    ignoredRows: 0,
+  };
 
   // 1) abas anuais
   workbook.eachSheet((sheet) => {
     const year = yearFromSheetName(sheet.name);
     const isAnnual = /RECEBER/.test(normalizeText(sheet.name)) && year !== null;
     if (!isAnnual) return;
+    if (selected && !selected.has(sheet.name)) return;
     sheetsRead.push(sheet.name);
-    parseAnnualSheet(sheet, year!, index, issues);
+    parseAnnualSheet(sheet, year!, index, issues, baseline, referenceMonth);
   });
 
   // 2) abas estruturadas
@@ -537,68 +705,94 @@ export function parseWorkbook(workbook: Workbook): ParseResult {
     }
   });
 
-  const today = new Date().toISOString().slice(0, 10);
   const operations = index.all().filter((op) => op.installments.length > 0 || op.initialCapital);
 
   for (const op of operations) {
     op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
-    if (!op.firstDueDate && op.installments.length > 0) {
-      op.firstDueDate = null; // contrato não confirmado: não inventar
-    }
     const contractComplete = Boolean(op.installmentCount && op.installmentValue && op.firstDueDate);
     op.incomplete = !contractComplete;
-    if (!contractComplete) {
+    if (!op.installmentCount) {
       issues.push({
-        sheet: "Operações",
+        sheet: op.sheets[0] ?? "Operações",
         row: op.reference,
         reference: op.reference,
-        issueType: "CONTRATO_INCOMPLETO",
-        description: "Contrato incompleto — informar primeiro vencimento, quantidade de parcelas e valor da parcela.",
+        issueType: "PARCELAS_NAO_IDENTIFICADAS",
+        description: "Quantidade de parcelas não identificada na planilha.",
+      });
+    }
+    if (!op.firstDueDate) {
+      issues.push({
+        sheet: op.sheets[0] ?? "Operações",
+        row: op.reference,
+        reference: op.reference,
+        issueType: "PRIMEIRO_VENCIMENTO_AUSENTE",
+        description: "Primeiro vencimento não informado na planilha.",
+      });
+    }
+    if (!op.initialCapital) {
+      issues.push({
+        sheet: op.sheets[0] ?? "Operações",
+        row: op.reference,
+        reference: op.reference,
+        issueType: "CAPITAL_NAO_IDENTIFICADO",
+        description: "Capital investido (Valor Emprestado) não informado para esta operação.",
       });
     }
   }
 
+  const sum = (fn: (i: ParsedInstallment) => number) =>
+    round2(operations.reduce((total, op) => total + op.installments.reduce((s, i) => s + fn(i), 0), 0));
+
+  const enrichedIssues = issues.map((issue) => ({
+    ...issue,
+    severity: issue.severity ?? ISSUE_SEVERITY[issue.issueType],
+    action: issue.action ?? ISSUE_ACTION[issue.issueType],
+  }));
+
+  const critical = enrichedIssues.filter((i) => i.severity === "CRITICO");
+  const criticalRefs = new Set(critical.map((i) => normalizeReference(i.reference ?? "")));
+  const pendingRefs = new Set(
+    enrichedIssues
+      .filter((i) => i.severity === "ATENCAO" && i.reference)
+      .map((i) => normalizeReference(i.reference!)),
+  );
+
   const stats = {
     sheetsRead: [...new Set(sheetsRead)],
+    availableSheets,
+    referenceMonth,
     operations: operations.length,
-    installments: operations.reduce((sum, op) => sum + op.installments.length, 0),
+    installments: operations.reduce((total, op) => total + op.installments.length, 0),
     receivedInstallments: operations.reduce(
-      (sum, op) => sum + op.installments.filter((i) => i.received > 0).length,
+      (total, op) => total + op.installments.filter((i) => i.received > 0).length,
       0,
     ),
     overdueInstallments: operations.reduce(
-      (sum, op) =>
-        sum + op.installments.filter((i) => i.dueDate < today && i.received < i.expected).length,
+      (total, op) => total + op.installments.filter((i) => i.overdue > 0).length,
       0,
     ),
-    contributions: operations.reduce((sum, op) => sum + op.contributions.length, 0),
-    expectedTotal: round2(
-      operations.reduce((sum, op) => sum + op.installments.reduce((s, i) => s + i.expected, 0), 0),
-    ),
-    receivedTotal: round2(
-      operations.reduce((sum, op) => sum + op.installments.reduce((s, i) => s + i.received, 0), 0),
-    ),
-    overdueTotal: round2(
-      operations.reduce(
-        (sum, op) =>
-          sum +
-          op.installments.reduce(
-            (s, i) => s + (i.dueDate < today ? Math.max(i.expected - i.received, 0) : 0),
-            0,
-          ),
-        0,
-      ),
-    ),
+    contributions: operations.reduce((total, op) => total + op.contributions.length, 0),
+    expectedTotal: sum((i) => i.expected),
+    receivedTotal: sum((i) => i.received),
+    overdueTotal: sum((i) => i.overdue),
+    toReceiveTotal: sum((i) => Math.max(i.expected - i.received - i.overdue, 0)),
     investedTotal: round2(
       operations.reduce(
-        (sum, op) =>
-          sum +
-          (op.initialCapital ?? 0) +
-          op.contributions.reduce((s, c) => s + c.amount, 0),
+        (total, op) =>
+          total + (op.initialCapital ?? 0) + op.contributions.reduce((s, c) => s + c.amount, 0),
         0,
       ),
     ),
   };
 
-  return { operations, issues, stats };
+  const readiness = {
+    ready: operations.filter(
+      (op) => !criticalRefs.has(normalizeReference(op.reference)) && !pendingRefs.has(normalizeReference(op.reference)),
+    ).length,
+    pending: operations.filter((op) => pendingRefs.has(normalizeReference(op.reference))).length,
+    ignored: baseline.ignoredRows,
+    critical: critical.length,
+  };
+
+  return { operations, issues: enrichedIssues, baseline, readiness, stats };
 }
