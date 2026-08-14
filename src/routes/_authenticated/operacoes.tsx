@@ -286,46 +286,6 @@ function OperationsPage() {
   );
 }
 
-function PortfolioToggle({ operationId, year }: { operationId: string; year: number }) {
-  const { data: operations } = useOperations();
-  const updateMembership = usePortfolioMembershipUpdate();
-  
-  const op = operations?.find(o => o.operation_id === operationId);
-  // O backend ainda não retorna memberships na view, mas podemos simular ou usar o hook específico
-  // Por enquanto, vamos assumir que o usuário quer gerenciar isso visualmente.
-  // Em uma implementação real, o useOperations retornaria is_in_portfolio_2026
-  const isActive = false; // Mock - implementar via hook real de memberships
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        "h-7 w-7 p-0 rounded-full",
-        isActive ? "text-amber-500 hover:text-amber-600" : "text-muted-foreground/30 hover:text-muted-foreground"
-      )}
-      onClick={() => {
-        toast.promise(
-          updateMembership.mutateAsync({ operationId, year, isActive: !isActive }),
-          {
-            loading: "Atualizando carteira...",
-            success: isActive ? "Removido da carteira gerencial." : "Adicionado à carteira gerencial.",
-            error: "Falha ao atualizar carteira.",
-          }
-        );
-      }}
-    >
-      <Star className={cn("size-4", isActive && "fill-current")} />
-    </Button>
-  );
-}
-
-// Hook auxiliar para o componente
-function usePortfolioMembershipUpdate() {
-  const queryClient = useQueryClient();
-  const { useUpdatePortfolioMembership } = require("@/lib/data/hooks");
-  return useUpdatePortfolioMembership();
-}
 
 
 function NewOperationDialog() {
