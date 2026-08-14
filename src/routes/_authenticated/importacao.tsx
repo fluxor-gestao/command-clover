@@ -33,14 +33,14 @@ export const Route = createFileRoute("/_authenticated/importacao")({
   component: ImportPage,
 });
 
-const currentYear = String(new Date().getUTCFullYear());
+const ALL_SHEETS = "__ALL__";
 
 function ImportPage() {
   const imports = useImports();
   const invalidate = useInvalidateAll();
   const [file, setFile] = useState<File | null>(null);
   const [sheets, setSheets] = useState<string[]>([]);
-  const [selectedSheet, setSelectedSheet] = useState<string>("");
+  const [selectedSheet, setSelectedSheet] = useState<string>(ALL_SHEETS);
   const [preview, setPreview] = useState<ParseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [showIssues, setShowIssues] = useState(false);
@@ -56,10 +56,13 @@ function ImportPage() {
         sheetList = inspected.sheets;
         setSheets(sheetList);
       }
-      const target =
-        sheet ?? sheetList.find((name) => name.includes(currentYear)) ?? sheetList[0] ?? "";
+      // Padrão: carga histórica completa (todas as abas anuais).
+      const target = sheet ?? ALL_SHEETS;
       setSelectedSheet(target);
-      const result = await readWorkbookFile(selected, target ? { sheets: [target] } : undefined);
+      const result = await readWorkbookFile(
+        selected,
+        target && target !== ALL_SHEETS ? { sheets: [target] } : undefined,
+      );
       setPreview(result);
       toast.success("Leitura concluída. Homologue os totais antes de importar.");
     } catch (error) {
@@ -68,6 +71,7 @@ function ImportPage() {
       setBusy(false);
     }
   };
+
 
   const runImport = async () => {
     if (!file || !preview) return;
@@ -125,6 +129,7 @@ function ImportPage() {
                   <SelectValue placeholder="Aba a importar" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value={ALL_SHEETS}>Todas as abas (carga histórica completa)</SelectItem>
                   {sheets.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}
@@ -135,11 +140,42 @@ function ImportPage() {
             )}
           </div>
           {preview && (
-            <p className="text-xs text-muted-foreground">
-              Aba lida: <strong>{preview.stats.sheetsRead.join(", ") || "—"}</strong> · mês de referência{" "}
-              {competenceBR(`${preview.stats.referenceMonth}-01`)}
-            </p>
+            <>
+              <p className="text-xs text-muted-foreground">
+                Abas lidas: <strong>{preview.stats.sheetsRead.join(", ") || "—"}</strong> · mês de referência{" "}
+                {competenceBR(`${preview.stats.referenceMonth}-01`)}
+              </p>
+              {preview.stats.byYear.length > 0 && (
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Ano</th>
+                        <th className="px-3 py-2 text-right">Operações</th>
+                        <th className="px-3 py-2 text-right">Parcelas</th>
+                        <th className="px-3 py-2 text-right">Previsto</th>
+                        <th className="px-3 py-2 text-right">Recebido</th>
+                        <th className="px-3 py-2 text-right">Inadimplente</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.stats.byYear.map((row) => (
+                        <tr key={row.year} className="border-t">
+                          <td className="px-3 py-2">{row.year}</td>
+                          <td className="px-3 py-2 text-right">{row.operations}</td>
+                          <td className="px-3 py-2 text-right">{row.installments}</td>
+                          <td className="px-3 py-2 text-right">{brl(row.expected)}</td>
+                          <td className="px-3 py-2 text-right">{brl(row.received)}</td>
+                          <td className="px-3 py-2 text-right">{brl(row.overdue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
+
         </CardContent>
       </Card>
 
