@@ -99,47 +99,52 @@ function DashboardPage() {
         </p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Capital investido"
           value={brl(s?.total_invested)}
-          hint={`${s?.total_operations ?? 0} operações cadastradas`}
-          icon={<Wallet className="size-4 text-muted-foreground" />}
+          hint={`${s?.total_operations ?? 0} operações`}
+          icon={<Wallet className="size-4" />}
+          primary
         />
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct(s?.recovery_percentage)} do capital recuperado`}
-          icon={<ArrowDownRight className="size-4 text-muted-foreground" />}
+          hint={`${pct(s?.recovery_percentage)} do capital`}
+          icon={<ArrowDownRight className="size-4" />}
+          primary
         />
         <Kpi
-          title="Saldo a recuperar"
+          title="Capital a Recuperar"
           value={brl(s?.capital_to_recover)}
-          hint="Capital ainda não retornado"
-          icon={<ArrowUpRight className="size-4 text-muted-foreground" />}
+          hint="Saldo pendente do aporte"
+          icon={<ArrowUpRight className="size-4" />}
+          primary
         />
+        <Kpi
+          title="Total a Receber"
+          value={brl(s?.total_a_receber)}
+          hint="Projeção total futura"
+          icon={<TrendingUp className="size-4" />}
+          primary
+        />
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Lucro realizado"
           value={brl(s?.realized_profit)}
-          hint={`Lucro sobre capital retornado`}
-          icon={<TrendingUp className="size-4 text-muted-foreground" />}
+          hint="Sobre capital retornado"
         />
         <Kpi
           title="Resultado Projetado"
           value={brl(s?.projected_result)}
-          hint="Expectativa total de lucro"
-          icon={<TrendingUp className="size-4 text-primary" />}
-        />
-        <Kpi
-          title="A receber (futuro)"
-          value={brl(s?.future_receivable)}
-          hint="Parcelas com vencimento em aberto"
+          hint="Expectativa total"
         />
         <Kpi
           title="Inadimplência"
           value={brl(s?.overdue_receivable)}
-          hint={`${s?.overdue_installments ?? 0} parcelas vencidas em ${s?.overdue_operations ?? 0} operações`}
-          icon={<AlertTriangle className="size-4 text-destructive" />}
+          hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
           tone="destructive"
         />
         <Kpi
@@ -147,22 +152,31 @@ function DashboardPage() {
           value={brl(monthRow?.recebido ?? 0)}
           hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
         />
-        <Kpi
-          title="Total a Receber"
-          value={brl(s?.total_a_receber)}
-          hint={`${s?.closed_operations ?? 0} encerradas`}
-        />
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recuperação do capital</CardTitle>
-          <CardDescription>
-            {brl(s?.total_received)} recuperados de {brl(s?.total_invested)} investidos
-          </CardDescription>
+      <Card className="border-none shadow-sm bg-card/50">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Recuperação do capital</CardTitle>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-3xl font-bold tracking-tight text-foreground">{pct(s?.recovery_percentage)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {brl(s?.total_received)} de {brl(s?.total_invested)} recuperados
+                </span>
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Progress value={Number(s?.recovery_percentage ?? 0) * 100} />
+        <CardContent className="pt-4">
+          <Progress 
+            value={Number(s?.recovery_percentage ?? 0) * 100} 
+            className="h-3 bg-muted"
+          />
+          <div className="mt-4 flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <span>Capital recuperado</span>
+            <span>Capital restante</span>
+          </div>
         </CardContent>
       </Card>
 
