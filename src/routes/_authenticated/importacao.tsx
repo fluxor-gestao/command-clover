@@ -33,14 +33,14 @@ export const Route = createFileRoute("/_authenticated/importacao")({
   component: ImportPage,
 });
 
-const currentYear = String(new Date().getUTCFullYear());
+const ALL_SHEETS = "__ALL__";
 
 function ImportPage() {
   const imports = useImports();
   const invalidate = useInvalidateAll();
   const [file, setFile] = useState<File | null>(null);
   const [sheets, setSheets] = useState<string[]>([]);
-  const [selectedSheet, setSelectedSheet] = useState<string>("");
+  const [selectedSheet, setSelectedSheet] = useState<string>(ALL_SHEETS);
   const [preview, setPreview] = useState<ParseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [showIssues, setShowIssues] = useState(false);
@@ -56,10 +56,13 @@ function ImportPage() {
         sheetList = inspected.sheets;
         setSheets(sheetList);
       }
-      const target =
-        sheet ?? sheetList.find((name) => name.includes(currentYear)) ?? sheetList[0] ?? "";
+      // Padrão: carga histórica completa (todas as abas anuais).
+      const target = sheet ?? ALL_SHEETS;
       setSelectedSheet(target);
-      const result = await readWorkbookFile(selected, target ? { sheets: [target] } : undefined);
+      const result = await readWorkbookFile(
+        selected,
+        target && target !== ALL_SHEETS ? { sheets: [target] } : undefined,
+      );
       setPreview(result);
       toast.success("Leitura concluída. Homologue os totais antes de importar.");
     } catch (error) {
@@ -68,6 +71,7 @@ function ImportPage() {
       setBusy(false);
     }
   };
+
 
   const runImport = async () => {
     if (!file || !preview) return;
