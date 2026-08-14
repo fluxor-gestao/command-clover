@@ -430,16 +430,19 @@ function parseAnnualSheet(
       const competenceKey = `${year}-${String(month).padStart(2, "0")}`;
       const competence = `${competenceKey}-01`;
       const isFuture = competenceKey > referenceMonth;
-      // vermelho em competência passada/corrente = saldo devedor; futuro = previsto a receber
+      const isPast = competenceKey < referenceMonth;
+      // vermelho só é inadimplência em competência ANTERIOR ao mês atual.
+      // vermelho no mês corrente ou futuro = previsto a receber (ainda no prazo).
       const received = !red && !isFuture ? round2(amount) : 0;
-      const overdue = red && !isFuture ? round2(amount) : 0;
+      const overdue = red && isPast ? round2(amount) : 0;
+      const toReceive = isFuture || (red && !isPast) ? round2(amount) : 0;
       overdueRow += overdue;
 
       baseline.monthlyCells += 1;
       baseline.monthlyTotal = round2(baseline.monthlyTotal + amount);
       baseline.receivedTotal = round2(baseline.receivedTotal + received);
       baseline.overdueTotal = round2(baseline.overdueTotal + overdue);
-      baseline.toReceiveTotal = round2(baseline.toReceiveTotal + (isFuture ? round2(amount) : 0));
+      baseline.toReceiveTotal = round2(baseline.toReceiveTotal + toReceive);
 
       upsertInstallment(op, {
         competence,
