@@ -73,29 +73,33 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <img
-            src={logoAsset.url}
-            alt="Nova Era Imóveis e Seguros"
-            className="mx-auto h-24 w-24 object-contain"
-          />
-          <CardTitle className="text-xl">Nova Era · Gestão de Investimentos</CardTitle>
-          <CardDescription>
-            Acesso restrito à diretoria e ao time financeiro.
+      <Card className="w-full max-w-md border-none shadow-2xl bg-card/80 backdrop-blur-xl">
+        <CardHeader className="items-center text-center pt-10 pb-6">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 transition-transform hover:scale-105 duration-300">
+            <img
+              src={logoAsset.url}
+              alt="Nova Era"
+              className="h-12 w-12 object-contain brightness-0 invert"
+            />
+          </div>
+          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+            NOVA ERA
+          </CardTitle>
+          <CardDescription className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mt-2">
+            GESTÃO DE INVESTIMENTOS
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="entrar">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="entrar">Entrar</TabsTrigger>
-              <TabsTrigger value="criar">Criar conta</TabsTrigger>
+        <CardContent className="pb-10">
+          <Tabs defaultValue="entrar" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/50 rounded-xl">
+              <TabsTrigger value="entrar" className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:shadow-sm">Entrar</TabsTrigger>
+              <TabsTrigger value="criar" className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:shadow-sm">Criar conta</TabsTrigger>
             </TabsList>
             {(["entrar", "criar"] as const).map((tab) => (
               <TabsContent key={tab} value={tab}>
                 <form className="space-y-4" onSubmit={tab === "entrar" ? signIn : signUp}>
                   <div className="space-y-2">
-                    <Label htmlFor={`email-${tab}`}>E-mail</Label>
+                    <Label htmlFor={`email-${tab}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">E-mail</Label>
                     <Input
                       id={`email-${tab}`}
                       type="email"
@@ -103,10 +107,11 @@ function AuthPage() {
                       required
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
+                      className="h-11 border-none bg-muted/50 focus:ring-1 rounded-xl px-4"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`senha-${tab}`}>Senha</Label>
+                    <Label htmlFor={`senha-${tab}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Senha</Label>
                     <Input
                       id={`senha-${tab}`}
                       type="password"
@@ -115,10 +120,11 @@ function AuthPage() {
                       minLength={6}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
+                      className="h-11 border-none bg-muted/50 focus:ring-1 rounded-xl px-4"
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {tab === "entrar" ? "Entrar" : "Criar conta"}
+                  <Button type="submit" className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={loading}>
+                    {tab === "entrar" ? "Acessar Sistema" : "Cadastrar Agora"}
                   </Button>
                 </form>
               </TabsContent>

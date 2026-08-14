@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -49,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 const CHART_COLORS = ["oklch(0.696 0.17 162.48)", "oklch(0.446 0.03 256.802)", "oklch(0.129 0.042 264.695)", "oklch(0.92 0.004 286.32)", "oklch(0.85 0.01 264.695)"];
 
 function DashboardPage() {
+  const navigate = useNavigate();
   const summary = usePortfolioSummary();
   const operations = useOperations();
   const flow = useMonthlyFlow();
@@ -107,6 +108,7 @@ function DashboardPage() {
           hint={`${s?.total_operations ?? 0} operações`}
           icon={<Wallet className="size-4" />}
           primary
+          onClick={() => navigate({ to: "/operacoes" })}
         />
         <Kpi
           title="Capital recebido"
@@ -114,6 +116,7 @@ function DashboardPage() {
           hint={`${pct(s?.recovery_percentage)} do capital`}
           icon={<ArrowDownRight className="size-4" />}
           primary
+          onClick={() => navigate({ to: "/recebimentos" })}
         />
         <Kpi
           title="Capital a Recuperar"
@@ -121,6 +124,7 @@ function DashboardPage() {
           hint="Saldo pendente do aporte"
           icon={<ArrowUpRight className="size-4" />}
           primary
+          onClick={() => navigate({ to: "/operacoes" })}
         />
         <Kpi
           title="Total a Receber"
@@ -128,6 +132,7 @@ function DashboardPage() {
           hint="Projeção total futura"
           icon={<TrendingUp className="size-4" />}
           primary
+          onClick={() => navigate({ to: "/parcelas" })}
         />
       </section>
 
@@ -136,22 +141,26 @@ function DashboardPage() {
           title="Lucro realizado"
           value={brl(s?.realized_profit)}
           hint="Sobre capital retornado"
+          onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Resultado Projetado"
           value={brl(s?.projected_result)}
           hint="Expectativa total"
+          onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Inadimplência"
           value={brl(s?.overdue_receivable)}
           hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
           tone="destructive"
+          onClick={() => navigate({ to: "/parcelas", search: { status: "VENCIDA" } })}
         />
         <Kpi
           title="Recebido no mês"
           value={brl(monthRow?.recebido ?? 0)}
           hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
+          onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>
 
@@ -272,7 +281,11 @@ function DashboardPage() {
                   </TableRow>
                 )}
                 {topOverdue.map((op) => (
-                  <TableRow key={op.operation_id}>
+                  <TableRow 
+                    key={op.operation_id} 
+                    className="group cursor-pointer transition-colors hover:bg-muted/50"
+                    onClick={() => navigate({ to: "/operacoes/$id", params: { id: op.operation_id ?? "" } })}
+                  >
                     <TableCell className="font-medium">{op.reference}</TableCell>
                     <TableCell className="text-right text-destructive font-bold tabular-nums">{brl(op.overdue_receivable)}</TableCell>
                     <TableCell className="text-right">
@@ -296,6 +309,7 @@ function Kpi({
   icon,
   tone,
   primary,
+  onClick,
 }: {
   title: string;
   value: string;
@@ -303,13 +317,18 @@ function Kpi({
   icon?: React.ReactNode;
   tone?: "destructive";
   primary?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <Card className={cn(
-      "border-none shadow-sm transition-all hover:shadow-md",
-      primary ? "bg-primary text-primary-foreground" : "bg-card",
-      tone === "destructive" && !primary && "bg-destructive/5"
-    )}>
+    <Card 
+      onClick={onClick}
+      className={cn(
+        "border-none shadow-sm transition-all hover:shadow-md",
+        onClick && "cursor-pointer active:scale-[0.98]",
+        primary ? "bg-primary text-primary-foreground" : "bg-card",
+        tone === "destructive" && !primary && "bg-destructive/5"
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className={cn(
           "text-xs font-bold uppercase tracking-wider",

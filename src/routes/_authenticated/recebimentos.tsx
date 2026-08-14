@@ -51,10 +51,18 @@ function ReceiptsPage() {
     if (searchOperationId) setOperationId(searchOperationId);
   }, [searchOperationId]);
 
-  const openInstallments = useMemo(
-    () => (installments.data ?? []).filter((row) => (row.outstanding_amount ?? 0) > 0.004),
-    [installments.data],
-  );
+  const { overdue, current, future } = useMemo(() => {
+    const list = (installments.data ?? []).filter((row) => (row.outstanding_amount ?? 0) > 0.004);
+    const today = todayISO();
+    
+    return {
+      overdue: list.filter(r => r.due_date && r.due_date < today),
+      current: list.filter(r => r.due_date === today),
+      future: list.filter(r => r.due_date && r.due_date > today),
+    };
+  }, [installments.data]);
+
+  const openInstallments = useMemo(() => [...overdue, ...current, ...future], [overdue, current, future]);
 
   const totalAllocated = useMemo(() => {
     return Object.values(amounts).reduce((acc, val) => acc + (Number(val) || 0), 0);
@@ -162,28 +170,49 @@ function ReceiptsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {openInstallments.map((row) => (
-                            <TableRow key={row.id} className="group hover:bg-muted/30 border-border/50">
-                              <TableCell className="font-mono text-xs text-muted-foreground">{row.installment_number}</TableCell>
-                              <TableCell className="text-xs font-medium tabular-nums">{dateBR(row.due_date)}</TableCell>
-                              <TableCell className="text-right font-mono text-xs font-bold">{brl(row.outstanding_amount)}</TableCell>
-                              <TableCell className="text-right pr-4">
-                                <div className="relative flex items-center">
-                                  <span className="absolute left-3 text-[10px] font-bold text-muted-foreground/40 italic pointer-events-none">R$</span>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    className="h-8 pl-8 text-right font-mono text-xs border-none bg-muted/50 group-hover:bg-background transition-colors focus:ring-1"
-                                    placeholder="0,00"
-                                    value={amounts[row.id ?? ""] ?? ""}
-                                    onChange={(event) =>
-                                      setAmounts({ ...amounts, [row.id ?? ""]: event.target.value })
-                                    }
-                                  />
-                                </div>
-                              </TableCell>
+                          {overdue.length > 0 && (
+                            <TableRow className="bg-destructive/5 hover:bg-destructive/5 border-none">
+                              <TableCell colSpan={4} className="py-1 px-4 text-[9px] font-bold uppercase tracking-widest text-destructive">Parcelas Atrasadas</TableCell>
                             </TableRow>
+                          )}
+                          {overdue.map((row) => (
+                            <InstallmentRow 
+                              key={row.id} 
+                              row={row} 
+                              value={amounts[row.id ?? ""] ?? ""} 
+                              onChange={(val) => setAmounts(prev => ({ ...prev, [row.id ?? ""]: val }))}
+                              isOverdue
+                            />
                           ))}
+
+                          {current.length > 0 && (
+                            <TableRow className="bg-success/5 hover:bg-success/5 border-none">
+                              <TableCell colSpan={4} className="py-1 px-4 text-[9px] font-bold uppercase tracking-widest text-success">Vencendo Hoje</TableCell>
+                            </TableRow>
+                          )}
+                          {current.map((row) => (
+                            <InstallmentRow 
+                              key={row.id} 
+                              row={row} 
+                              value={amounts[row.id ?? ""] ?? ""} 
+                              onChange={(val) => setAmounts(prev => ({ ...prev, [row.id ?? ""]: val }))}
+                            />
+                          ))}
+
+                          {future.length > 0 && (
+                            <TableRow className="bg-muted/30 hover:bg-muted/30 border-none">
+                              <TableCell colSpan={4} className="py-1 px-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Parcelas Futuras</TableCell>
+                            </TableRow>
+                          )}
+                          {future.map((row) => (
+                            <InstallmentRow 
+                              key={row.id} 
+                              row={row} 
+                              value={amounts[row.id ?? ""] ?? ""} 
+                              onChange={(val) => setAmounts(prev => ({ ...prev, [row.id ?? ""]: val }))}
+                            />
+                          ))}
+
                           {openInstallments.length === 0 && !installments.isLoading && (
                             <TableRow>
                               <TableCell colSpan={4} className="h-24 text-center">
@@ -343,5 +372,30 @@ function EditReceiptDialog({ receipt }: { receipt: any }) {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function InstallmentRow({ row, value, onChange, isOverdue }: { row: any, value: string, onChange: (val: string) => void, isOverdue?: boolean }) {
+  return (
+    <TableRow className={cn("group hover:bg-muted/30 border-border/50", isOverdue && "bg-destructive/[0.02]")}>
+      <TableCell className="font-mono text-xs text-muted-foreground">{row.installment_number}</TableCell>
+      <TableCell className={cn("text-xs font-medium tabular-nums", isOverdue && "text-destructive font-bold")}>
+        {dateBR(row.due_date)}
+      </TableCell>
+      <TableCell className="text-right font-mono text-xs font-bold">{brl(row.outstanding_amount)}</TableCell>
+      <TableCell className="text-right pr-4">
+        <div className="relative flex items-center">
+          <span className="absolute left-3 text-[10px] font-bold text-muted-foreground/40 italic pointer-events-none">R$</span>
+          <Input
+            type="number"
+            step="0.01"
+            className="h-8 pl-8 text-right font-mono text-xs border-none bg-muted/50 group-hover:bg-background transition-colors focus:ring-1"
+            placeholder="0,00"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </div>
+      </TableCell>
+    </TableRow>
   );
 }
