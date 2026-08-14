@@ -318,6 +318,7 @@ export type Database = {
           last_due_date: string | null
           notes: string | null
           reference: string
+          reference_id: string | null
           source: string
           source_key: string | null
           status: string
@@ -340,6 +341,7 @@ export type Database = {
           last_due_date?: string | null
           notes?: string | null
           reference: string
+          reference_id?: string | null
           source?: string
           source_key?: string | null
           status?: string
@@ -362,6 +364,7 @@ export type Database = {
           last_due_date?: string | null
           notes?: string | null
           reference?: string
+          reference_id?: string | null
           source?: string
           source_key?: string | null
           status?: string
@@ -373,6 +376,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "investment_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investment_operations_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "investment_references"
             referencedColumns: ["id"]
           },
         ]
@@ -480,6 +490,50 @@ export type Database = {
           },
         ]
       }
+      investment_references: {
+        Row: {
+          active: boolean | null
+          archived_at: string | null
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          archived_at?: string | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          archived_at?: string | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investment_references_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "investment_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_installments: {
@@ -533,12 +587,13 @@ export type Database = {
       }
       v_operation_position: {
         Row: {
+          cancelled_at: string | null
           capital_to_recover: number | null
           category: string | null
           category_id: string | null
           computed_status: string | null
+          contracted_total: number | null
           contracted_total_calc: number | null
-          contributions: number | null
           description: string | null
           due_day: number | null
           first_due_date: string | null
@@ -556,42 +611,26 @@ export type Database = {
           overdue_installments: number | null
           overdue_receivable: number | null
           projected_result: number | null
-          realized_profit: number | null
           receipts_count: number | null
           recovery_percentage: number | null
           reference: string | null
           source: string | null
+          status: string | null
           total_installments: number | null
           total_invested: number | null
-          total_receivable: number | null
+          total_invested_contributions: number | null
           total_received: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "investment_operations_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "investment_categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       v_portfolio_summary: {
         Row: {
-          active_operations: number | null
-          capital_to_recover: number | null
-          closed_operations: number | null
-          future_receivable: number | null
-          overdue_installments: number | null
-          overdue_operations: number | null
-          overdue_receivable: number | null
-          projected_result: number | null
-          realized_profit: number | null
-          recovery_percentage: number | null
-          review_operations: number | null
+          delinquent_operations: number | null
+          total_future: number | null
           total_invested: number | null
           total_operations: number | null
-          total_receivable: number | null
+          total_overdue: number | null
+          total_projected_result: number | null
           total_received: number | null
         }
         Relationships: []
