@@ -795,7 +795,33 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
         0,
       ),
     ),
+    byYear: (() => {
+      const map = new Map<
+        string,
+        { year: string; operations: number; installments: number; expected: number; received: number; overdue: number }
+      >();
+      const opsByYear = new Map<string, Set<string>>();
+      for (const op of operations) {
+        for (const inst of op.installments) {
+          const year = inst.competence.slice(0, 4);
+          const entry =
+            map.get(year) ?? { year, operations: 0, installments: 0, expected: 0, received: 0, overdue: 0 };
+          entry.installments += 1;
+          entry.expected = round2(entry.expected + inst.expected);
+          entry.received = round2(entry.received + inst.received);
+          entry.overdue = round2(entry.overdue + inst.overdue);
+          map.set(year, entry);
+          const set = opsByYear.get(year) ?? new Set<string>();
+          set.add(op.key ?? op.reference);
+          opsByYear.set(year, set);
+        }
+      }
+      return [...map.values()]
+        .map((entry) => ({ ...entry, operations: opsByYear.get(entry.year)?.size ?? 0 }))
+        .sort((a, b) => a.year.localeCompare(b.year));
+    })(),
   };
+
 
   const readiness = {
     ready: operations.filter(
