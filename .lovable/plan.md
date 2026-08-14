@@ -2,45 +2,47 @@
 
 Este plano detalha a "Onda Final de Refinamento", focando em estruturar referências, melhorar a interatividade e reduzir o esforço do usuário através de cadastros mestres e componentes de seleção inteligentes.
 
-## Alterações de Banco de Dados (Supabase)
+## 1. Estrutura de Referências (Database)
 
-1.  **Criar Tabela `investment_references`**:
-    - Campos: `id`, `name`, `category_id` (FK), `description`, `active`, `source`, `created_at`, `updated_at`, `archived_at`.
-    - Habilitar RLS e conceder permissões.
-2.  **Modificar `investment_operations`**:
-    - Adicionar `reference_id` (FK para `investment_references`).
-3.  **Migração de Dados**:
-    - Script para extrair referências únicas de `investment_operations` e popular `investment_references`.
-    - Vincular `operation.reference_id` baseado no nome da referência.
-4.  **Atualizar Views Financeiras**:
-    - `v_operation_position`, `v_monthly_flow` e `v_portfolio_summary` devem agora considerar a nova estrutura de referências para nomes e agrupamentos.
+A ideia é separar a **Referência** (o ativo/imóvel/pessoa) da **Operação** (o contrato financeiro).
 
-## Componentes e Hooks
+### Novas Tabelas e Alterações
+- **Criar `investment_references`**: 
+  - `id`, `name` (unique), `category_id`, `description`, `active` (default true), `created_at`, `updated_at`, `archived_at`.
+- **Alterar `investment_operations`**:
+  - Adicionar `reference_id` (FK para `investment_references`).
+- **Migração**:
+  - Script para extrair referências únicas de `investment_operations` atual e popular `investment_references`.
+  - Atualizar `reference_id` em todas as operações existentes.
+  - Manter o campo `reference` (text) em `investment_operations` por compatibilidade ou remover após garantir que as views usam o join. *Decisão: Manter temporariamente e atualizar views.*
 
-1.  **Combobox de Referência**:
-    - Componente reutilizável com busca assíncrona.
-    - Opção integrada para "+ Cadastrar Nova Referência" que abre um modal sem sair do fluxo.
-2.  **Resumo Dinâmico da Operação**:
-    - Bloco visual em tempo real no formulário de Nova Operação calculando Total Previsto, Datas Limites e Resultado Projetado conforme o usuário digita.
-3.  **Lógica de Edição Segura**:
-    - Mecanismo para detectar se uma alteração contratual afeta parcelas já recebidas.
-    - Alerta e opção de aplicar apenas a parcelas futuras.
+## 2. Interface de Referências
 
-## Novas Telas e Ajustes de UI
+- **Nova Tela**: `src/routes/_authenticated/referencias.tsx`.
+  - Listagem com filtros de Categoria e Status.
+  - Visualização resumida: Capital Total Investido e Recebido por referência (drill-down para operações).
+- **Combobox Inteligente**:
+  - Componente de seleção de referência com busca.
+  - Botão "+ Cadastrar Nova Referência" integrado no dropdown.
+  - Modal rápido de cadastro sem sair do fluxo de "Nova Operação".
 
-1.  **Página de Referências**:
-    - Lista mestre sob "Operações > Referências" ou menu lateral.
-    - Gestão de status (Ativo/Inativo) e visualização de capital total por referência.
-2.  **Tabela de Operações**:
-    - Referências clicáveis para abrir detalhes.
-    - Menu de ações (⋮) em cada linha para acesso rápido (Recebimento, Aporte, Edição).
-3.  **Formulário de Operação**:
-    - Substituir input de texto por Combobox.
-    - Autofill da categoria baseado na referência selecionada.
+## 3. Refinamento de Fluxos (UX)
 
-## Rastreabilidade e Segurança
+### Nova Operação
+- **Resumo Dinâmico**: Ao preencher valor da parcela e quantidade, mostrar imediatamente o ROI projetado e a data do último vencimento.
+- **Autofill**: Ao selecionar uma Referência já cadastrada, preencher a Categoria automaticamente.
 
-1.  **Audit Log**:
-    - Garantir que edições em operações e referências sejam registradas com `old_data` e `new_data`.
-2.  **Soft Delete**:
-    - Implementar `archived_at` em referências e `cancelled_at` em operações com histórico financeiro.
+### Edição de Operações
+- **Edição Segura**: Se o usuário tentar alterar valor/quantidade de parcelas em uma operação com recebimentos, exibir um aviso.
+- **Histórico**: Registro automático no `investment_audit_log` para qualquer alteração contratual.
+
+### Tabela de Operações
+- Adição de menu de ações rápido (⋮).
+- Referência clicável levando para o detalhe da operação.
+- Melhoria na visualização de "Retorno" (exibindo lucro/prejuízo projetado).
+
+## Detalhes Técnicos
+- **RLS**: Garantir que a nova tabela `investment_references` tenha políticas de acesso corretas.
+- **Views**: Atualizar `v_operation_position` e `v_monthly_flow` para usar `investment_references.name`.
+- **Idempotência**: Manter a lógica de importação compatível com o novo ID de referência.
+
