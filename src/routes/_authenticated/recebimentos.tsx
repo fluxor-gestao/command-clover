@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, Receipt, History, RotateCcw } from "lucide-react";
+import { Search, Receipt, History, RotateCcw, Edit2 } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCancelReceipt, useInstallments, useOperations, useReceipts, useRegisterReceipt } from "@/lib/data/hooks";
+import { useCancelReceipt, useInstallments, useOperations, useReceipts, useRegisterReceipt, useUpdateReceipt } from "@/lib/data/hooks";
 import { brl, dateBR, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -205,14 +205,16 @@ function ReceiptsPage() {
                         <p className="text-sm font-bold text-green-600">{brl(receipt.total_amount)}</p>
                         <p className="text-[10px] text-muted-foreground uppercase">{receipt.source}</p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                        disabled={cancel.isPending}
-                        title="Estornar lançamento"
-                        onClick={async () => {
-                          if (confirm("Deseja realmente estornar este recebimento?")) {
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <EditReceiptDialog receipt={receipt} />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          disabled={cancel.isPending}
+                          title="Estornar lançamento"
+                          onClick={async () => {
+                            if (confirm("Deseja realmente estornar este recebimento? Motivo obrigatório será registrado na auditoria.")) {
                             try {
                               await cancel.mutateAsync(receipt.id);
                               toast.success("Recebimento estornado.");
