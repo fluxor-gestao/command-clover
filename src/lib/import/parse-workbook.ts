@@ -131,7 +131,16 @@ export interface ParseResult {
     overdueTotal: number;
     toReceiveTotal: number;
     investedTotal: number;
+    byYear: {
+      year: string;
+      operations: number;
+      installments: number;
+      expected: number;
+      received: number;
+      overdue: number;
+    }[];
   };
+
 }
 
 
