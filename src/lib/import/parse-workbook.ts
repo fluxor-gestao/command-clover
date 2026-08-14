@@ -12,10 +12,43 @@ import type { Workbook, Worksheet, Cell } from "exceljs";
 
 export type IssueType =
   | "CONTRATO_INCOMPLETO"
+  | "PARCELAS_NAO_IDENTIFICADAS"
+  | "PRIMEIRO_VENCIMENTO_AUSENTE"
   | "CAPITAL_NAO_IDENTIFICADO"
+  | "REFERENCIA_DUPLICADA"
   | "OPERACAO_NAO_ENCONTRADA"
   | "VALOR_INVALIDO"
+  | "CELULA_NAO_INTERPRETADA"
+  | "POSSIVEL_INADIMPLENCIA"
   | "LINHA_IGNORADA";
+
+export type IssueSeverity = "INFORMATIVO" | "ATENCAO" | "CRITICO";
+
+export const ISSUE_SEVERITY: Record<IssueType, IssueSeverity> = {
+  CONTRATO_INCOMPLETO: "ATENCAO",
+  PARCELAS_NAO_IDENTIFICADAS: "ATENCAO",
+  PRIMEIRO_VENCIMENTO_AUSENTE: "ATENCAO",
+  CAPITAL_NAO_IDENTIFICADO: "ATENCAO",
+  REFERENCIA_DUPLICADA: "CRITICO",
+  OPERACAO_NAO_ENCONTRADA: "CRITICO",
+  VALOR_INVALIDO: "CRITICO",
+  CELULA_NAO_INTERPRETADA: "INFORMATIVO",
+  POSSIVEL_INADIMPLENCIA: "INFORMATIVO",
+  LINHA_IGNORADA: "INFORMATIVO",
+};
+
+export const ISSUE_ACTION: Record<IssueType, string> = {
+  CONTRATO_INCOMPLETO: "Completar contrato na tela da operação após a importação.",
+  PARCELAS_NAO_IDENTIFICADAS: "Informar quantidade de parcelas na operação.",
+  PRIMEIRO_VENCIMENTO_AUSENTE: "Informar o primeiro vencimento da operação.",
+  CAPITAL_NAO_IDENTIFICADO: "Informar o capital investido (Valor Emprestado).",
+  REFERENCIA_DUPLICADA: "Conferir referências repetidas na planilha antes de importar.",
+  OPERACAO_NAO_ENCONTRADA: "Cadastrar a operação ou corrigir a referência na planilha.",
+  VALOR_INVALIDO: "Corrigir o valor na planilha de origem.",
+  CELULA_NAO_INTERPRETADA: "Nenhuma — célula ignorada com segurança.",
+  POSSIVEL_INADIMPLENCIA: "Conferir na tela de Parcelas após a importação.",
+  LINHA_IGNORADA: "Nenhuma — linha sem dados de recebível.",
+};
 
 export interface ParsedIssue {
   sheet: string;
@@ -23,6 +56,8 @@ export interface ParsedIssue {
   reference: string | null;
   issueType: IssueType;
   description: string;
+  severity?: IssueSeverity;
+  action?: string;
   raw?: Record<string, unknown>;
 }
 
@@ -31,6 +66,7 @@ export interface ParsedInstallment {
   dueDate: string; // YYYY-MM-DD
   expected: number;
   received: number;
+  overdue: number;
   sourceKey: string;
   sheet: string;
 }
@@ -56,13 +92,35 @@ export interface ParsedOperation {
   installments: ParsedInstallment[];
   contributions: ParsedContribution[];
   incomplete: boolean;
+  sheets: string[];
+}
+
+/** Totais lidos direto das células da planilha, sem passar pela normalização. */
+export interface ParseBaseline {
+  operationRows: number;
+  capitalTotal: number;
+  monthlyTotal: number;
+  receivedTotal: number;
+  overdueTotal: number;
+  toReceiveTotal: number;
+  monthlyCells: number;
+  ignoredRows: number;
 }
 
 export interface ParseResult {
   operations: ParsedOperation[];
   issues: ParsedIssue[];
+  baseline: ParseBaseline;
+  readiness: {
+    ready: number;
+    pending: number;
+    ignored: number;
+    critical: number;
+  };
   stats: {
     sheetsRead: string[];
+    availableSheets: string[];
+    referenceMonth: string;
     operations: number;
     installments: number;
     receivedInstallments: number;
@@ -71,9 +129,11 @@ export interface ParseResult {
     expectedTotal: number;
     receivedTotal: number;
     overdueTotal: number;
+    toReceiveTotal: number;
     investedTotal: number;
   };
 }
+
 
 const MONTHS: Record<string, number> = {
   JANEIRO: 1,
