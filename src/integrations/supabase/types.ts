@@ -625,12 +625,18 @@ export type Database = {
       }
       v_portfolio_summary: {
         Row: {
-          delinquent_operations: number | null
-          total_future: number | null
+          active_operations: number | null
+          capital_to_recover: number | null
+          closed_operations: number | null
+          future_receivable: number | null
+          overdue_installments: number | null
+          overdue_operations: number | null
+          overdue_receivable: number | null
+          realized_profit: number | null
+          recovery_percentage: number | null
+          review_operations: number | null
           total_invested: number | null
           total_operations: number | null
-          total_overdue: number | null
-          total_projected_result: number | null
           total_received: number | null
         }
         Relationships: []
