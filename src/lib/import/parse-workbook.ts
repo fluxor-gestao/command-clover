@@ -111,14 +111,15 @@ function cellText(cell: Cell | undefined): string {
   if (!cell) return "";
   const value = cell.value as unknown;
   if (value === null || value === undefined) return "";
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
   if (typeof value === "object") {
     const obj = value as Record<string, unknown>;
-    if ("richText" in obj && Array.isArray(obj.richText)) {
-      return (obj.richText as { text: string }[]).map((part) => part.text).join("").trim();
+    const rich = obj["richText"];
+    if (Array.isArray(rich)) {
+      return (rich as { text: string }[]).map((part) => part.text).join("").trim();
     }
-    if ("text" in obj) return String(obj.text ?? "").trim();
-    if ("result" in obj) return String(obj.result ?? "").trim();
-    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    if ("text" in obj) return String(obj["text"] ?? "").trim();
+    if ("result" in obj) return String(obj["result"] ?? "").trim();
   }
   return String(value).trim();
 }
