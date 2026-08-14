@@ -149,16 +149,66 @@ export function useCategories() {
   });
 }
 
-export function useReferences(options?: { activeOnly?: boolean }) {
+export function useReferences(options?: { activeOnly?: boolean; year?: number }) {
   return useQuery({
     queryKey: ["references", options],
     queryFn: async () => {
-      let query = supabase.from("investment_references").select("*, investment_categories(name), operations_count:investment_operations(count)");
+      let query = supabase.from("investment_references").select(`
+        *, 
+        investment_categories(name), 
+        operations_count:investment_operations(count),
+        memberships:portfolio_memberships(portfolio_year)
+      `);
       if (options?.activeOnly) query = query.eq("active", true).is("archived_at", null);
+      if (options?.year) {
+        // Filtro via subquery ou post-process se necessário, mas o join já traz
+      }
       return unwrap(await query.order("name"));
     },
   });
 }
+
+export function usePortfolioMemberships(year: number) {
+  return useQuery({
+    queryKey: ["portfolio-memberships", year],
+    queryFn: async () =>
+      unwrap(
+        await supabase
+          .from("v_portfolio_memberships" as any)
+          .select("*")
+          .eq("portfolio_year", year),
+      ),
+  });
+}
+
+export function useUpdatePortfolioMembership() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ 
+      operationId, 
+      year, 
+      isActive 
+    }: { 
+      operationId: string; 
+      year: number; 
+      isActive: boolean 
+    }) => {
+      const { error } = await supabase
+        .from("portfolio_memberships" as any)
+        .upsert(
+          { operation_id: operationId, portfolio_year: year, is_active: isActive },
+          { onConflict: "operation_id,portfolio_year" }
+        );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolio-memberships"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["operations"] });
+    },
+  });
+}
+
 
 export function useCreateReference() {
   const queryClient = useQueryClient();
