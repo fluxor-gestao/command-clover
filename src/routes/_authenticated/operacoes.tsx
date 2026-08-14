@@ -1,7 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Info, Calculator, TrendingUp, Calendar, MoreHorizontal, Eye, Edit, Receipt, PlusCircle, Trash2 } from "lucide-react";
+import {
+  Info,
+  Calculator,
+  TrendingUp,
+  Calendar,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Receipt,
+  PlusCircle,
+  Search,
+  Filter,
+  X,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +33,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ReferenceCombobox } from "@/components/import/ReferenceCombobox";
 import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hooks";
 import { brl, dateBR, pct } from "@/lib/format";
