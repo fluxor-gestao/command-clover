@@ -247,6 +247,7 @@ function parseAnnualSheet(
   issues: ParsedIssue[],
 ) {
   let section = sheet.name;
+  let skipSection = false;
   let monthColumns: { column: number; month: number }[] = [];
   let columns = { reference: 2, dueDay: 3, capital: 4 };
 
@@ -277,8 +278,11 @@ function parseAnnualSheet(
     // Título de seção (categoria)
     if (colA && !colB && Number.isNaN(Number(colA)) && colA.length > 4) {
       section = colA;
+      // Blocos de patrimônio/imóveis não são recebíveis: os valores são preços de ativos
+      skipSection = /IMOVEIS|TITULARES|PATRIMONIO|RECEBIVEIS/.test(normalizeText(colA));
       return;
     }
+    if (skipSection) return;
 
     const reference = cellText(row.getCell(columns.reference));
     if (!reference) return;
