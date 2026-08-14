@@ -164,9 +164,9 @@ function ImportPage() {
                           <td className="px-3 py-2">{row.year}</td>
                           <td className="px-3 py-2 text-right">{row.operations}</td>
                           <td className="px-3 py-2 text-right">{row.installments}</td>
-                          <td className="px-3 py-2 text-right">{currencyBR(row.expected)}</td>
-                          <td className="px-3 py-2 text-right">{currencyBR(row.received)}</td>
-                          <td className="px-3 py-2 text-right">{currencyBR(row.overdue)}</td>
+                          <td className="px-3 py-2 text-right">{brl(row.expected)}</td>
+                          <td className="px-3 py-2 text-right">{brl(row.received)}</td>
+                          <td className="px-3 py-2 text-right">{brl(row.overdue)}</td>
                         </tr>
                       ))}
                     </tbody>
