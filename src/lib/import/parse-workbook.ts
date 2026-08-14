@@ -287,13 +287,16 @@ function parseAnnualSheet(
       /^(SUB[- ]?TOTA|TOTA|QT\.|RECEBIVEIS|IMOVEIS)/.test(normalized) ||
       normalized.includes("TOTAL") ||
       normalized === "REFERENCIA" ||
-      normalized === "-"
+      normalized === "-" ||
+      /^[0-9.,]+$/.test(normalized)
     ) {
       return;
     }
     if (monthColumns.length === 0) return;
 
     const op = index.get(reference, categoryFromSection(section));
+    const sectionCategory = categoryFromSection(section);
+    if (op.category === "Outros" && sectionCategory !== "Outros") op.category = sectionCategory;
     const dueDay = cellNumber(row.getCell(columns.dueDay));
     if (dueDay !== null && dueDay > 0 && op.dueDay === null) op.dueDay = Math.round(dueDay);
     const capital = cellNumber(row.getCell(columns.capital));
