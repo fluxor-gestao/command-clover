@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMonthlyFlow, useOperations, usePortfolioSummary } from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -294,24 +295,54 @@ function Kpi({
   hint,
   icon,
   tone,
+  primary,
 }: {
   title: string;
   value: string;
   hint?: string;
   icon?: React.ReactNode;
   tone?: "destructive";
+  primary?: boolean;
 }) {
   return (
-    <Card>
+    <Card className={cn(
+      "border-none shadow-sm transition-all hover:shadow-md",
+      primary ? "bg-primary text-primary-foreground" : "bg-card",
+      tone === "destructive" && !primary && "bg-destructive/5"
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        {icon}
+        <CardTitle className={cn(
+          "text-xs font-bold uppercase tracking-wider",
+          primary ? "text-primary-foreground/70" : "text-muted-foreground"
+        )}>
+          {title}
+        </CardTitle>
+        {icon && (
+          <div className={cn(
+            "rounded-md p-1.5",
+            primary ? "bg-primary-foreground/10" : "bg-muted"
+          )}>
+            {icon}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
-        <p className={tone === "destructive" ? "text-2xl font-semibold text-destructive" : "text-2xl font-semibold"}>
-          {value}
-        </p>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        <div className="flex flex-col gap-1">
+          <p className={cn(
+            "text-2xl font-bold tracking-tight",
+            tone === "destructive" && !primary ? "text-destructive" : ""
+          )}>
+            {value}
+          </p>
+          {hint && (
+            <p className={cn(
+              "text-[10px] font-medium uppercase tracking-tight opacity-70",
+              primary ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}>
+              {hint}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
