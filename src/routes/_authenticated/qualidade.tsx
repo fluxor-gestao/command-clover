@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { HomologacaoFinanceira } from "@/components/homolog/HomologacaoFinanceira";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useImportIssues, useResolveIssue } from "@/lib/data/hooks";
 import { dateBR } from "@/lib/format";
 
@@ -36,6 +38,17 @@ function QualityPage() {
         <p className="text-sm text-muted-foreground">{issues.data?.length ?? 0} apontamentos registrados.</p>
       </header>
 
+      <Tabs defaultValue="apontamentos" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="apontamentos">Apontamentos</TabsTrigger>
+          <TabsTrigger value="homologacao">Homologação financeira</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="homologacao">
+          <HomologacaoFinanceira />
+        </TabsContent>
+
+        <TabsContent value="apontamentos">
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Apontamentos</CardTitle>
@@ -97,6 +110,8 @@ function QualityPage() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
