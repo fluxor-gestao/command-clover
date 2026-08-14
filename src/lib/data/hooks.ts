@@ -4,12 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 export type PortfolioSummary = Database["public"]["Views"]["v_portfolio_summary"]["Row"];
-export type OperationPosition = Database["public"]["Views"]["v_operation_position"]["Row"] & {
-  capital_to_recover?: number | null;
-  recovery_percentage?: number | null;
-  future_receivable?: number | null;
-  last_installment_due?: string | null;
-};
+export type OperationPosition = Database["public"]["Views"]["v_operation_position"]["Row"];
 
 const unwrap = <T,>({ data, error }: { data: T[] | null; error: { message: string } | null }): T[] => {
   if (error) throw new Error(error.message);
@@ -282,6 +277,27 @@ export function useCancelReceipt() {
   });
 }
 
+export function useUpdateReceipt() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: async (payload: {
+      receiptId: string;
+      receiptDate: string;
+      notes: string | null;
+      allocations: { installment_id: string; amount: number }[];
+    }) => {
+      const { error } = await supabase.rpc("update_receipt", {
+        p_receipt_id: payload.receiptId,
+        p_receipt_date: payload.receiptDate,
+        p_notes: payload.notes,
+        p_allocations: payload.allocations,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: invalidate,
+  });
+}
+
 export function useCreateContribution() {
   const invalidate = useInvalidateAll();
   return useMutation({
@@ -293,6 +309,17 @@ export function useCreateContribution() {
       notes: string | null;
     }) => {
       const { error } = await supabase.from("investment_contributions").insert(payload);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateContribution() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: async ({ id, input }: { id: string; input: any }) => {
+      const { error } = await supabase.from("investment_contributions").update(input).eq("id", id);
       if (error) throw new Error(error.message);
     },
     onSuccess: invalidate,

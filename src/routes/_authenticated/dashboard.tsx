@@ -125,6 +125,12 @@ function DashboardPage() {
           icon={<TrendingUp className="size-4 text-muted-foreground" />}
         />
         <Kpi
+          title="Resultado Projetado"
+          value={brl(s?.projected_result)}
+          hint="Expectativa total de lucro"
+          icon={<TrendingUp className="size-4 text-primary" />}
+        />
+        <Kpi
           title="A receber (futuro)"
           value={brl(s?.future_receivable)}
           hint="Parcelas com vencimento em aberto"
