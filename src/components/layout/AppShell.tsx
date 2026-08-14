@@ -1,4 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import logoAsset from "@/assets/logo.png.asset.json";
 import {
   BarChart3,
   Building2,
