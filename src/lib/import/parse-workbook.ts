@@ -130,7 +130,7 @@ function cellNumber(cell: Cell | undefined): number | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value === "object") {
-    const result = (value as Record<string, unknown>).result;
+    const result = (value as Record<string, unknown>)["result"];
     if (typeof result === "number") return result;
     return null;
   }
