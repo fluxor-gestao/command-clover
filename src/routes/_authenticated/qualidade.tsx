@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { HomologacaoFinanceira } from "@/components/homolog/HomologacaoFinanceira";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useImportIssues, useResolveIssue } from "@/lib/data/hooks";
 import { dateBR } from "@/lib/format";
 
