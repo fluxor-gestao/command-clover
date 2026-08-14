@@ -286,7 +286,7 @@ export function useUpdateReceipt() {
       notes: string | null;
       allocations: { installment_id: string; amount: number }[];
     }) => {
-      const { error } = await supabase.rpc("update_receipt", {
+      const { error } = await supabase.rpc("update_receipt" as any, {
         p_receipt_id: payload.receiptId,
         p_receipt_date: payload.receiptDate,
         p_notes: payload.notes,
