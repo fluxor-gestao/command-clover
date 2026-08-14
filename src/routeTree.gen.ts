@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAportesRouteImport } from './routes/_authenticated/aportes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedParcelasRouteImport } from './routes/_authenticated/parcelas'
@@ -31,6 +32,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAportesRoute = AuthenticatedAportesRouteImport.update({
+  id: '/aportes',
+  path: '/aportes',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -63,6 +69,7 @@ const AuthenticatedOperacoesIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/parcelas': typeof AuthenticatedParcelasRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/aportes': typeof AuthenticatedAportesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
   '/_authenticated/parcelas': typeof AuthenticatedParcelasRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/aportes'
     | '/dashboard'
     | '/operacoes'
     | '/parcelas'
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/aportes'
     | '/dashboard'
     | '/operacoes'
     | '/parcelas'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/aportes'
     | '/_authenticated/dashboard'
     | '/_authenticated/operacoes'
     | '/_authenticated/parcelas'
@@ -148,6 +160,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/aportes': {
+      id: '/_authenticated/aportes'
+      path: '/aportes'
+      fullPath: '/aportes'
+      preLoaderRoute: typeof AuthenticatedAportesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -202,6 +221,7 @@ const AuthenticatedOperacoesRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAportesRoute: typeof AuthenticatedAportesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRouteWithChildren
   AuthenticatedParcelasRoute: typeof AuthenticatedParcelasRoute
@@ -209,6 +229,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAportesRoute: AuthenticatedAportesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRouteWithChildren,
   AuthenticatedParcelasRoute: AuthenticatedParcelasRoute,
