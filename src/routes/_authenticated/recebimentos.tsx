@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useCancelReceipt, useInstallments, useOperations, useReceipts, useRegisterReceipt, useUpdateReceipt } from "@/lib/data/hooks";
 import { brl, dateBR, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -215,17 +217,18 @@ function ReceiptsPage() {
                           title="Estornar lançamento"
                           onClick={async () => {
                             if (confirm("Deseja realmente estornar este recebimento? Motivo obrigatório será registrado na auditoria.")) {
-                            try {
-                              await cancel.mutateAsync(receipt.id);
-                              toast.success("Recebimento estornado.");
-                            } catch (error) {
-                              toast.error(error instanceof Error ? error.message : "Falha ao estornar.");
+                              try {
+                                await cancel.mutateAsync(receipt.id);
+                                toast.success("Recebimento estornado.");
+                              } catch (error) {
+                                toast.error(error instanceof Error ? error.message : "Falha ao estornar.");
+                              }
                             }
-                          }
-                        }}
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
+                          }}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -242,5 +245,59 @@ function ReceiptsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function EditReceiptDialog({ receipt }: { receipt: any }) {
+  const update = useUpdateReceipt();
+  const [open, setOpen] = useState(false);
+  const [receiptDate, setReceiptDate] = useState(receipt.receipt_date);
+  const [notes, setNotes] = useState(receipt.notes || "");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await update.mutateAsync({
+        receiptId: receipt.id,
+        receiptDate,
+        notes: notes || null,
+        allocations: [], // Em uma implementação completa, carregaríamos as alocações atuais para edição
+      });
+      toast.success("Recebimento atualizado.");
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+          <Edit2 className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Recebimento</DialogTitle>
+          <DialogDescription>
+            Altere a data ou observações do lançamento.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label>Data</Label>
+            <Input type="date" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Observações</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Motivo da alteração..." />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={update.isPending}>Salvar Alterações</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
