@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Info, Calculator, TrendingUp, Calendar } from "lucide-react";
+import { Info, Calculator, TrendingUp, Calendar, MoreHorizontal, Eye, Edit, Receipt, PlusCircle, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ReferenceCombobox } from "@/components/import/ReferenceCombobox";
 import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hooks";
 import { brl, dateBR, pct } from "@/lib/format";
@@ -122,6 +123,7 @@ function OperationsPage() {
                 <TableHead className="text-right">Retorno</TableHead>
                 <TableHead>Últ. venc.</TableHead>
                 <TableHead>Situação</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,6 +149,9 @@ function OperationsPage() {
                     <TableCell>{dateBR(op.last_installment_due)}</TableCell>
                     <TableCell>
                       <Badge variant={badge.variant}>{badge.label}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <OperationActions operation={op} />
                     </TableCell>
                   </TableRow>
                 );
@@ -392,5 +397,43 @@ function NewOperationDialog() {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function OperationActions({ operation }: { operation: any }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link to="/operacoes/$id" params={{ id: operation.operation_id }}>
+            <Eye className="mr-2 h-4 w-4" /> Ver detalhes
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Edit className="mr-2 h-4 w-4" /> Editar contrato
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/recebimentos" search={{ operationId: operation.operation_id }}>
+            <Receipt className="mr-2 h-4 w-4" /> Registrar recebimento
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/aportes">
+            <PlusCircle className="mr-2 h-4 w-4" /> Registrar aporte
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive">
+          <Trash2 className="mr-2 h-4 w-4" /> Cancelar operação
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
