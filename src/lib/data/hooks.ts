@@ -2,9 +2,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 
-const unwrap = <T,>({ data, error }: { data: T | null; error: { message: string } | null }): T => {
+const unwrap = <T,>({ data, error }: { data: T[] | null; error: { message: string } | null }): T[] => {
   if (error) throw new Error(error.message);
-  return (data ?? []) as T;
+  return data ?? [];
+};
+
+const unwrapOne = <T,>({
+  data,
+  error,
+}: {
+  data: T | null;
+  error: { message: string } | null;
+}): T | null => {
+  if (error) throw new Error(error.message);
+  return data;
 };
 
 export function usePortfolioSummary() {
