@@ -111,7 +111,7 @@ function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(flow.data ?? []).map((row) => (
+                  {rows.map((row) => (
                     <TableRow key={row.competence} className="group hover:bg-muted/50 transition-colors border-border/40">
                       <TableCell className="font-bold py-4 pl-6">{competenceBR(row.competence)}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{row.installments_count ?? 0}</TableCell>
