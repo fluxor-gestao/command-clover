@@ -1,24 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Fluxor · Área de trabalho em branco" },
+      {
+        name: "description",
+        content:
+          "Área em branco da Diretoria CA, pronta para receber os próximos comandos e construções.",
+      },
+      { property: "og:title", content: "Fluxor · Área de trabalho em branco" },
+      {
+        property: "og:description",
+        content: "Espaço limpo pronto para receber comandos e novas construções.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="flex min-h-screen flex-col bg-background">
+      <div className="flex flex-1 items-center justify-center px-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Área em branco
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Pronta para receber seus comandos.
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }
