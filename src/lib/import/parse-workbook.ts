@@ -372,18 +372,26 @@ function parseAnnualSheet(
     if (monthColumns.length === 0) return;
 
     const refKey = normalizeReference(reference);
-    if (seenReferences.has(refKey)) {
+    const duplicated = seenReferences.has(refKey);
+    if (duplicated) {
       issues.push({
         sheet: sheet.name,
         row: String(rowNumber),
         reference,
         issueType: "REFERENCIA_DUPLICADA",
-        description: "Referência repetida na mesma aba — os valores foram consolidados em uma única operação.",
+        description:
+          "Referência repetida na mesma aba — registrada como operação separada identificada pela linha de origem.",
       });
     }
     seenReferences.add(refKey);
 
-    const op = index.get(reference, categoryFromSection(section));
+    const displayReference = duplicated ? `${reference.trim()} (linha ${rowNumber})` : reference;
+    const op = index.get(
+      displayReference,
+      categoryFromSection(section),
+      duplicated ? `${refKey}#${sheet.name}#${rowNumber}` : undefined,
+    );
+
     if (!op.sheets.includes(sheet.name)) op.sheets.push(sheet.name);
     const sectionCategory = categoryFromSection(section);
     if (op.category === "Outros" && sectionCategory !== "Outros") op.category = sectionCategory;
