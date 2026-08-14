@@ -22,6 +22,28 @@ export function usePortfolioSummary() {
   });
 }
 
+/** Soma dos recebimentos efetivos (data real) dentro do mês informado (YYYY-MM). */
+export function useReceivedInMonth(month: string) {
+  return useQuery({
+    queryKey: ["received-in-month", month],
+    queryFn: async (): Promise<number> => {
+      const start = `${month}-01`;
+      const [y, m] = month.split("-").map(Number);
+      const end = new Date(Date.UTC(m === 12 ? y! + 1 : y!, m === 12 ? 0 : m!, 1)).toISOString().slice(0, 10);
+      const { data, error } = await supabase
+        .from("investment_receipts")
+        .select("total_amount")
+        .is("cancelled_at", null)
+        .gte("receipt_date", start)
+        .lt("receipt_date", end)
+        .limit(5000);
+      if (error) throw new Error(error.message);
+      return (data ?? []).reduce((sum, row) => sum + Number(row.total_amount ?? 0), 0);
+    },
+    enabled: Boolean(month),
+  });
+}
+
 export function useOperations() {
   return useQuery({
     queryKey: ["operations"],
