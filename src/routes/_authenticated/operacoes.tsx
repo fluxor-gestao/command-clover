@@ -44,7 +44,6 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   INADIMPLENTE: { label: "Inadimplente", variant: "destructive" },
   LIQUIDADA: { label: "Liquidada", variant: "secondary" },
 };
-};
 
 function OperationsPage() {
   const operations = useOperations();
