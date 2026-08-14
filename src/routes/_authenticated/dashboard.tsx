@@ -240,7 +240,7 @@ function DashboardPage() {
                   type="monotone"
                   dataKey="inadimplente"
                   name="Inadimplente"
-                  stroke="var(--destructive)"
+                  stroke="oklch(0.605 0.22 28.27)"
                   strokeWidth={2}
                   dot={false}
                 />
