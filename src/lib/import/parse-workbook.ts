@@ -629,18 +629,50 @@ export function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function parseWorkbook(workbook: Workbook): ParseResult {
+export interface ParseOptions {
+  /** Abas anuais a considerar. Vazio/omitido = todas as encontradas. */
+  sheets?: string[];
+  /** Mês de referência (YYYY-MM) para separar recebido/inadimplente de previsto. */
+  referenceMonth?: string;
+}
+
+export function listAnnualSheets(workbook: Workbook): string[] {
+  const names: string[] = [];
+  workbook.eachSheet((sheet) => {
+    if (/RECEBER/.test(normalizeText(sheet.name)) && yearFromSheetName(sheet.name) !== null) {
+      names.push(sheet.name);
+    }
+  });
+  return names;
+}
+
+export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): ParseResult {
   const index = new OperationIndex();
   const issues: ParsedIssue[] = [];
   const sheetsRead: string[] = [];
+  const availableSheets = listAnnualSheets(workbook);
+  const referenceMonth = options.referenceMonth ?? new Date().toISOString().slice(0, 7);
+  const selected = options.sheets?.length ? new Set(options.sheets) : null;
+
+  const baseline: ParseBaseline = {
+    operationRows: 0,
+    capitalTotal: 0,
+    monthlyTotal: 0,
+    receivedTotal: 0,
+    overdueTotal: 0,
+    toReceiveTotal: 0,
+    monthlyCells: 0,
+    ignoredRows: 0,
+  };
 
   // 1) abas anuais
   workbook.eachSheet((sheet) => {
     const year = yearFromSheetName(sheet.name);
     const isAnnual = /RECEBER/.test(normalizeText(sheet.name)) && year !== null;
     if (!isAnnual) return;
+    if (selected && !selected.has(sheet.name)) return;
     sheetsRead.push(sheet.name);
-    parseAnnualSheet(sheet, year!, index, issues);
+    parseAnnualSheet(sheet, year!, index, issues, baseline, referenceMonth);
   });
 
   // 2) abas estruturadas
@@ -663,68 +695,96 @@ export function parseWorkbook(workbook: Workbook): ParseResult {
     }
   });
 
-  const today = new Date().toISOString().slice(0, 10);
   const operations = index.all().filter((op) => op.installments.length > 0 || op.initialCapital);
 
   for (const op of operations) {
     op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
-    if (!op.firstDueDate && op.installments.length > 0) {
-      op.firstDueDate = null; // contrato não confirmado: não inventar
-    }
     const contractComplete = Boolean(op.installmentCount && op.installmentValue && op.firstDueDate);
     op.incomplete = !contractComplete;
-    if (!contractComplete) {
+    if (!op.installmentCount) {
       issues.push({
-        sheet: "Operações",
+        sheet: op.sheets[0] ?? "Operações",
         row: op.reference,
         reference: op.reference,
-        issueType: "CONTRATO_INCOMPLETO",
-        description: "Contrato incompleto — informar primeiro vencimento, quantidade de parcelas e valor da parcela.",
+        issueType: "PARCELAS_NAO_IDENTIFICADAS",
+        description: "Quantidade de parcelas não identificada na planilha.",
+      });
+    }
+    if (!op.firstDueDate) {
+      issues.push({
+        sheet: op.sheets[0] ?? "Operações",
+        row: op.reference,
+        reference: op.reference,
+        issueType: "PRIMEIRO_VENCIMENTO_AUSENTE",
+        description: "Primeiro vencimento não informado na planilha.",
+      });
+    }
+    if (!op.initialCapital) {
+      issues.push({
+        sheet: op.sheets[0] ?? "Operações",
+        row: op.reference,
+        reference: op.reference,
+        issueType: "CAPITAL_NAO_IDENTIFICADO",
+        description: "Capital investido (Valor Emprestado) não informado para esta operação.",
       });
     }
   }
 
+  const sum = (fn: (i: ParsedInstallment) => number) =>
+    round2(operations.reduce((total, op) => total + op.installments.reduce((s, i) => s + fn(i), 0), 0));
+
+  const enrichedIssues = issues.map((issue) => ({
+    ...issue,
+    severity: issue.severity ?? ISSUE_SEVERITY[issue.issueType],
+    action: issue.action ?? ISSUE_ACTION[issue.issueType],
+  }));
+
+  const critical = enrichedIssues.filter((i) => i.severity === "CRITICO");
+  const criticalRefs = new Set(critical.map((i) => normalizeReference(i.reference ?? "")));
+  const pendingRefs = new Set(
+    enrichedIssues
+      .filter((i) => i.severity === "ATENCAO" && i.reference)
+      .map((i) => normalizeReference(i.reference!)),
+  );
+
   const stats = {
     sheetsRead: [...new Set(sheetsRead)],
+    availableSheets,
+    referenceMonth,
     operations: operations.length,
-    installments: operations.reduce((sum, op) => sum + op.installments.length, 0),
+    installments: operations.reduce((total, op) => total + op.installments.length, 0),
     receivedInstallments: operations.reduce(
-      (sum, op) => sum + op.installments.filter((i) => i.received > 0).length,
+      (total, op) => total + op.installments.filter((i) => i.received > 0).length,
       0,
     ),
     overdueInstallments: operations.reduce(
-      (sum, op) =>
-        sum + op.installments.filter((i) => i.dueDate < today && i.received < i.expected).length,
+      (total, op) => total + op.installments.filter((i) => i.overdue > 0).length,
       0,
     ),
-    contributions: operations.reduce((sum, op) => sum + op.contributions.length, 0),
-    expectedTotal: round2(
-      operations.reduce((sum, op) => sum + op.installments.reduce((s, i) => s + i.expected, 0), 0),
-    ),
-    receivedTotal: round2(
-      operations.reduce((sum, op) => sum + op.installments.reduce((s, i) => s + i.received, 0), 0),
-    ),
-    overdueTotal: round2(
-      operations.reduce(
-        (sum, op) =>
-          sum +
-          op.installments.reduce(
-            (s, i) => s + (i.dueDate < today ? Math.max(i.expected - i.received, 0) : 0),
-            0,
-          ),
-        0,
-      ),
-    ),
+    contributions: operations.reduce((total, op) => total + op.contributions.length, 0),
+    expectedTotal: sum((i) => i.expected),
+    receivedTotal: sum((i) => i.received),
+    overdueTotal: sum((i) => i.overdue),
+    toReceiveTotal: sum((i) => Math.max(i.expected - i.received - i.overdue, 0)),
     investedTotal: round2(
       operations.reduce(
-        (sum, op) =>
-          sum +
-          (op.initialCapital ?? 0) +
-          op.contributions.reduce((s, c) => s + c.amount, 0),
+        (total, op) =>
+          total + (op.initialCapital ?? 0) + op.contributions.reduce((s, c) => s + c.amount, 0),
         0,
       ),
     ),
   };
 
-  return { operations, issues, stats };
+  const readiness = {
+    ready: operations.filter(
+      (op) => !criticalRefs.has(normalizeReference(op.reference)) && !pendingRefs.has(normalizeReference(op.reference)),
+    ).length,
+    pending: operations.filter((op) => pendingRefs.has(normalizeReference(op.reference))).length,
+    ignored: baseline.ignoredRows,
+    critical: critical.length,
+  };
+
+  return { operations, issues: enrichedIssues, baseline, readiness, stats };
+}
+
 }
