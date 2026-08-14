@@ -1,26 +1,48 @@
-# Plan - Remove landing page and redirect to login
+# Refinamento do Sistema de Gestão de Investimentos - Nova Era
 
-The user wants to remove the initial landing page that contains the "Acessar Sistema" button and instead open the application directly at the login screen.
+Este plano detalha a "Onda Final de Refinamento", focando em estruturar referências, melhorar a interatividade e reduzir o esforço do usuário através de cadastros mestres e componentes de seleção inteligentes.
 
-## User Review Required
+## 1. Estrutura de Referências (Database)
 
-> [!IMPORTANT]
-> This change will make the `/auth` page the new entry point for unauthenticated users.
+A ideia é separar a **Referência** (o ativo/imóvel/pessoa) da **Operação** (o contrato financeiro).
 
-- None
+### Novas Tabelas e Alterações
+- **Criar `investment_references`**: 
+  - `id`, `name` (unique), `category_id`, `description`, `active` (default true), `created_at`, `updated_at`, `archived_at`.
+- **Alterar `investment_operations`**:
+  - Adicionar `reference_id` (FK para `investment_references`).
+- **Migração**:
+  - Script para extrair referências únicas de `investment_operations` atual e popular `investment_references`.
+  - Atualizar `reference_id` em todas as operações existentes.
+  - Manter o campo `reference` (text) em `investment_operations` por compatibilidade ou remover após garantir que as views usam o join. *Decisão: Manter temporariamente e atualizar views.*
 
-## Proposed Changes
+## 2. Interface de Referências
 
-### Routing
+- **Nova Tela**: `src/routes/_authenticated/referencias.tsx`.
+  - Listagem com filtros de Categoria e Status.
+  - Visualização resumida: Capital Total Investido e Recebido por referência (drill-down para operações).
+- **Combobox Inteligente**:
+  - Componente de seleção de referência com busca.
+  - Botão "+ Cadastrar Nova Referência" integrado no dropdown.
+  - Modal rápido de cadastro sem sair do fluxo de "Nova Operação".
 
-#### [src/routes/index.tsx](src/routes/index.tsx)
-- Replace the current landing page component with a redirect to `/auth`.
-- Use the `beforeLoad` or a simple `Navigate` component to handle the redirection.
+## 3. Refinamento de Fluxos (UX)
 
-## Verification Plan
+### Nova Operação
+- **Resumo Dinâmico**: Ao preencher valor da parcela e quantidade, mostrar imediatamente o ROI projetado e a data do último vencimento.
+- **Autofill**: Ao selecionar uma Referência já cadastrada, preencher a Categoria automaticamente.
 
-### Automated Tests
-- Run a Playwright script to verify that navigating to `http://localhost:8080/` automatically redirects to `http://localhost:8080/auth`.
+### Edição de Operações
+- **Edição Segura**: Se o usuário tentar alterar valor/quantidade de parcelas em uma operação com recebimentos, exibir um aviso.
+- **Histórico**: Registro automático no `investment_audit_log` para qualquer alteração contratual.
 
-### Manual Verification
-- Open the preview at the root path and confirm it lands on the login page.
+### Tabela de Operações
+- Adição de menu de ações rápido (⋮).
+- Referência clicável levando para o detalhe da operação.
+- Melhoria na visualização de "Retorno" (exibindo lucro/prejuízo projetado).
+
+## Detalhes Técnicos
+- **RLS**: Garantir que a nova tabela `investment_references` tenha políticas de acesso corretas.
+- **Views**: Atualizar `v_operation_position` e `v_monthly_flow` para usar `investment_references.name`.
+- **Idempotência**: Manter a lógica de importação compatível com o novo ID de referência.
+
