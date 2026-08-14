@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useMonthlyFlow } from "@/lib/data/hooks";
+import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
+import { useMonthlyFlow, usePortfolioMetrics } from "@/lib/data/hooks";
 import { brl, competenceBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,14 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
 });
 
 function ReportsPage() {
+  const [scopeValue, setScopeValue] = useState(new Date().getFullYear().toString());
+  const scope = scopeFromValue(scopeValue);
+  const year = "year" in scope ? scope.year : null;
+  const metrics = usePortfolioMetrics(scope);
   const flow = useMonthlyFlow();
+  const rows = (flow.data ?? []).filter((row) =>
+    year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year),
+  );
 
   return (
     <div className="space-y-8">
