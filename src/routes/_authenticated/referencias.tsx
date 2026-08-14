@@ -78,7 +78,7 @@ function ReferencesPage() {
             </p>
           </div>
         </div>
-        <NewReferenceDialog />
+        <NewReferenceDialog references={references} />
       </header>
 
       <div className="space-y-4">
@@ -148,7 +148,9 @@ function ReferencesPage() {
                       <span className="text-xs text-muted-foreground">{(ref as any).investment_categories?.name ?? "—"}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="text-[10px]">{ref.operations_count || 0}</Badge>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {(ref as any).operations_count?.[0]?.count ?? 0}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge 
@@ -201,7 +203,7 @@ function ReferencesPage() {
   );
 }
 
-function NewReferenceDialog() {
+function NewReferenceDialog({ references }: { references: any }) {
   const categories = useCategories();
   const create = useCreateReference();
   const [open, setOpen] = useState(false);
@@ -216,7 +218,7 @@ function NewReferenceDialog() {
     
     const normalizedName = normalizeString(form.name);
     const exists = (references.data ?? []).some(
-      (r) => normalizeString(r.name) === normalizedName
+      (r: any) => normalizeString(r.name) === normalizedName
     );
 
     if (exists) {
