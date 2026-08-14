@@ -1,28 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+export type PortfolioSummary = Database["public"]["Views"]["v_portfolio_summary"]["Row"];
+export type OperationPosition = Database["public"]["Views"]["v_operation_position"]["Row"];
 
 const unwrap = <T,>({ data, error }: { data: T[] | null; error: { message: string } | null }): T[] => {
   if (error) throw new Error(error.message);
   return data ?? [];
 };
 
-const unwrapOne = <T,>({
-  data,
-  error,
-}: {
-  data: T | null;
-  error: { message: string } | null;
-}): T | null => {
-  if (error) throw new Error(error.message);
-  return data;
-};
-
 export function usePortfolioSummary() {
   return useQuery({
     queryKey: ["portfolio-summary"],
-    queryFn: async () =>
-      unwrapOne(await supabase.from("v_portfolio_summary").select("*").maybeSingle()),
+    queryFn: async (): Promise<PortfolioSummary | null> => {
+      const { data, error } = await supabase.from("v_portfolio_summary").select("*").maybeSingle();
+      if (error) throw new Error(error.message);
+      return data;
+    },
   });
 }
 
@@ -39,10 +35,15 @@ export function useOperations() {
 export function useOperation(operationId: string) {
   return useQuery({
     queryKey: ["operation", operationId],
-    queryFn: async () =>
-      unwrapOne(
-        await supabase.from("v_operation_position").select("*").eq("operation_id", operationId).maybeSingle(),
-      ),
+    queryFn: async (): Promise<OperationPosition | null> => {
+      const { data, error } = await supabase
+        .from("v_operation_position")
+        .select("*")
+        .eq("operation_id", operationId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data;
+    },
     enabled: Boolean(operationId),
   });
 }
