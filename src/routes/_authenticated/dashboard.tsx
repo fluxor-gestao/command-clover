@@ -121,7 +121,7 @@ function DashboardPage() {
         <Kpi
           title="Lucro realizado"
           value={brl(s?.realized_profit)}
-          hint={`Resultado projetado ${brl(s?.projected_result)}`}
+          hint={`Lucro sobre capital retornado`}
           icon={<TrendingUp className="size-4 text-muted-foreground" />}
         />
         <Kpi
