@@ -2,6 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories, useCreateOperation, useOperations, useUpdatePortfolioMembership } from "@/lib/data/hooks";
+
 import {
   Info,
   Calculator,
@@ -48,7 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ReferenceCombobox } from "@/components/import/ReferenceCombobox";
-import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hooks";
+
 import { brl, dateBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
