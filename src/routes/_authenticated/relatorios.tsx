@@ -52,10 +52,34 @@ function ReportsPage() {
             <p className="text-sm text-muted-foreground mt-0.5">Análise de performance e saúde da carteira</p>
           </div>
         </div>
-        <Button variant="outline" className="h-9 text-[10px] font-bold uppercase tracking-widest border-muted-foreground/20 bg-card/50">
-          <Download className="mr-2 size-3" /> Exportar Consolidado
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <YearScopeSelect value={scopeValue} onChange={setScopeValue} />
+          <Button variant="outline" className="h-9 text-[10px] font-bold uppercase tracking-widest border-muted-foreground/20 bg-card/50">
+            <Download className="mr-2 size-3" /> Exportar Consolidado
+          </Button>
+        </div>
       </header>
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Capital investido", value: brl(metrics.data?.total_invested) },
+          { label: "Total recebido", value: brl(metrics.data?.total_received) },
+          { label: "Total a receber", value: brl(metrics.data?.total_a_receber) },
+          { label: "Saldo inadimplente", value: brl(metrics.data?.overdue_receivable) },
+        ].map((item) => (
+          <Card key={item.label} className="border-none shadow-sm bg-card/50">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {item.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-bold tabular-nums">{item.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
+
 
       <Tabs defaultValue="fluxo" className="space-y-6">
         <TabsList className="h-11 p-1 bg-muted/50 rounded-xl w-full justify-start overflow-x-auto overflow-y-hidden">
