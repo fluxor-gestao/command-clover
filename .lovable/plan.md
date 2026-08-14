@@ -1,39 +1,56 @@
----
-name: Captura de Telas do Sistema
-description: Gerar um arquivo consolidado com capturas de tela (prints) de todas as páginas do sistema para documentação.
-type: feature
----
+# Onda Visual Premium — Nova Era
 
-O usuário solicitou um arquivo contendo o print de cada tela do sistema. Vou criar um processo automatizado para capturar essas telas e gerar um documento consolidado.
+Elevar a experiência visual para o nível de um SaaS financeiro premium, focando em clareza, hierarquia, sofisticação e microinterações.
 
-## Etapas
+## Identidade Visual
+- **Paleta**: Navy muito escuro (BG/Sidebar), Off-white (Área de conteúdo), tons neutros, verde financeiro, vermelho alerta e âmbar atenção.
+- **Estilo**: Sem excessos, gradientes chamativos ou neon. Sombras leves e foco em tipografia.
 
-1. **Preparação da Sessão**: Utilizar a sessão de usuário já autenticada para garantir acesso às rotas protegidas.
-2. **Script de Captura**: Criar um script Playwright em Python para:
-    - Autenticar no sistema injetando o token na LocalStorage.
-    - Navegar por cada uma das rotas:
-        - Login (`/auth`)
-        - Dashboard (`/dashboard`)
-        - Operações (`/operacoes`)
-        - Detalhe de Operação (`/operacoes/[id]`)
-        - Referências (`/referencias`)
-        - Recebimentos (`/recebimentos`)
-        - Aportes (`/aportes`)
-        - Importação (`/importacao`)
-        - Qualidade da Base (`/qualidade`)
-        - Relatórios (`/relatorios`)
-        - Parcelas (`/parcelas`)
-    - Aguardar o carregamento dos dados em cada página.
-    - Salvar os prints em `/mnt/documents/screenshots/`.
-3. **Consolidação**: Criar um arquivo Markdown (`/mnt/documents/portfolio_sistema_nova_era.md`) que exibe todas as imagens capturadas com suas respectivas descrições.
+## Etapas de Implementação
+
+### 1. Fundação & Layout (AppShell & Sidebar)
+- **Sidebar**:
+  - Implementar colapsibilidade (desktop).
+  - Nova hierarquia: "NOVA ERA" (topo) e "Gestão de Investimentos" (logo abaixo).
+  - Itens agrupados por categoria (Operacional vs. Gestão/Importação) com separador.
+  - Hovers refinados, ícones minimalistas e tooltips para estado colapsado.
+- **Header**:
+  - Header discreto com Breadcrumb (esquerda).
+  - Busca global ("Buscar operação ou referência...") e Avatar/Menu (direita).
+
+### 2. Dashboard Executivo
+- **Cards de KPI**:
+  - Peso visual maior nos 4 principais (Investido, Recebido, A Recuperar, Total a Receber).
+  - Ícones em pequenos containers, labels claras e microtexto informativo (ex: "% do capital").
+  - Inadimplência com destaque vermelho suave (não fundo sólido).
+- **Recuperação de Capital**:
+  - Progress bar moderna e alta, com valores "X de Y recuperados" em destaque.
+- **Gráficos (Recharts)**:
+  - Refinar tooltips, legendas, grid e labels.
+  - Segmented control para período no fluxo mensal (12m, 24m, 36m, 60m).
+  - Drill-down simples ao clicar nas competências.
+
+### 3. Carteira de Investimentos (Tabelas & Operações)
+- **Tabelas**:
+  - Whitespace generoso, cabeçalhos discretos, alinhamento monetário à direita.
+  - Badges de status consistentes e coluna de ações (⋮).
+- **Tela de Operações**:
+  - Toolbar única para filtros com chips de busca ativa.
+  - Primeira coluna sticky para facilitar visualização em scroll horizontal.
+
+### 4. Experiência de Detalhe e Fluxos Operacionais
+- **Detalhe da Operação**:
+  - Header com status e ações rápidas.
+  - Organização por Tabs (Visão Geral, Parcelas, Recebimentos, Aportes, Histórico).
+  - Timeline contratual visual (Início -> 1º Vencimento -> Fim).
+- **Recebimentos & Aportes**:
+  - Layout focado em produtividade (Formulário lateral ou Drawer + Histórico em tabela).
+  - Empty states premium informativos.
+- **Importação & Qualidade**:
+  - Área drag-and-drop para upload.
+  - Substituição de termos técnicos por labels amigáveis com tooltips explicativos.
 
 ## Detalhes Técnicos
-
-- **Autenticação**: O script usará o arquivo de sessão `~/.cache/lovable-auth/session.json`.
-- **Estabilidade**: O script incluirá esperas (`wait_for_selector` ou `wait_for_load_state`) para garantir que os gráficos e tabelas estejam renderizados antes do print.
-- **Saída**: As imagens serão salvas em formato PNG e referenciadas no Markdown final.
-
-## Verificação
-
-- Confirmar que todas as páginas foram capturadas sem erros de "Não Autorizado".
-- Validar se o arquivo Markdown final abre corretamente com os links das imagens.
+- Utilizar `SidebarProvider` e componentes `Sidebar` do Shadcn para colapsibilidade.
+- Aplicar oklch para cores exatas do design system.
+- Refinar `src/components/ui/table.tsx` e `src/components/ui/card.tsx` para o estilo premium.
