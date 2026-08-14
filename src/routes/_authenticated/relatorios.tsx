@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, FileBarChart, PieChart, TrendingUp } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -86,8 +88,8 @@ function ReportsPage() {
                       <TableCell className="text-right tabular-nums">
                         <Badge variant="outline" className={cn(
                           "h-5 font-bold border-none",
-                          row.realization_percentage >= 90 ? "bg-success/10 text-success" : 
-                          row.realization_percentage >= 50 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                          (row.realization_percentage ?? 0) >= 90 ? "bg-success/10 text-success" : 
+                          (row.realization_percentage ?? 0) >= 50 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                         )}>
                           {pct(row.realization_percentage)}
                         </Badge>
