@@ -559,7 +559,7 @@ function PortfolioToggle({ operationId, year }: { operationId: string; year: num
   const { data: memberships } = usePortfolioMemberships(year);
   const updateMembership = useUpdatePortfolioMembership();
   
-  const isActive = memberships?.some(m => m.operation_id === operationId && m.is_active);
+  const isActive = (memberships as any[])?.some((m: any) => m.operation_id === operationId && m.is_active);
 
   return (
     <Button
