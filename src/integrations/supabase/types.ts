@@ -618,6 +618,7 @@ export type Database = {
           recovery_percentage: number | null
           review_operations: number | null
           total_a_receber: number | null
+          total_installments: number | null
           total_invested: number | null
           total_operations: number | null
           total_previsto_carteira: number | null
