@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -21,7 +22,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMonthlyFlow, useOperations, usePortfolioSummary, useReceivedInMonth } from "@/lib/data/hooks";
+import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
+import {
+  useInstallments,
+  useMonthlyFlow,
+  useOperations,
+  usePortfolioMetrics,
+  useReceivedInMonth,
+} from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
