@@ -556,12 +556,10 @@ function OperationActions({ operation }: { operation: any }) {
 }
 
 function PortfolioToggle({ operationId, year }: { operationId: string; year: number }) {
-  const { data: operations } = useOperations();
+  const { data: memberships } = usePortfolioMemberships(year);
   const updateMembership = useUpdatePortfolioMembership();
   
-  const op = operations?.find(o => o.operation_id === operationId);
-  // O backend ainda não retorna memberships na view, mas podemos simular ou usar o hook específico
-  const isActive = false; // Mock - implementar via hook real de memberships se necessário
+  const isActive = memberships?.some(m => m.operation_id === operationId && m.is_active);
 
   return (
     <Button
@@ -569,14 +567,14 @@ function PortfolioToggle({ operationId, year }: { operationId: string; year: num
       size="sm"
       className={cn(
         "h-7 w-7 p-0 rounded-full",
-        isActive ? "text-amber-500 hover:text-amber-600" : "text-muted-foreground/30 hover:text-muted-foreground"
+        isActive ? "text-amber-500 hover:text-amber-600 bg-amber-500/5" : "text-muted-foreground/30 hover:text-muted-foreground"
       )}
       onClick={() => {
         toast.promise(
           updateMembership.mutateAsync({ operationId, year, isActive: !isActive }),
           {
             loading: "Atualizando carteira...",
-            success: isActive ? "Removido da carteira gerencial." : "Adicionado à carteira gerencial.",
+            success: !isActive ? "Adicionado à carteira gerencial." : "Removido da carteira gerencial.",
             error: "Falha ao atualizar carteira.",
           }
         );
