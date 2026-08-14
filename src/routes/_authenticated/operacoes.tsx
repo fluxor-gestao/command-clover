@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { z } from "zod";
 import { toast } from "sonner";
 import {
   Info,
@@ -49,7 +50,14 @@ import { useCategories, useCreateOperation, useOperations } from "@/lib/data/hoo
 import { brl, dateBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+const searchSchema = z.object({
+  search: z.string().optional(),
+  status: z.string().optional(),
+  category: z.string().optional(),
+});
+
 export const Route = createFileRoute("/_authenticated/operacoes")({
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Operações · Nova Era Investimentos" },
@@ -70,10 +78,17 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 function OperationsPage() {
+  const navigate = useNavigate();
+  const searchParams = Route.useSearch();
   const operations = useOperations();
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("TODOS");
-  const [category, setCategory] = useState("TODAS");
+  
+  const search = searchParams.search || "";
+  const status = searchParams.status || "TODOS";
+  const category = searchParams.category || "TODAS";
+
+  const setSearch = (v: string) => navigate({ search: (prev) => ({ ...prev, search: v || undefined }) });
+  const setStatus = (v: string) => navigate({ search: (prev) => ({ ...prev, status: v === "TODOS" ? undefined : v }) });
+  const setCategory = (v: string) => navigate({ search: (prev) => ({ ...prev, category: v === "TODAS" ? undefined : v }) });
 
   const filtered = useMemo(() => {
     return (operations.data ?? []).filter((op) => {
