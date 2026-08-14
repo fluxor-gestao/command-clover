@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCategories, useCreateOperation, useOperations, useUpdatePortfolioMembership } from "@/lib/data/hooks";
+import { useCategories, useCreateOperation, useOperations, usePortfolioMemberships, useUpdatePortfolioMembership } from "@/lib/data/hooks";
 
 import {
   Info,
