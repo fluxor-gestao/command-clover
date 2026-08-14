@@ -3,26 +3,56 @@ import {
   BarChart3,
   Building2,
   CalendarClock,
+  ChevronLeft,
+  ChevronRight,
   FileSpreadsheet,
   LayoutDashboard,
   LogOut,
   PiggyBank,
+  Search,
   ShieldCheck,
+  User,
   Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+const NAV_OPERATIONAL = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/operacoes", label: "Operações", icon: Building2 },
   { to: "/referencias", label: "Referências", icon: Building2 },
-  { to: "/parcelas", label: "Parcelas", icon: CalendarClock },
+  { to: "/parcelas", label: "Parcelas & Vencimentos", icon: CalendarClock },
   { to: "/recebimentos", label: "Recebimentos", icon: Wallet },
   { to: "/aportes", label: "Aportes", icon: PiggyBank },
+] as const;
+
+const NAV_SYSTEM = [
   { to: "/importacao", label: "Importação", icon: FileSpreadsheet },
   { to: "/qualidade", label: "Qualidade da base", icon: ShieldCheck },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
@@ -31,61 +61,142 @@ const NAV = [
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
   };
 
-  return (
-    <div className="flex min-h-screen bg-muted/30">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 lg:flex">
-        <div className="px-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nova Era</p>
-          <p className="text-lg font-semibold text-sidebar-foreground">Gestão de Investimentos</p>
-        </div>
-        <nav className="mt-8 flex flex-1 flex-col gap-1">
-          {NAV.map((item) => {
-            const active = pathname.startsWith(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <item.icon className="size-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <Button variant="ghost" className="justify-start gap-3" onClick={signOut}>
-          <LogOut className="size-4" />
-          Sair
-        </Button>
-      </aside>
+  const getPageTitle = () => {
+    const allNav = [...NAV_OPERATIONAL, ...NAV_SYSTEM];
+    const item = allNav.find((n) => pathname.startsWith(n.to));
+    return item?.label || "Nova Era";
+  };
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 overflow-x-auto border-b bg-background px-4 py-3 lg:hidden">
-          {NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium",
-                pathname.startsWith(item.to) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+  return (
+    <div className="flex min-h-screen w-full bg-background">
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="py-6">
+          <div className={cn("flex flex-col px-2 transition-all", isCollapsed && "items-center px-0")}>
+            {!isCollapsed ? (
+              <>
+                <span className="text-xs font-bold tracking-[0.2em] text-sidebar-foreground/50 uppercase">
+                  Nova Era
+                </span>
+                <span className="text-sm font-semibold text-sidebar-foreground mt-0.5">
+                  Gestão de Investimentos
+                </span>
+              </>
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+                NE
+              </div>
+            )}
+          </div>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel className={cn(isCollapsed && "sr-only")}>Operacional</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV_OPERATIONAL.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith(item.to)}
+                      tooltip={item.label}
+                    >
+                      <Link to={item.to}>
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="mt-4">
+            <SidebarGroupLabel className={cn(isCollapsed && "sr-only")}>Gestão</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV_SYSTEM.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith(item.to)}
+                      tooltip={item.label}
+                    >
+                      <Link to={item.to}>
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter className="pb-6">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={signOut} tooltip="Sair">
+                <LogOut className="size-4" />
+                <span>Sair</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <h2 className="text-sm font-semibold text-foreground tracking-tight">
+              {getPageTitle()}
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar operação ou referência..."
+                className="h-9 w-64 pl-9 text-xs bg-muted/50 border-none focus-visible:ring-1"
+              />
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="mr-2 size-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">{children}</main>
+
+        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

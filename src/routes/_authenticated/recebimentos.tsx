@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, Receipt, History, RotateCcw, Edit2 } from "lucide-react";
+import { Search, Receipt, History, RotateCcw, Edit2, Calendar, Building2, Plus, ArrowRight } from "lucide-react";
 import { z } from "zod";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,29 +81,42 @@ function ReceiptsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Recebimentos</h1>
-        <p className="text-sm text-muted-foreground">Baixa de parcelas e gestão de fluxo de entrada.</p>
+    <div className="space-y-8">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-white">
+            <Receipt className="size-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Fluxo de Recebimentos</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Gestão de entradas e baixas de parcelas</p>
+          </div>
+        </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-7 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Lançar Recebimento
-              </CardTitle>
-              <CardDescription>Selecione a operação e distribua o valor nas parcelas em aberto.</CardDescription>
+      <div className="grid gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-6">
+          <Card className="border-none shadow-sm overflow-hidden bg-card/50">
+            <CardHeader className="bg-muted/30 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Novo Lançamento</CardTitle>
+                  <CardDescription>Selecione a operação para distribuir o recebimento</CardDescription>
+                </div>
+                {totalAllocated > 0 && (
+                  <Badge variant="outline" className="h-6 border-success/30 text-success bg-success/5 font-bold tabular-nums">
+                    {brl(totalAllocated)}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form className="space-y-6" onSubmit={submit}>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Operação</Label>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Operação Principal</Label>
                     <Select value={operationId} onValueChange={setOperationId}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 border-none bg-muted/50 focus:ring-1">
                         <SelectValue placeholder="Selecione a operação" />
                       </SelectTrigger>
                       <SelectContent>
@@ -114,53 +128,69 @@ function ReceiptsPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="receiptDate">Data do recebimento</Label>
-                    <Input
-                      id="receiptDate"
-                      type="date"
-                      value={receiptDate}
-                      onChange={(event) => setReceiptDate(event.target.value)}
-                    />
+                  <div className="space-y-2.5">
+                    <Label htmlFor="receiptDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Data da Entrada</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 size-4 text-muted-foreground/50" />
+                      <Input
+                        id="receiptDate"
+                        type="date"
+                        value={receiptDate}
+                        onChange={(event) => setReceiptDate(event.target.value)}
+                        className="h-10 pl-10 border-none bg-muted/50 focus:ring-1"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {operationId && (
-                  <div className="space-y-3">
-                    <div className="rounded-md border overflow-hidden">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-border/50" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Distribuição de Parcelas</span>
+                      <div className="h-px flex-1 bg-border/50" />
+                    </div>
+                    
+                    <div className="rounded-xl border border-border/50 overflow-hidden">
                       <Table>
-                        <TableHeader className="bg-muted/50">
-                          <TableRow>
-                            <TableHead className="w-12">#</TableHead>
-                            <TableHead>Vencimento</TableHead>
-                            <TableHead className="text-right">Saldo Devedor</TableHead>
-                            <TableHead className="text-right w-32">Receber</TableHead>
+                        <TableHeader className="bg-muted/30">
+                          <TableRow className="hover:bg-transparent border-none">
+                            <TableHead className="w-16 text-[10px] uppercase font-bold tracking-wider">Parcela</TableHead>
+                            <TableHead className="text-[10px] uppercase font-bold tracking-wider">Vencimento</TableHead>
+                            <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider">Saldo</TableHead>
+                            <TableHead className="text-right w-36 text-[10px] uppercase font-bold tracking-wider pr-4">Receber</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {openInstallments.map((row) => (
-                            <TableRow key={row.id}>
-                              <TableCell className="font-mono text-xs">{row.installment_number}</TableCell>
-                              <TableCell>{dateBR(row.due_date)}</TableCell>
-                              <TableCell className="text-right font-medium">{brl(row.outstanding_amount)}</TableCell>
-                              <TableCell className="text-right">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  className="h-8 text-right font-mono"
-                                  placeholder="0.00"
-                                  value={amounts[row.id ?? ""] ?? ""}
-                                  onChange={(event) =>
-                                    setAmounts({ ...amounts, [row.id ?? ""]: event.target.value })
-                                  }
-                                />
+                            <TableRow key={row.id} className="group hover:bg-muted/30 border-border/50">
+                              <TableCell className="font-mono text-xs text-muted-foreground">{row.installment_number}</TableCell>
+                              <TableCell className="text-xs font-medium tabular-nums">{dateBR(row.due_date)}</TableCell>
+                              <TableCell className="text-right font-mono text-xs font-bold">{brl(row.outstanding_amount)}</TableCell>
+                              <TableCell className="text-right pr-4">
+                                <div className="relative flex items-center">
+                                  <span className="absolute left-3 text-[10px] font-bold text-muted-foreground/40 italic pointer-events-none">R$</span>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    className="h-8 pl-8 text-right font-mono text-xs border-none bg-muted/50 group-hover:bg-background transition-colors focus:ring-1"
+                                    placeholder="0,00"
+                                    value={amounts[row.id ?? ""] ?? ""}
+                                    onChange={(event) =>
+                                      setAmounts({ ...amounts, [row.id ?? ""]: event.target.value })
+                                    }
+                                  />
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}
                           {openInstallments.length === 0 && !installments.isLoading && (
                             <TableRow>
-                              <TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">
-                                Nenhuma parcela pendente nesta operação.
+                              <TableCell colSpan={4} className="h-24 text-center">
+                                <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                                  <Building2 className="size-6 opacity-20" />
+                                  <p className="text-xs font-medium italic">Nenhuma parcela pendente nesta operação.</p>
+                                </div>
                               </TableCell>
                             </TableRow>
                           )}
@@ -169,74 +199,88 @@ function ReceiptsPage() {
                     </div>
                     
                     {totalAllocated > 0 && (
-                      <div className="flex justify-between items-center p-3 rounded-lg bg-primary/5 border border-primary/10">
-                        <span className="text-sm font-medium">Total a registrar:</span>
-                        <span className="text-lg font-bold text-primary">{brl(totalAllocated)}</span>
+                      <div className="flex justify-between items-center p-4 rounded-xl bg-success/5 border border-success/10 transition-all animate-in zoom-in-95">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-success/70">Total Distribuído</p>
+                          <p className="text-sm font-medium text-muted-foreground">Confirmar baixa de parcelas</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-success tabular-nums tracking-tight">{brl(totalAllocated)}</p>
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                <Button type="submit" className="w-full sm:w-auto" disabled={register.isPending || totalAllocated === 0}>
-                  Confirmar Recebimento
+                <Button 
+                  type="submit" 
+                  className={cn(
+                    "w-full h-11 rounded-xl font-bold transition-all",
+                    totalAllocated > 0 ? "bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20" : ""
+                  )} 
+                  disabled={register.isPending || totalAllocated === 0}
+                >
+                  <Plus className="mr-2 size-4" /> Registrar Recebimento
                 </Button>
               </form>
             </CardContent>
           </Card>
         </div>
 
-        <div className="lg:col-span-5">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Histórico Recente
-              </CardTitle>
-              <CardDescription>Últimos 20 recebimentos registrados.</CardDescription>
+        <div className="lg:col-span-4">
+          <Card className="h-full border-none shadow-sm bg-card/50 overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Histórico</CardTitle>
+                <History className="size-4 text-muted-foreground/50" />
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="space-y-4">
                 {(receipts.data ?? []).slice(0, 20).map((receipt) => (
-                  <div key={receipt.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold">{receipt.investment_operations?.reference ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">{dateBR(receipt.receipt_date)}</p>
+                  <div key={receipt.id} className="flex flex-col gap-3 p-3.5 rounded-xl border border-border/50 bg-card/80 hover:bg-muted/50 transition-all group relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-success/40" />
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold leading-none tracking-tight">{receipt.investment_operations?.reference ?? "—"}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                          <Calendar className="size-3" />
+                          <span>{dateBR(receipt.receipt_date)}</span>
+                          <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                          <span className="uppercase tracking-widest">{receipt.source}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-success tabular-nums">{brl(receipt.total_amount)}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-green-600">{brl(receipt.total_amount)}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">{receipt.source}</p>
-                      </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <EditReceiptDialog receipt={receipt} />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          disabled={cancel.isPending}
-                          title="Estornar lançamento"
-                          onClick={async () => {
-                            if (confirm("Deseja realmente estornar este recebimento? Motivo obrigatório será registrado na auditoria.")) {
-                              try {
-                                await cancel.mutateAsync(receipt.id);
-                                toast.success("Recebimento estornado.");
-                              } catch (error) {
-                                toast.error(error instanceof Error ? error.message : "Falha ao estornar.");
-                              }
+                    
+                    <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-border/30 mt-1 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                      <EditReceiptDialog receipt={receipt} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                        disabled={cancel.isPending}
+                        onClick={async () => {
+                          if (confirm("Deseja realmente estornar este recebimento?")) {
+                            try {
+                              await cancel.mutateAsync(receipt.id);
+                              toast.success("Recebimento estornado.");
+                            } catch (error) {
+                              toast.error(error instanceof Error ? error.message : "Falha ao estornar.");
                             }
-                          }}
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      </div>
+                          }
+                        }}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
                 ))}
                 
                 {(receipts.data ?? []).length === 0 && !receipts.isLoading && (
-                  <div className="h-32 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
-                    <Receipt className="h-8 w-8 mb-2 opacity-20" />
-                    <p className="text-sm italic">Nenhum histórico encontrado.</p>
+                  <div className="h-48 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-xl bg-muted/20">
+                    <Receipt className="h-10 w-10 mb-3 opacity-10" />
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-40">Sem lançamentos</p>
                   </div>
                 )}
               </div>

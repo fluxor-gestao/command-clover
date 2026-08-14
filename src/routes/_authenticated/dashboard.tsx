@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMonthlyFlow, useOperations, usePortfolioSummary } from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const CHART_COLORS = ["oklch(0.696 0.17 162.48)", "oklch(0.446 0.03 256.802)", "oklch(0.129 0.042 264.695)", "oklch(0.92 0.004 286.32)", "oklch(0.85 0.01 264.695)"];
 
 function DashboardPage() {
   const summary = usePortfolioSummary();
@@ -99,47 +100,52 @@ function DashboardPage() {
         </p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Capital investido"
           value={brl(s?.total_invested)}
-          hint={`${s?.total_operations ?? 0} operações cadastradas`}
-          icon={<Wallet className="size-4 text-muted-foreground" />}
+          hint={`${s?.total_operations ?? 0} operações`}
+          icon={<Wallet className="size-4" />}
+          primary
         />
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct(s?.recovery_percentage)} do capital recuperado`}
-          icon={<ArrowDownRight className="size-4 text-muted-foreground" />}
+          hint={`${pct(s?.recovery_percentage)} do capital`}
+          icon={<ArrowDownRight className="size-4" />}
+          primary
         />
         <Kpi
-          title="Saldo a recuperar"
+          title="Capital a Recuperar"
           value={brl(s?.capital_to_recover)}
-          hint="Capital ainda não retornado"
-          icon={<ArrowUpRight className="size-4 text-muted-foreground" />}
+          hint="Saldo pendente do aporte"
+          icon={<ArrowUpRight className="size-4" />}
+          primary
         />
+        <Kpi
+          title="Total a Receber"
+          value={brl(s?.total_a_receber)}
+          hint="Projeção total futura"
+          icon={<TrendingUp className="size-4" />}
+          primary
+        />
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Lucro realizado"
           value={brl(s?.realized_profit)}
-          hint={`Lucro sobre capital retornado`}
-          icon={<TrendingUp className="size-4 text-muted-foreground" />}
+          hint="Sobre capital retornado"
         />
         <Kpi
           title="Resultado Projetado"
           value={brl(s?.projected_result)}
-          hint="Expectativa total de lucro"
-          icon={<TrendingUp className="size-4 text-primary" />}
-        />
-        <Kpi
-          title="A receber (futuro)"
-          value={brl(s?.future_receivable)}
-          hint="Parcelas com vencimento em aberto"
+          hint="Expectativa total"
         />
         <Kpi
           title="Inadimplência"
           value={brl(s?.overdue_receivable)}
-          hint={`${s?.overdue_installments ?? 0} parcelas vencidas em ${s?.overdue_operations ?? 0} operações`}
-          icon={<AlertTriangle className="size-4 text-destructive" />}
+          hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
           tone="destructive"
         />
         <Kpi
@@ -147,22 +153,31 @@ function DashboardPage() {
           value={brl(monthRow?.recebido ?? 0)}
           hint={`Previsto ${brl(monthRow?.previsto ?? 0)}`}
         />
-        <Kpi
-          title="Total a Receber"
-          value={brl(s?.total_a_receber)}
-          hint={`${s?.closed_operations ?? 0} encerradas`}
-        />
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recuperação do capital</CardTitle>
-          <CardDescription>
-            {brl(s?.total_received)} recuperados de {brl(s?.total_invested)} investidos
-          </CardDescription>
+      <Card className="border-none shadow-sm bg-card/50">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Recuperação do capital</CardTitle>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-3xl font-bold tracking-tight text-foreground">{pct(s?.recovery_percentage)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {brl(s?.total_received)} de {brl(s?.total_invested)} recuperados
+                </span>
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Progress value={Number(s?.recovery_percentage ?? 0) * 100} />
+        <CardContent className="pt-4">
+          <Progress 
+            value={Number(s?.recovery_percentage ?? 0) * 100} 
+            className="h-3 bg-muted"
+          />
+          <div className="mt-4 flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <span>Capital recuperado</span>
+            <span>Capital restante</span>
+          </div>
         </CardContent>
       </Card>
 
@@ -180,8 +195,8 @@ function DashboardPage() {
                 <YAxis fontSize={11} tickFormatter={(v: number) => brlCompact(v)} />
                 <Tooltip formatter={(value: number) => brl(value)} />
                 <Legend />
-                <Bar dataKey="previsto" name="Previsto" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="recebido" name="Recebido" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="previsto" name="Previsto" fill="oklch(0.446 0.03 256.802)" radius={[4, 4, 0, 0]} fillOpacity={0.3} />
+                <Bar dataKey="recebido" name="Recebido" fill="oklch(0.696 0.17 162.48)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -225,7 +240,7 @@ function DashboardPage() {
                   type="monotone"
                   dataKey="inadimplente"
                   name="Inadimplente"
-                  stroke="var(--destructive)"
+                  stroke="oklch(0.605 0.22 28.27)"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -259,7 +274,7 @@ function DashboardPage() {
                 {topOverdue.map((op) => (
                   <TableRow key={op.operation_id}>
                     <TableCell className="font-medium">{op.reference}</TableCell>
-                    <TableCell className="text-right text-destructive">{brl(op.overdue_receivable)}</TableCell>
+                    <TableCell className="text-right text-destructive font-bold tabular-nums">{brl(op.overdue_receivable)}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant="outline">{op.overdue_installments ?? 0}</Badge>
                     </TableCell>
@@ -280,24 +295,54 @@ function Kpi({
   hint,
   icon,
   tone,
+  primary,
 }: {
   title: string;
   value: string;
   hint?: string;
   icon?: React.ReactNode;
   tone?: "destructive";
+  primary?: boolean;
 }) {
   return (
-    <Card>
+    <Card className={cn(
+      "border-none shadow-sm transition-all hover:shadow-md",
+      primary ? "bg-primary text-primary-foreground" : "bg-card",
+      tone === "destructive" && !primary && "bg-destructive/5"
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        {icon}
+        <CardTitle className={cn(
+          "text-xs font-bold uppercase tracking-wider",
+          primary ? "text-primary-foreground/70" : "text-muted-foreground"
+        )}>
+          {title}
+        </CardTitle>
+        {icon && (
+          <div className={cn(
+            "rounded-md p-1.5",
+            primary ? "bg-primary-foreground/10" : "bg-muted"
+          )}>
+            {icon}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
-        <p className={tone === "destructive" ? "text-2xl font-semibold text-destructive" : "text-2xl font-semibold"}>
-          {value}
-        </p>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        <div className="flex flex-col gap-1">
+          <p className={cn(
+            "text-2xl font-bold tracking-tight",
+            tone === "destructive" && !primary ? "text-destructive" : ""
+          )}>
+            {value}
+          </p>
+          {hint && (
+            <p className={cn(
+              "text-[10px] font-medium uppercase tracking-tight opacity-70",
+              primary ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}>
+              {hint}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

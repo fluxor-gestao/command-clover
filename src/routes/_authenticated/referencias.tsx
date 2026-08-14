@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Building2, Filter } from "lucide-react";
+import { Plus, Search, Building2, Filter, X, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useCategories, useReferences, useCreateReference } from "@/lib/data/hooks";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/referencias")({
   head: () => ({
@@ -56,32 +65,37 @@ function ReferencesPage() {
   }, [references.data, search, category]);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Referências</h1>
-          <p className="text-sm text-muted-foreground">
-            {filtered.length} ativos cadastrados
-          </p>
+    <div className="space-y-8">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Building2 className="size-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Base de Referências</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {filtered.length} ativos cadastrados no mestre
+            </p>
+          </div>
         </div>
         <NewReferenceDialog />
       </header>
 
-      <Card>
-        <CardHeader className="gap-3">
-          <CardTitle className="text-base">Filtros</CardTitle>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl border bg-card/50 p-3 backdrop-blur-sm">
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar referência..."
-                className="pl-8"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="h-9 pl-9 text-xs border-none bg-muted/50 focus-visible:ring-1"
               />
             </div>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 w-full md:w-44 text-xs border-none bg-muted/50">
+                <Filter className="mr-2 size-3 text-muted-foreground" />
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -93,52 +107,92 @@ function ReferencesPage() {
                 ))}
               </SelectContent>
             </Select>
+
+            {(search || category !== "TODAS") && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => { setSearch(""); setCategory("TODAS"); }}
+                className="h-8 px-2 text-[10px] uppercase font-bold tracking-wider"
+              >
+                <X className="mr-1 size-3" /> Limpar filtros
+              </Button>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Referência</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((ref) => (
-                <TableRow key={ref.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      {ref.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{(ref as any).investment_categories?.name ?? "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={ref.active ? "default" : "secondary"}>
-                      {ref.active ? "Ativa" : "Inativa"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm">Editar</Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">Excluir</Button>
-                    </div>
-                  </TableCell>
+        </div>
+
+        <Card className="border-none shadow-sm overflow-hidden bg-card/50">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-[10px] uppercase font-bold tracking-wider">Referência</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-wider">Categoria</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-wider">Status</TableHead>
+                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-wider pr-4">Ações</TableHead>
                 </TableRow>
-              ))}
-              {filtered.length === 0 && !references.isLoading && (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                    Nenhuma referência encontrada.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((ref) => (
+                  <TableRow key={ref.id} className="group transition-colors hover:bg-muted/50">
+                    <TableCell className="font-medium py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                          <Building2 className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">{ref.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">{(ref as any).investment_categories?.name ?? "—"}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "h-5 text-[10px] font-bold uppercase tracking-wider px-2",
+                          ref.active ? "border-success/30 text-success bg-success/5" : "border-muted-foreground/30 text-muted-foreground bg-muted/5"
+                        )}
+                      >
+                        {ref.active ? "Ativa" : "Inativa"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Opções</DropdownMenuLabel>
+                          <DropdownMenuItem className="text-xs cursor-pointer">
+                            <Edit className="mr-2 h-3.5 w-3.5" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-xs cursor-pointer text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && !references.isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Search className="size-8 text-muted-foreground/20" />
+                        <p className="text-sm text-muted-foreground font-medium">Nenhuma referência encontrada.</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
