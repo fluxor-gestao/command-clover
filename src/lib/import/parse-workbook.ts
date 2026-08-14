@@ -574,9 +574,11 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, issues: Par
       dueDate: buildDueDate(Number(yearText), Number(monthText), op.dueDay),
       expected: round2(amount),
       received: round2(amount),
+      overdue: 0,
       sourceKey: `hist:${op.key}:${monthStart}`,
       sheet: sheet.name,
     });
+
   });
 }
 
