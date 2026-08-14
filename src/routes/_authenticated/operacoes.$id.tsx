@@ -76,10 +76,10 @@ function OperationDetail() {
                   <TableCell>{dateBR(installment.due_date)}</TableCell>
                   <TableCell className="text-right">{brl(installment.expected_amount)}</TableCell>
                   <TableCell className="text-right">{brl(installment.received_amount)}</TableCell>
-                  <TableCell className="text-right">{brl(installment.balance)}</TableCell>
+                  <TableCell className="text-right">{brl(installment.outstanding_amount)}</TableCell>
                   <TableCell>
-                    <Badge variant={installment.computed_status === "VENCIDA" ? "destructive" : "secondary"}>
-                      {installment.computed_status}
+                    <Badge variant={installment.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
+                      {installment.financial_status}
                     </Badge>
                   </TableCell>
                 </TableRow>
