@@ -68,16 +68,20 @@ function ImportPage() {
 
       // Enriquecer com Diff de Sincronização
       const syncInfo: Record<string, any> = {};
-      const { data: operations } = await supabase.from("investment_operations").select("reference, source_hash");
+      const { data: operations } = await supabase.from("investment_operations").select("id, reference, source_hash");
       
       for (const op of result.operations) {
         const existing = operations?.find(o => o.reference === op.reference);
         if (!existing) {
           syncInfo[op.reference] = "NOVO";
-        } else if (existing.source_hash === op.sourceHash) {
-          syncInfo[op.reference] = "INALTERADO";
         } else {
-          syncInfo[op.reference] = "ALTERADO_NO_EXCEL";
+          // Usar RPC para detecção precisa de CONFLITO
+          const { data: conflictStatus } = await supabase.rpc("check_sync_conflict", {
+            p_operation_id: existing.id,
+            p_incoming_hash: op.sourceHash || ""
+          });
+          const status = (conflictStatus as "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO") || "ALTERADO_NO_EXCEL";
+          syncInfo[op.reference] = status;
         }
       }
       

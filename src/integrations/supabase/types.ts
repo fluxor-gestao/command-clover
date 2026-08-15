@@ -951,22 +951,22 @@ export type Database = {
       }
       generate_schedule: { Args: { p_operation_id: string }; Returns: number }
       get_portfolio_metrics: {
-        Args: { p_year?: number }
+        Args: { p_year: number }
         Returns: {
-          capital_to_recover: number
-          future_receivable: number
-          overdue_installments: number
-          overdue_receivable: number
-          projected_result: number
-          realized_profit: number
-          recovery_percentage: number
-          scope_year: number
+          capital_a_recuperar: number
+          inadimplente: number
+          lucro_realizado: number
+          operacoes_ativas: number
+          parcelas_atrasadas: number
+          percentual_recuperado: number
+          projetado_futuro: number
+          resultado_projetado: number
           total_a_receber: number
-          total_installments: number
-          total_invested: number
-          total_operations: number
+          total_investido: number
+          total_parcelas: number
           total_previsto_carteira: number
-          total_received: number
+          total_recebido: number
+          year: number
         }[]
       }
       get_portfolio_years: {
