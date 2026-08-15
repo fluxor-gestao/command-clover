@@ -441,18 +441,54 @@ function PreviewTabs({
                 <TableHead className="text-right">Venc.</TableHead>
                 <TableHead className="text-right">Capital</TableHead>
                 <TableHead className="text-right">Parcelas</TableHead>
+                <TableHead className="text-right">Ação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {preview.operations.map((op) => (
-                <TableRow key={op.sourceKey}>
-                  <TableCell className="text-xs">{op.reference}</TableCell>
-                  <TableCell className="text-xs">{op.category}</TableCell>
-                  <TableCell className="text-right text-xs">{op.dueDay ?? "—"}</TableCell>
-                  <TableCell className="text-right text-xs">{brl(op.initialCapital ?? 0)}</TableCell>
-                  <TableCell className="text-right text-xs">{op.installments.length}</TableCell>
-                </TableRow>
-              ))}
+              {preview.operations.map((op) => {
+                const syncStatus = preview.syncInfo?.[op.reference];
+                const isConflict = syncStatus === "CONFLITO";
+                const isForced = forceUpdateRefs.includes(op.reference);
+
+                return (
+                  <TableRow key={op.sourceKey} className={cn(isConflict && !isForced && "bg-destructive/5")}>
+                    <TableCell className="text-xs">
+                      <div className="flex flex-col gap-1">
+                        <span>{op.reference}</span>
+                        {syncStatus && (
+                          <Badge 
+                            variant={
+                              syncStatus === "NOVO" ? "secondary" : 
+                              syncStatus === "CONFLITO" ? "destructive" : "default"
+                            } 
+                            className="w-fit text-[8px] h-4"
+                          >
+                            {syncStatus}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">{op.category}</TableCell>
+                    <TableCell className="text-right text-xs">{op.dueDay ?? "—"}</TableCell>
+                    <TableCell className="text-right text-xs">{brl(op.initialCapital ?? 0)}</TableCell>
+                    <TableCell className="text-right text-xs">{op.installments.length}</TableCell>
+                    <TableCell className="text-right">
+                      {isConflict ? (
+                        <Button 
+                          size="sm" 
+                          variant={isForced ? "default" : "outline"} 
+                          className="h-7 text-[9px]"
+                          onClick={() => onToggleForce(op.reference)}
+                        >
+                          {isForced ? "USAR EXCEL" : "MANTER SISTEMA"}
+                        </Button>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground">Automático</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </ScrollArea>
