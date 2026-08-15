@@ -51,6 +51,8 @@ const NAV_OPERATIONAL = [
   { to: "/parcelas", label: "Parcelas & Vencimentos", icon: CalendarClock },
   { to: "/recebimentos", label: "Recebimentos", icon: Wallet },
   { to: "/aportes", label: "Aportes", icon: PiggyBank },
+  { to: "/alugueis", label: "Aluguéis", icon: KeyRound },
+  { to: "/simulador", label: "Simulador gerencial", icon: Calculator },
 ] as const;
 
 const NAV_SYSTEM = [
