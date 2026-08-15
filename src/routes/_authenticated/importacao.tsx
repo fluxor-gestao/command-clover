@@ -80,7 +80,7 @@ function ImportPage() {
             p_operation_id: existing.id,
             p_incoming_hash: op.sourceHash
           });
-          syncInfo[op.reference] = String(conflictStatus || "ALTERADO_NO_EXCEL");
+          syncInfo[op.reference] = (conflictStatus as any) || "ALTERADO_NO_EXCEL";
         }
       }
       
