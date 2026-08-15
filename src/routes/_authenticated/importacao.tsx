@@ -48,6 +48,7 @@ function ImportPage() {
   const [busy, setBusy] = useState(false);
   const [showIssues, setShowIssues] = useState(false);
   const [showData, setShowData] = useState(false);
+  const [forceUpdateRefs, setForceUpdateRefs] = useState<string[]>([]);
 
   const analyse = async (selected: File, sheet?: string) => {
     setBusy(true);
@@ -99,7 +100,7 @@ function ImportPage() {
     if (!file || !preview) return;
     setBusy(true);
     try {
-      const outcome = await importParseResult(file.name, preview, importMode);
+      const outcome = await importParseResult(file.name, preview, importMode, undefined, { forceUpdateRefs });
       toast.success(
         `Importação concluída: ${outcome.operations} operações, ${outcome.installments} parcelas, ${outcome.receipts} recebimentos.`,
       );
@@ -342,7 +343,15 @@ function ImportPage() {
             <SheetTitle>Dados que serão importados</SheetTitle>
             <SheetDescription>Inspeção completa antes da confirmação — nada foi gravado ainda.</SheetDescription>
           </SheetHeader>
-          {preview && <PreviewTabs preview={preview} />}
+          {preview && (
+            <PreviewTabs 
+              preview={preview} 
+              forceUpdateRefs={forceUpdateRefs} 
+              onToggleForce={(ref) => setForceUpdateRefs(prev => 
+                prev.includes(ref) ? prev.filter(r => r !== ref) : [...prev, ref]
+              )} 
+            />
+          )}
         </SheetContent>
       </Sheet>
     </div>
@@ -397,7 +406,15 @@ function HomologationTable({ preview }: { preview: ParseResult }) {
   );
 }
 
-function PreviewTabs({ preview }: { preview: ParseResult }) {
+function PreviewTabs({ 
+  preview, 
+  forceUpdateRefs, 
+  onToggleForce 
+}: { 
+  preview: ParseResult; 
+  forceUpdateRefs: string[]; 
+  onToggleForce: (ref: string) => void;
+}) {
   const installments = preview.operations.flatMap((op) =>
     op.installments.map((inst) => ({ reference: op.reference, ...inst })),
   );
