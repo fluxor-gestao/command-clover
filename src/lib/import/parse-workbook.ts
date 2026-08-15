@@ -1,5 +1,6 @@
 import type { Workbook, Worksheet, Cell } from "exceljs";
 import { createHash } from "crypto";
+import { addMonthsClamped } from "../finance/contract";
 
 /**
  * Leitor da base histórica Nova Era.
@@ -792,10 +793,8 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
 
     // Lógica de derivação de datas conforme BLOQUEADOR 3
     if (op.firstDueDate && op.installmentCount && !op.lastDueDate) {
-      const { addMonthsClamped } = await import("../finance/contract");
       op.lastDueDate = addMonthsClamped(op.firstDueDate, op.installmentCount - 1, op.dueDay);
     } else if (op.lastDueDate && op.installmentCount && !op.firstDueDate) {
-      const { addMonthsClamped } = await import("../finance/contract");
       op.firstDueDate = addMonthsClamped(op.lastDueDate, -(op.installmentCount - 1), op.dueDay);
     }
 
