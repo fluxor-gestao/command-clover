@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAlugueisRouteImport } from './routes/_authenticated/alugueis'
 import { Route as AuthenticatedAportesRouteImport } from './routes/_authenticated/aportes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
@@ -36,6 +37,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAlugueisRoute = AuthenticatedAlugueisRouteImport.update({
+  id: '/alugueis',
+  path: '/alugueis',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAportesRoute = AuthenticatedAportesRouteImport.update({
   id: '/aportes',
@@ -94,6 +100,7 @@ const AuthenticatedOperacoesIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/alugueis': typeof AuthenticatedAlugueisRoute
   '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/alugueis': typeof AuthenticatedAlugueisRoute
   '/aportes': typeof AuthenticatedAportesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/alugueis': typeof AuthenticatedAlugueisRoute
   '/_authenticated/aportes': typeof AuthenticatedAportesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/alugueis'
     | '/aportes'
     | '/dashboard'
     | '/importacao'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/alugueis'
     | '/aportes'
     | '/dashboard'
     | '/importacao'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/alugueis'
     | '/_authenticated/aportes'
     | '/_authenticated/dashboard'
     | '/_authenticated/importacao'
@@ -209,6 +221,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/alugueis': {
+      id: '/_authenticated/alugueis'
+      path: '/alugueis'
+      fullPath: '/alugueis'
+      preLoaderRoute: typeof AuthenticatedAlugueisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/aportes': {
       id: '/_authenticated/aportes'
@@ -298,6 +317,7 @@ const AuthenticatedOperacoesRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAlugueisRoute: typeof AuthenticatedAlugueisRoute
   AuthenticatedAportesRoute: typeof AuthenticatedAportesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
@@ -310,6 +330,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAlugueisRoute: AuthenticatedAlugueisRoute,
   AuthenticatedAportesRoute: AuthenticatedAportesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
