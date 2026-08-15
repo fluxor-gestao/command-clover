@@ -945,6 +945,10 @@ export type Database = {
     }
     Functions: {
       cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined }
+      check_sync_conflict: {
+        Args: { p_incoming_hash: string; p_operation_id: string }
+        Returns: string
+      }
       generate_schedule: { Args: { p_operation_id: string }; Returns: number }
       get_portfolio_metrics: {
         Args: { p_year?: number }
