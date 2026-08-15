@@ -34,7 +34,7 @@ export async function backfillContractDates() {
       if (!count) count = installments.length;
       if (!value && installments[0]) value = Number(installments[0].expected_amount);
       
-      const lastDateFromInst = installments[installments.length - 1].due_date;
+      const lastDateFromInst = installments[installments.length - 1]?.due_date;
       
       const { error: updateError } = await supabase
         .from("investment_operations")
