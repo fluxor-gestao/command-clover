@@ -786,7 +786,7 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
     }
     if (name.includes("ALUGUE")) {
       sheetsRead.push(sheet.name);
-      parseRentalsSheet(sheet, index, issues, referenceMonth);
+      parseRentalsSheet(sheet, index, issues, referenceMonth, baseline);
     }
   });
 
@@ -917,7 +917,7 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
   return { operations, issues: enrichedIssues, baseline, readiness, stats, syncInfo: {} };
 }
 
-function parseRentalsSheet(sheet: Worksheet, index: OperationIndex, issues: ParsedIssue[], referenceMonth: string) {
+function parseRentalsSheet(sheet: Worksheet, index: OperationIndex, issues: ParsedIssue[], referenceMonth: string, baseline: ParseBaseline) {
   let headerRow = 0;
   const header: Record<string, number> = {};
   sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
@@ -935,6 +935,8 @@ function parseRentalsSheet(sheet: Worksheet, index: OperationIndex, issues: Pars
     const col = (name: string) => Object.entries(header).find(([key]) => key.includes(name))?.[1];
     const reference = cellText(row.getCell(col("IMOVEL") ?? col("REFERENCIA") ?? 1));
     if (!reference || normalizeText(reference).startsWith("TOTAL")) return;
+    
+    baseline.operationRows += 1;
 
     // Aluguéis próprios não criam investment_operation, mas alimentam o baseline para conferência
     const rentValue = cellNumber(row.getCell(col("VALOR ALUGUEL") ?? 4)) || 0;
@@ -954,18 +956,27 @@ function parseRentalsSheet(sheet: Worksheet, index: OperationIndex, issues: Pars
         const isPast = compKey < referenceMonth;
         
         // Simular no index para o Diff da UI, mas com flag que evita UPSERT em investment_operations
-        const op = index.get(`ALUGUEL: ${reference}`, "Aluguéis", `rental:${normalizeReference(reference)}`);
+        const op = index.get(reference, "ALUGUEL", `rental:${normalizeReference(reference)}`);
         op.notes = "Propriedade Própria (Aluguel)";
+        op.initialCapital = 0; // Aluguéis não são investimento inicial
         
+        baseline.monthlyTotal = round2(baseline.monthlyTotal + amount);
+        if (red && isPast) {
+          baseline.overdueTotal = round2(baseline.overdueTotal + amount);
+        } else if (!red && isPast) {
+          baseline.receivedTotal = round2(baseline.receivedTotal + amount);
+        }
+
         upsertInstallment(op, {
           competence: `${compKey}-01`,
           dueDate: buildDueDate(year, mIndex, dueDay),
           expected: round2(amount),
-          received: !red && !isPast ? round2(amount) : 0,
+          received: !red && isPast ? round2(amount) : 0,
           overdue: red && isPast ? round2(amount) : 0,
           sourceKey: `rental:${normalizeReference(reference)}:${compKey}`,
           sheet: sheet.name
         });
+        baseline.monthlyCells += 1;
       }
     }
   });
