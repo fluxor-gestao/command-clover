@@ -950,25 +950,7 @@ export type Database = {
         Returns: string
       }
       generate_schedule: { Args: { p_operation_id: string }; Returns: number }
-      get_portfolio_metrics: {
-        Args: { p_year: number }
-        Returns: {
-          capital_a_recuperar: number
-          inadimplente: number
-          lucro_realizado: number
-          operacoes_ativas: number
-          parcelas_atrasadas: number
-          percentual_recuperado: number
-          projetado_futuro: number
-          resultado_projetado: number
-          total_a_receber: number
-          total_investido: number
-          total_parcelas: number
-          total_previsto_carteira: number
-          total_recebido: number
-          year: number
-        }[]
-      }
+      get_portfolio_metrics: { Args: { p_year?: number }; Returns: Json[] }
       get_portfolio_years: {
         Args: never
         Returns: {
