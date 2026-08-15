@@ -6,6 +6,16 @@ import { addMonthsClamped } from "../finance/contract";
  * Leitor da base histórica Nova Era.
  */
 
+export interface ParseOptions {
+  referenceMonth?: string;
+}
+
+export function listAnnualSheets(workbook: Workbook): string[] {
+  return workbook.worksheets
+    .map((s) => s.name)
+    .filter((n) => normalizeText(n).startsWith("A RECEBER") || n.match(/20\d{2}/));
+}
+
 export type IssueType =
   | "CONTRATO_INCOMPLETO"
   | "PARCELAS_NAO_IDENTIFICADAS"
@@ -165,12 +175,12 @@ function cellText(cell: Cell | undefined): string {
   if (value === null || value === undefined) return "";
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    if ("richText" in obj && Array.isArray(obj.richText)) {
-      return (obj.richText as { text: string }[]).map((part) => part.text).join("").trim();
+    const obj = value as Record<string, any>;
+    if (obj["richText"] && Array.isArray(obj["richText"])) {
+      return (obj["richText"] as { text: string }[]).map((part) => part.text).join("").trim();
     }
-    if ("text" in obj) return String(obj.text ?? "").trim();
-    if ("result" in obj) return String(obj.result ?? "").trim();
+    if (obj["text"]) return String(obj["text"] ?? "").trim();
+    if (obj["result"]) return String(obj["result"] ?? "").trim();
   }
   return String(value).trim();
 }
