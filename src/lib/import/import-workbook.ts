@@ -47,15 +47,17 @@ export async function readWorkbookFile(file: File, options?: ParseOptions): Prom
 export async function importParseResult(
   filename: string,
   result: ParseResult,
+  mode: "CARGA_HISTORICA" | "CONTROLE_GERENCIAL",
   onProgress?: (progress: ImportProgress) => void,
 ): Promise<ImportOutcome> {
+  const { data: user } = await supabase.auth.getUser();
   const { data: importRow, error: importError } = await supabase
-    .from("investment_imports")
+    .from("sync_runs")
     .insert({
       filename,
-      fingerprint: `${filename}:${result.stats.operations}:${result.stats.installments}`,
+      mode,
       status: "EM_ANDAMENTO",
-      rows_processed: result.stats.operations + result.stats.installments,
+      created_by: user.user?.id ?? null,
     })
     .select("id")
     .single();
@@ -87,8 +89,24 @@ export async function importParseResult(
 
     let operationId = existing?.id ?? null;
 
-    // Se já existe e o hash é igual, pulamos a atualização da operação base
-    const needsUpdate = !existing || existing.source_hash !== op.sourceHash;
+    // Lógica de Diff/Sync
+    let syncStatus: "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO" = "NOVO";
+    if (existing) {
+      const { data: status } = await supabase.rpc("check_sync_conflict", {
+        p_operation_id: existing.id,
+        p_incoming_hash: op.sourceHash ?? "",
+      });
+      syncStatus = (status as any) || "ALTERADO_NO_EXCEL";
+    }
+
+    // Se é modo de sincronização e está inalterado, pulamos a atualização
+    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "INALTERADO") {
+      continue;
+    }
+
+    // Se há conflito, em um sistema real pediríamos decisão. 
+    // Por enquanto, no modo Carga Histórica forçamos atualização.
+    const needsUpdate = syncStatus !== "INALTERADO";
 
     if (needsUpdate) {
       const payload = {
@@ -101,7 +119,7 @@ export async function importParseResult(
         installment_value: op.installmentValue,
         notes: op.notes,
         source: "IMPORTADO",
-        import_status: op.incomplete ? "PENDENTE_REVISAO" : "IMPORTADO",
+        import_status: op.incomplete ? "PENDENTE_REVISAO" : "VALIDADO",
         source_key: sourceKey,
         source_hash: op.sourceHash ?? null,
         last_synced_at: new Date().toISOString(),
@@ -248,11 +266,10 @@ export async function importParseResult(
   }
 
   await supabase
-    .from("investment_imports")
+    .from("sync_runs")
     .update({
       status: "CONCLUIDA",
-      rows_imported: installmentsCount + result.operations.length,
-      rows_pending: result.issues.length,
+      confirmed_at: new Date().toISOString(),
       summary: {
         operacoes: result.operations.length,
         parcelas: installmentsCount,
@@ -263,7 +280,6 @@ export async function importParseResult(
         investido: result.stats.investedTotal,
         abas: result.stats.sheetsRead,
       },
-      finished_at: new Date().toISOString(),
     })
     .eq("id", importId);
 

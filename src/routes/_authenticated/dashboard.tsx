@@ -144,16 +144,11 @@ function DashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard executivo</h1>
-            {year === 2026 && (
-              <Badge variant="secondary" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
-                27 operações na carteira
-              </Badge>
-            )}
           </div>
           <p className="text-sm text-muted-foreground">
             {year === null
-              ? "Carteira completa — consolidação histórica de todas as competências."
-              : `Controle gerencial ${year} — indicadores restritos às competências do ano.`}
+              ? "Audit Mode — Visão completa e histórica de toda a base de dados."
+              : `Management Mode — Indicadores oficiais da Carteira ${year}.`}
           </p>
         </div>
         <YearScopeSelect value={scopeValue} onChange={setScopeValue} />

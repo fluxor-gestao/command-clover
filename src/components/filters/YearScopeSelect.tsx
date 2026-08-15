@@ -23,12 +23,12 @@ export function YearScopeSelect({ value, onChange }: { value: string; onChange: 
             <SelectValue placeholder="Selecione o período" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value={ALL_SCOPE}>Carteira Completa (Audit Mode)</SelectItem>
             {(years.data ?? []).map((year) => (
               <SelectItem key={year} value={String(year)}>
-                Carteira {year}
+                Controle Gerencial {year}
               </SelectItem>
             ))}
-            <SelectItem value={ALL_SCOPE}>Carteira Completa (Audit)</SelectItem>
           </SelectContent>
         </Select>
       </div>

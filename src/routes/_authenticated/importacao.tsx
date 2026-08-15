@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -57,14 +59,29 @@ function ImportPage() {
         sheetList = inspected.sheets;
         setSheets(sheetList);
       }
-      // Padrão: carga histórica completa (todas as abas anuais).
       const target = sheet ?? ALL_SHEETS;
       setSelectedSheet(target);
       const result = await readWorkbookFile(
         selected,
         target && target !== ALL_SHEETS ? { sheets: [target] } : undefined,
       );
-      setPreview(result);
+
+      // Enriquecer com Diff de Sincronização
+      const syncInfo: Record<string, any> = {};
+      const { data: operations } = await supabase.from("investment_operations").select("reference, source_hash");
+      
+      for (const op of result.operations) {
+        const existing = operations?.find(o => o.reference === op.reference);
+        if (!existing) {
+          syncInfo[op.reference] = "NOVO";
+        } else if (existing.source_hash === op.sourceHash) {
+          syncInfo[op.reference] = "INALTERADO";
+        } else {
+          syncInfo[op.reference] = "ALTERADO_NO_EXCEL";
+        }
+      }
+      
+      setPreview({ ...result, syncInfo });
       toast.success("Leitura concluída. Homologue os totais antes de importar.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível ler a planilha.");
@@ -78,7 +95,7 @@ function ImportPage() {
     if (!file || !preview) return;
     setBusy(true);
     try {
-      const outcome = await importParseResult(file.name, preview);
+      const outcome = await importParseResult(file.name, preview, importMode);
       toast.success(
         `Importação concluída: ${outcome.operations} operações, ${outcome.installments} parcelas, ${outcome.receipts} recebimentos.`,
       );
@@ -215,11 +232,12 @@ function ImportPage() {
               <CardTitle className="text-base">Resumo da importação</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-4 text-sm">
-                <Stat label="Prontos para importar" value={String(preview.readiness.ready)} />
-                <Stat label="Pendentes de revisão" value={String(preview.readiness.pending)} />
-                <Stat label="Ignorados" value={String(preview.readiness.ignored)} />
-                <Stat label="Erros críticos" value={String(preview.readiness.critical)} />
+              <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 text-sm">
+                <Stat label="Prontos" value={String(preview.readiness.ready)} />
+                <Stat label="Pendentes" value={String(preview.readiness.pending)} />
+                <Stat label="Novos" value={String(Object.values(preview.syncInfo ?? {}).filter(v => v === 'NOVO').length)} />
+                <Stat label="Alterados" value={String(Object.values(preview.syncInfo ?? {}).filter(v => v === 'ALTERADO_NO_EXCEL').length)} />
+                <Stat label="Conflitos" value={String(Object.values(preview.syncInfo ?? {}).filter(v => v === 'CONFLITO').length)} color="text-destructive" />
               </div>
               <button
                 type="button"
@@ -491,11 +509,11 @@ function SeverityBadge({ severity }: { severity: IssueSeverity }) {
   return <Badge variant={variant}>{severity}</Badge>;
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="rounded-md border p-3">
       <p className="text-xs uppercase text-muted-foreground">{label}</p>
-      <p className="font-semibold">{value}</p>
+      <p className={cn("font-semibold", color)}>{value}</p>
     </div>
   );
 }

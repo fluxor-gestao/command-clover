@@ -115,6 +115,7 @@ export interface ParseResult {
   operations: ParsedOperation[];
   issues: ParsedIssue[];
   baseline: ParseBaseline;
+  syncInfo?: Record<string, "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO">;
   readiness: {
     ready: number;
     pending: number;
@@ -894,5 +895,5 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
     critical: critical.length,
   };
 
-  return { operations, issues: enrichedIssues, baseline, readiness, stats };
+  return { operations, issues: enrichedIssues, baseline, readiness, stats, syncInfo: {} };
 }
