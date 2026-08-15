@@ -116,7 +116,7 @@ function DashboardPage() {
       acc[name]!.value += Number(op.initial_capital ?? 0) + Number(op.total_contributions ?? 0);
       return acc;
     }, {}),
-  ).sort((a, b) => b.value - a.value);
+  ).sort((a: any, b: any) => b.value - a.value);
 
   const topOverdue = scopedOperations
     .map((op) => ({
