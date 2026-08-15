@@ -274,7 +274,7 @@ function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={byCategory} dataKey="value" nameKey="name" innerRadius={55} outerRadius={95}>
-                  {byCategory.map((entry, index) => (
+                  {byCategory.map((entry: any, index: number) => (
                     <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
