@@ -167,7 +167,7 @@ function DashboardPage() {
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct(s?.percentual_recuperado / 100)} do principal`}
+          hint={`${pct((s?.percentual_recuperado ?? 0) / 100)} do principal`}
           icon={<ArrowDownRight className="size-4" />}
           primary
           onClick={() => navigate({ to: "/recebimentos" })}
@@ -224,9 +224,9 @@ function DashboardPage() {
             <div>
               <CardTitle className="text-sm font-medium text-muted-foreground">Recuperação do capital</CardTitle>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight text-foreground">{pct(s?.recovery_percentage)}</span>
+                <span className="text-3xl font-bold tracking-tight text-foreground">{pct((s?.percentual_recuperado ?? 0) / 100)}</span>
                 <span className="text-sm text-muted-foreground">
-                  {brl(s?.total_received)} de {brl(s?.total_invested)} recuperados
+                  {brl(s?.total_received)} de {brl(s?.capital_investido)} recuperados
                 </span>
               </div>
             </div>
@@ -234,7 +234,7 @@ function DashboardPage() {
         </CardHeader>
         <CardContent className="pt-4">
           <Progress 
-            value={Number(s?.recovery_percentage ?? 0) * 100} 
+            value={Number(s?.percentual_recuperado ?? 0)} 
             className="h-3 bg-muted"
           />
           <div className="mt-4 flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">

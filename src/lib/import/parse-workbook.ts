@@ -140,11 +140,13 @@ export interface ParseResult {
     ignored: number;
     critical: number;
   };
-  stats: {
+  rentals: [],
+    stats: {
     sheetsRead: string[];
     availableSheets: string[];
     referenceMonth: string;
     operations: number;
+      rentals: number;
     rentals: number;
     installments: number;
     receivedInstallments: number;
@@ -158,6 +160,7 @@ export interface ParseResult {
     byYear: {
       year: string;
       operations: number;
+      rentals: number;
       installments: number;
       expected: number;
       received: number;
