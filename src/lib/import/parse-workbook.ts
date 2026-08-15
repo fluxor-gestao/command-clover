@@ -1,13 +1,15 @@
 import type { Workbook, Worksheet, Cell } from "exceljs";
+import { createHash } from "crypto";
 
 /**
  * Leitor da base histórica Nova Era.
  *
- * Suporta dois formatos:
+ * Suporta três formatos:
  *  1. Abas anuais "À receber YYYY" (colunas JANEIRO..DEZEMBRO).
  *     Valores em vermelho = saldo em aberto / inadimplência (NÃO são recebimentos).
  *     Valores em preto em competências já vencidas = recebimentos efetivos.
  *  2. Abas estruturadas "Operações", "Recebimentos", "Aportes".
+ *  3. Abas de Controle Gerencial "BaseYYYY" (lista de ativos da carteira oficial).
  */
 
 export type IssueType =
@@ -89,6 +91,8 @@ export interface ParsedOperation {
   installmentValue: number | null;
   notes: string | null;
   sourceKey: string;
+  sourceHash?: string;
+  isManagement?: boolean;
   installments: ParsedInstallment[];
   contributions: ParsedContribution[];
   incomplete: boolean;
@@ -647,6 +651,47 @@ function parseContributionsSheet(sheet: Worksheet, index: OperationIndex, issues
   });
 }
 
+function parseManagementSheet(sheet: Worksheet, year: number, index: OperationIndex) {
+  let headerRow = 0;
+  const header: Record<string, number> = {};
+  sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (!headerRow) {
+      const cells: Record<string, number> = {};
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        cells[normalizeText(cellText(cell))] = colNumber;
+      });
+      if (Object.keys(cells).some((key) => key.includes("REFERENCIA"))) {
+        headerRow = rowNumber;
+        Object.assign(header, cells);
+      }
+      return;
+    }
+    const col = (name: string) => Object.entries(header).find(([key]) => key.includes(name))?.[1];
+    const reference = cellText(row.getCell(col("REFERENCIA") ?? 1));
+    if (!reference || normalizeText(reference).startsWith("TOTAL")) return;
+
+    const op = index.find(reference);
+    if (op) {
+      op.isManagement = true;
+      if (!op.sheets.includes(sheet.name)) op.sheets.push(sheet.name);
+    }
+  });
+}
+
+export function calculateSourceHash(op: ParsedOperation): string {
+  const data = JSON.stringify({
+    reference: op.reference,
+    initialCapital: op.initialCapital,
+    installmentCount: op.installmentCount,
+    installmentValue: op.installmentValue,
+    firstDueDate: op.firstDueDate,
+    dueDay: op.dueDay,
+    category: op.category,
+    notes: op.notes,
+  });
+  return createHash("md5").update(data).digest("hex");
+}
+
 export function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
@@ -673,6 +718,13 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
   const issues: ParsedIssue[] = [];
   const sheetsRead: string[] = [];
   const availableSheets = listAnnualSheets(workbook);
+  workbook.eachSheet((sheet) => {
+    const name = normalizeText(sheet.name);
+    if (name.startsWith("BASE") && /\d{4}/.test(name)) {
+      availableSheets.push(sheet.name);
+    }
+  });
+
   const referenceMonth = options.referenceMonth ?? new Date().toISOString().slice(0, 7);
   const selected = options.sheets?.length ? new Set(options.sheets) : null;
 
@@ -689,12 +741,21 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
 
   // 1) abas anuais
   workbook.eachSheet((sheet) => {
+    const name = normalizeText(sheet.name);
     const year = yearFromSheetName(sheet.name);
-    const isAnnual = /RECEBER/.test(normalizeText(sheet.name)) && year !== null;
-    if (!isAnnual) return;
+    const isAnnual = /RECEBER/.test(name) && year !== null;
+    const isManagement = name.startsWith("BASE") && /\d{4}/.test(name);
+
+    if (!isAnnual && !isManagement) return;
     if (selected && !selected.has(sheet.name)) return;
+    
     sheetsRead.push(sheet.name);
-    parseAnnualSheet(sheet, year!, index, issues, baseline, referenceMonth);
+    if (isAnnual) {
+      parseAnnualSheet(sheet, year!, index, issues, baseline, referenceMonth);
+    } else {
+      const mYear = parseInt(name.match(/\d{4}/)?.[0] ?? "0");
+      parseManagementSheet(sheet, mYear, index);
+    }
   });
 
   // 2) abas estruturadas
@@ -720,6 +781,7 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
   const operations = index.all().filter((op) => op.installments.length > 0 || op.initialCapital);
 
   for (const op of operations) {
+    op.sourceHash = calculateSourceHash(op);
     op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
     const contractComplete = Boolean(op.installmentCount && op.installmentValue && op.firstDueDate);
     op.incomplete = !contractComplete;

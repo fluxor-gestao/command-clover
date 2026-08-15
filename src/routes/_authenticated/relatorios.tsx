@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Download, FileBarChart, PieChart, TrendingUp } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Download, FileBarChart, PieChart, TrendingUp, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -9,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
-import { useMonthlyFlow, usePortfolioMetrics } from "@/lib/data/hooks";
+import { useMonthlyFlow, usePortfolioMetrics, useOperations, useInstallments } from "@/lib/data/hooks";
 import { brl, competenceBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { simulateContract } from "@/lib/finance/contract";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({
@@ -36,9 +37,57 @@ function ReportsPage() {
   const year = "year" in scope ? scope.year : null;
   const metrics = usePortfolioMetrics(scope);
   const flow = useMonthlyFlow();
-  const rows = (flow.data ?? []).filter((row) =>
-    year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year),
-  );
+  const operations = useOperations();
+  const allInstallments = useInstallments();
+
+  const projectedRows = useMemo(() => {
+    const realRows = (flow.data ?? []).map(r => ({ ...r, isProjected: false }));
+    if (!year || !operations.data) return realRows.filter(r => !year || r.competence?.startsWith(String(year)));
+
+    // Se temos um ano selecionado, vamos preencher as lacunas até Dezembro se necessário,
+    // e projetar valores baseados nos contratos ativos que não têm parcelas no banco
+    const months = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}-01`);
+    
+    return months.map(month => {
+      const existing = realRows.find(r => r.competence === month);
+      if (existing && (existing.installments_count ?? 0) > 0) return existing;
+
+      // Projetar: buscar operações que deveriam estar ativas neste mês
+      let projectedExpected = 0;
+      let projectedOps = 0;
+
+      operations.data?.forEach(op => {
+        const rawOp = op as any;
+        if (rawOp.is_own_property || !rawOp.first_due_date || !rawOp.installment_count || !rawOp.installment_value) return;
+        
+        const simulation = simulateContract({
+          capital: rawOp.initial_capital ?? 0,
+          installmentValue: rawOp.installment_value,
+          installmentCount: rawOp.installment_count,
+          firstDueDate: rawOp.first_due_date,
+          dueDay: rawOp.due_day
+        });
+
+        const monthSim = simulation.schedule.find(s => s.dueDate.startsWith(month.slice(0, 7)));
+        if (monthSim) {
+          projectedExpected += monthSim.amount;
+          projectedOps += 1;
+        }
+      });
+
+      return {
+        competence: month,
+        installments_count: projectedOps,
+        expected: projectedExpected,
+        received: 0,
+        overdue: 0,
+        realization_percentage: 0,
+        isProjected: true
+      };
+    });
+  }, [flow.data, year, operations.data]);
+
+  const rows = projectedRows;
 
   return (
     <div className="space-y-8">
@@ -113,7 +162,14 @@ function ReportsPage() {
                 <TableBody>
                   {rows.map((row) => (
                     <TableRow key={row.competence} className="group hover:bg-muted/50 transition-colors border-border/40">
-                      <TableCell className="font-bold py-4 pl-6">{competenceBR(row.competence)}</TableCell>
+                      <TableCell className="font-bold py-4 pl-6 flex items-center gap-2">
+                        {competenceBR(row.competence)}
+                        {(row as any).isProjected && (
+                          <Badge variant="secondary" className="h-4 text-[8px] px-1 bg-primary/5 text-primary border-primary/20">
+                            <Sparkles className="size-2 mr-1" /> Projetado
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{row.installments_count ?? 0}</TableCell>
                       <TableCell className="text-right tabular-nums font-medium">{brl(row.expected)}</TableCell>
                       <TableCell className="text-right tabular-nums font-bold text-success/80">{brl(row.received)}</TableCell>
