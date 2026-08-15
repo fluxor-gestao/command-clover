@@ -49,6 +49,7 @@ export async function importParseResult(
   result: ParseResult,
   mode: "CARGA_HISTORICA" | "CONTROLE_GERENCIAL",
   onProgress?: (progress: ImportProgress) => void,
+  options?: { forceUpdateRefs?: string[] },
 ): Promise<ImportOutcome> {
   const { data: user } = await supabase.auth.getUser();
   const { data: importRow, error: importError } = await supabase
@@ -76,6 +77,11 @@ export async function importParseResult(
   let done = 0;
 
   for (const op of result.operations) {
+    // Aba Aluguéis / Patrimônio: Ignorar se for imóvel próprio na carteira de investimentos
+    if (op.category?.toUpperCase() === "ALUGUEL" || op.reference.toLowerCase().includes("aluguel")) {
+      continue;
+    }
+
     onProgress?.({ step: op.reference, done, total });
     done += 1;
 
@@ -104,8 +110,9 @@ export async function importParseResult(
       continue;
     }
 
-    // BLOQUEADOR 1: Se há conflito no modo CONTROLE_GERENCIAL, não sobrescrever automaticamente
-    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "CONFLITO") {
+    // BLOQUEADOR 1: Se há conflito no modo CONTROLE_GERENCIAL, não sobrescrever automaticamente, a menos que forçado
+    const isForced = options?.forceUpdateRefs?.includes(op.reference);
+    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "CONFLITO" && !isForced) {
       await supabase.from("investment_import_issues").insert({
         import_id: importId,
         source_sheet: filename,
@@ -116,7 +123,7 @@ export async function importParseResult(
       continue;
     }
 
-    const needsUpdate = syncStatus !== "INALTERADO";
+    const needsUpdate = syncStatus !== "INALTERADO" || isForced;
 
     if (needsUpdate) {
       const payload = {
