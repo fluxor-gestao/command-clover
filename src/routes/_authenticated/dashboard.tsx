@@ -28,6 +28,7 @@ import {
   useMonthlyFlow,
   useOperations,
   usePortfolioMetrics,
+  usePortfolioProjection,
   useReceivedInMonth,
 } from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
@@ -68,13 +69,13 @@ function DashboardPage() {
   const metrics = usePortfolioMetrics(scope);
   const operations = useOperations();
   const installments = useInstallments();
+  const projection = usePortfolioProjection(year);
   const flow = useMonthlyFlow();
   const receivedInMonth = useReceivedInMonth(currentMonth);
 
   const s = metrics.data;
 
-  const monthly = (flow.data ?? [])
-    .filter((row) => (year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year)))
+  const monthly = (projection.data ?? [])
     .map((row) => ({
       competence: competenceBR(row.competence),
       raw: row.competence ?? "",
@@ -157,7 +158,7 @@ function DashboardPage() {
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Capital investido"
-          value={brl(s?.total_invested)}
+          value={brl(s?.capital_investido)}
           hint={`${s?.total_operations ?? 0} ativos`}
           icon={<Wallet className="size-4" />}
           primary
@@ -166,14 +167,14 @@ function DashboardPage() {
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct(s?.recovery_percentage)} do principal`}
+          hint={`${pct(s?.percentual_recuperado / 100)} do principal`}
           icon={<ArrowDownRight className="size-4" />}
           primary
           onClick={() => navigate({ to: "/recebimentos" })}
         />
         <Kpi
           title="Capital a Recuperar"
-          value={brl(s?.capital_to_recover)}
+          value={brl(s?.capital_a_recuperar)}
           hint="Saldo pendente do aporte"
           icon={<ArrowUpRight className="size-4" />}
           primary
@@ -182,7 +183,7 @@ function DashboardPage() {
         <Kpi
           title="Total a Receber"
           value={brl(s?.total_a_receber)}
-          hint="Projeção total futura"
+          hint="Saldo aberto (Inad. + Futuro)"
           icon={<TrendingUp className="size-4" />}
           primary
           onClick={() => navigate({ to: "/parcelas" })}
@@ -192,27 +193,27 @@ function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Lucro realizado"
-          value={brl(s?.realized_profit)}
-          hint="Sobre capital retornado"
+          value={brl(s?.lucro_realizado)}
+          hint="Excedente ao principal"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Resultado Projetado"
-          value={brl(s?.projected_result)}
-          hint="Resultado esperado ao final da carteira"
+          value={brl(s?.resultado_projetado)}
+          hint="Previsto - Investido"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Inadimplência"
-          value={brl(s?.overdue_receivable)}
-          hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
+          value={brl(s?.inadimplencia)}
+          hint="Parcelas vencidas em aberto"
           tone="destructive"
           onClick={() => navigate({ to: "/parcelas", search: { status: "VENCIDA" } })}
         />
         <Kpi
-          title="Recebido no mês"
-          value={brl(receivedInMonth.data ?? 0)}
-          hint={`Previsto no mês: ${brl(monthRow?.previsto ?? 0)}`}
+          title="A Receber Futuro"
+          value={brl(s?.a_receber_futuro)}
+          hint={`Recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>

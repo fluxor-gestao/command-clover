@@ -113,8 +113,24 @@ export interface ParseBaseline {
   ignoredRows: number;
 }
 
+export interface ParsedRental {
+  reference: string;
+  dueDay: number | null;
+  currentRent: number | null;
+  contractStart: string | null;
+  contractEnd: string | null;
+  adjustmentDate: string | null;
+  status: string;
+  notes: string | null;
+  monthlyValues: Record<string, number>;
+  receivedAmount: number;
+  sourceKey: string;
+  sourceHash: string;
+}
+
 export interface ParseResult {
   operations: ParsedOperation[];
+  rentals: ParsedRental[];
   issues: ParsedIssue[];
   baseline: ParseBaseline;
   syncInfo?: Record<string, "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO">;
@@ -129,6 +145,7 @@ export interface ParseResult {
     availableSheets: string[];
     referenceMonth: string;
     operations: number;
+    rentals: number;
     installments: number;
     receivedInstallments: number;
     overdueInstallments: number;
@@ -147,7 +164,6 @@ export interface ParseResult {
       overdue: number;
     }[];
   };
-
 }
 
 
