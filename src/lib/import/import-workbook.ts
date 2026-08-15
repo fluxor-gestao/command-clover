@@ -57,7 +57,7 @@ export async function importParseResult(
       filename,
       mode,
       status: "EM_ANDAMENTO",
-      created_by: user.user?.id,
+      created_by: user.user?.id ?? null,
     })
     .select("id")
     .single();
