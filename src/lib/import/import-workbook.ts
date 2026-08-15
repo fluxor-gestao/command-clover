@@ -103,7 +103,7 @@ export async function importParseResult(
     if (mode === "CONTROLE_GERENCIAL" && syncStatus === "INALTERADO") continue;
 
     const isForced = options?.forceUpdateRefs?.includes(rent.reference);
-    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "CONFLITO" && !isForced) {
+    if (mode === "CONTROLE_GERENCIAL" && syncStatus === ("CONFLITO" as any) && !isForced) {
         // Log issue
         continue;
     }
@@ -171,7 +171,7 @@ export async function importParseResult(
 
     // BLOQUEADOR 1: Se há conflito no modo CONTROLE_GERENCIAL, não sobrescrever automaticamente, a menos que forçado
     const isForced = options?.forceUpdateRefs?.includes(op.reference);
-    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "CONFLITO" && !isForced) {
+    if (mode === "CONTROLE_GERENCIAL" && syncStatus === ("CONFLITO" as any) && !isForced) {
       await supabase.from("investment_import_issues").insert({
         import_id: importId,
         source_sheet: filename,
@@ -193,7 +193,7 @@ export async function importParseResult(
         first_due_date: op.firstDueDate,
         installment_count: op.installmentCount,
         installment_value: op.installmentValue,
-        last_due_date: op.lastDueDate || undefined,
+        last_due_date: op.lastDueDate || null,
         notes: op.notes,
         source: "IMPORTADO",
         import_status: op.incomplete ? "PENDENTE_REVISAO" : "VALIDADO",
