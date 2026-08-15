@@ -1,0 +1,1 @@
+ALTER VIEW public.v_rental_position SET (security_invoker = on);
