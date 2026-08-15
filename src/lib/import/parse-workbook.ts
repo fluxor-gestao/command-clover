@@ -277,7 +277,7 @@ function upsertInstallment(op: ParsedOperation, inst: ParsedInstallment) {
   }
 }
 
-export async function parseWorkbook(workbook: Workbook, options?: { referenceMonth?: string }): Promise<ParseResult> {
+export async function parseWorkbook(workbook: Workbook, options?: ParseOptions): Promise<ParseResult> {
   const referenceMonth = options?.referenceMonth ?? new Date().toISOString().slice(0, 7);
   const result: ParseResult = {
     operations: [], rentals: [], issues: [],
@@ -294,6 +294,10 @@ export async function parseWorkbook(workbook: Workbook, options?: { referenceMon
 
   workbook.eachSheet(sheet => {
     const name = normalizeText(sheet.name);
+    
+    // Filtro de abas se fornecido nas opções
+    if (options?.sheets && !options.sheets.includes(sheet.name)) return;
+
     if (name.startsWith("A RECEBER") || name.match(/20\d{2}/)) {
       const year = yearFromSheetName(sheet.name) || new Date().getFullYear();
       parseAnnualSheet(sheet, year, index, result.issues, result.baseline, referenceMonth);
