@@ -56,16 +56,16 @@ function ReportsPage() {
       let projectedExpected = 0;
       let projectedOps = 0;
 
-      operations.data.forEach(op => {
-        if (op.is_own_property || !op.first_due_date || !op.installment_count || !op.installment_value) return;
-        
-        const simulation = simulateContract({
-          capital: op.initial_capital ?? 0,
-          installmentValue: op.installment_value,
-          installmentCount: op.installment_count,
-          firstDueDate: op.first_due_date,
-          dueDay: op.due_day
-        });
+      const rawOp = op as any;
+      if (rawOp.is_own_property || !rawOp.first_due_date || !rawOp.installment_count || !rawOp.installment_value) return;
+      
+      const simulation = simulateContract({
+        capital: rawOp.initial_capital ?? 0,
+        installmentValue: rawOp.installment_value,
+        installmentCount: rawOp.installment_count,
+        firstDueDate: rawOp.first_due_date,
+        dueDay: rawOp.due_day
+      });
 
         const monthSim = simulation.schedule.find(s => s.dueDate.startsWith(month.slice(0, 7)));
         if (monthSim) {

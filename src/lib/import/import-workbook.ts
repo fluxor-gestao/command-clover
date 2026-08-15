@@ -103,7 +103,7 @@ export async function importParseResult(
         source: "IMPORTADO",
         import_status: op.incomplete ? "PENDENTE_REVISAO" : "IMPORTADO",
         source_key: sourceKey,
-        source_hash: op.sourceHash,
+        source_hash: op.sourceHash ?? null,
         last_synced_at: new Date().toISOString(),
       };
 
