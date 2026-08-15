@@ -3,6 +3,8 @@ import logoAsset from "@/assets/logo.png.asset.json";
 import {
   BarChart3,
   Building2,
+  Calculator,
+  KeyRound,
   CalendarClock,
   ChevronLeft,
   ChevronRight,
@@ -51,6 +53,8 @@ const NAV_OPERATIONAL = [
   { to: "/parcelas", label: "Parcelas & Vencimentos", icon: CalendarClock },
   { to: "/recebimentos", label: "Recebimentos", icon: Wallet },
   { to: "/aportes", label: "Aportes", icon: PiggyBank },
+  { to: "/alugueis", label: "Aluguéis", icon: KeyRound },
+  { to: "/simulador", label: "Simulador gerencial", icon: Calculator },
 ] as const;
 
 const NAV_SYSTEM = [

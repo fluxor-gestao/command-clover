@@ -466,3 +466,95 @@ export function useResolveIssue() {
     onSuccess: invalidate,
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Aluguéis (imóveis próprios) — patrimônio, nunca somado a investimentos */
+/* ------------------------------------------------------------------ */
+
+export interface RentalProperty {
+  id: string;
+  name: string;
+  tenant_name: string | null;
+  due_day: number | null;
+  current_rent: number;
+  contract_start: string | null;
+  contract_end: string | null;
+  next_adjustment_date: string | null;
+  status: string;
+  notes: string | null;
+  received_year?: number;
+  receivable_year?: number;
+}
+
+export function useRentalProperties() {
+  return useQuery({
+    queryKey: ["rental-properties"],
+    queryFn: async (): Promise<RentalProperty[]> => {
+      const { data, error } = await supabase
+        .from("v_rental_position" as never)
+        .select("*")
+        .order("name");
+      if (error) throw new Error(error.message);
+      return ((data as unknown as RentalProperty[]) ?? []).map((row) => ({
+        ...row,
+        current_rent: Number(row.current_rent ?? 0),
+        received_year: Number(row.received_year ?? 0),
+        receivable_year: Number(row.receivable_year ?? 0),
+      }));
+    },
+  });
+}
+
+export function useSaveRentalProperty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Partial<RentalProperty> & { name: string }) => {
+      const payload = { ...input };
+      const { error } = input.id
+        ? await supabase.from("rental_properties" as never).update(payload as never).eq("id", input.id)
+        : await supabase.from("rental_properties" as never).insert(payload as never);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rental-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-receipts"] });
+    },
+  });
+}
+
+export function useRentalReceipts(propertyId?: string) {
+  return useQuery({
+    queryKey: ["rental-receipts", propertyId ?? "all"],
+    queryFn: async () => {
+      let query = supabase
+        .from("rental_receipts" as never)
+        .select("*, rental_properties(name)")
+        .is("cancelled_at", null)
+        .order("competence", { ascending: false });
+      if (propertyId) query = query.eq("property_id", propertyId);
+      const { data, error } = await query.limit(1000);
+      if (error) throw new Error(error.message);
+      return (data as unknown as Record<string, unknown>[]) ?? [];
+    },
+  });
+}
+
+export function useRegisterRentalReceipt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      property_id: string;
+      competence: string;
+      receipt_date: string;
+      amount: number;
+      notes: string | null;
+    }) => {
+      const { error } = await supabase.from("rental_receipts" as never).insert(payload as never);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rental-receipts"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-properties"] });
+    },
+  });
+}
