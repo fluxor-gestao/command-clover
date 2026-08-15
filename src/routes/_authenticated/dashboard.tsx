@@ -338,7 +338,7 @@ function DashboardPage() {
                   <TableRow 
                     key={op.operation_id} 
                     className="group cursor-pointer transition-colors hover:bg-muted/50"
-                    onClick={() => navigate({ to: "/operacoes/$id", params: { id: op.operation_id ?? "" } })}
+                    onClick={() => (navigate as any)({ to: "/operacoes/$id", params: { id: op.operation_id ?? "" } })}
                   >
                     <TableCell className="font-medium">{op.reference}</TableCell>
                     <TableCell className="text-right text-destructive font-bold tabular-nums">{brl(op.overdue_receivable)}</TableCell>
