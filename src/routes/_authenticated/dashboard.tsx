@@ -178,7 +178,7 @@ function DashboardPage() {
           hint="Saldo pendente do aporte"
           icon={<ArrowUpRight className="size-4" />}
           primary
-          onClick={() => navigate({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
+          onClick={() => (navigate as any)({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
           title="Total a Receber"
@@ -208,7 +208,7 @@ function DashboardPage() {
           value={brl(s?.inadimplencia)}
           hint="Parcelas vencidas em aberto"
           tone="destructive"
-          onClick={() => navigate({ to: "/parcelas", search: { status: "VENCIDA" } })}
+          onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "VENCIDA" } })}
         />
         <Kpi
           title="A Receber Futuro"
