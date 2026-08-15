@@ -78,7 +78,7 @@ function ImportPage() {
     if (!file || !preview) return;
     setBusy(true);
     try {
-      const outcome = await importParseResult(file.name, preview);
+      const outcome = await importParseResult(file.name, preview, importMode);
       toast.success(
         `Importação concluída: ${outcome.operations} operações, ${outcome.installments} parcelas, ${outcome.receipts} recebimentos.`,
       );

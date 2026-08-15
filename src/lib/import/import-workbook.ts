@@ -47,15 +47,18 @@ export async function readWorkbookFile(file: File, options?: ParseOptions): Prom
 export async function importParseResult(
   filename: string,
   result: ParseResult,
+  mode: "CARGA_HISTORICA" | "CONTROLE_GERENCIAL",
   onProgress?: (progress: ImportProgress) => void,
 ): Promise<ImportOutcome> {
+  const { data: user } = await supabase.auth.getUser();
   const { data: importRow, error: importError } = await supabase
-    .from("investment_imports")
+    .from("sync_runs")
     .insert({
       filename,
-      fingerprint: `${filename}:${result.stats.operations}:${result.stats.installments}`,
+      mode,
       status: "EM_ANDAMENTO",
-      rows_processed: result.stats.operations + result.stats.installments,
+      total_processed: result.operations.length,
+      created_by: user.user?.id,
     })
     .select("id")
     .single();
@@ -248,11 +251,11 @@ export async function importParseResult(
   }
 
   await supabase
-    .from("investment_imports")
+    .from("sync_runs")
     .update({
       status: "CONCLUIDA",
-      rows_imported: installmentsCount + result.operations.length,
-      rows_pending: result.issues.length,
+      new_records: result.operations.length, // Simplificado
+      finished_at: new Date().toISOString(),
       summary: {
         operacoes: result.operations.length,
         parcelas: installmentsCount,
@@ -263,7 +266,6 @@ export async function importParseResult(
         investido: result.stats.investedTotal,
         abas: result.stats.sheetsRead,
       },
-      finished_at: new Date().toISOString(),
     })
     .eq("id", importId);
 

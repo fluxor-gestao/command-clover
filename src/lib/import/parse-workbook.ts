@@ -115,6 +115,7 @@ export interface ParseResult {
   operations: ParsedOperation[];
   issues: ParsedIssue[];
   baseline: ParseBaseline;
+  syncInfo?: Record<string, "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO">;
   readiness: {
     ready: number;
     pending: number;
