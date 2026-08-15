@@ -895,5 +895,5 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
     critical: critical.length,
   };
 
-  return { operations, issues: enrichedIssues, baseline, readiness, stats };
+  return { operations, issues: enrichedIssues, baseline, readiness, stats, syncInfo: {} };
 }
