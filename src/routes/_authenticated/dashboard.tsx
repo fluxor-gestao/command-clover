@@ -28,12 +28,13 @@ import {
   useMonthlyFlow,
   useOperations,
   usePortfolioMetrics,
+  usePortfolioProjection,
   useReceivedInMonth,
 } from "@/lib/data/hooks";
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard" as any)({
   head: () => ({
     meta: [
       { title: "Dashboard executivo · Nova Era Investimentos" },
@@ -68,13 +69,13 @@ function DashboardPage() {
   const metrics = usePortfolioMetrics(scope);
   const operations = useOperations();
   const installments = useInstallments();
+  const projection = usePortfolioProjection(year);
   const flow = useMonthlyFlow();
   const receivedInMonth = useReceivedInMonth(currentMonth);
 
   const s = metrics.data;
 
-  const monthly = (flow.data ?? [])
-    .filter((row) => (year === null ? true : String(row.competence ?? "").slice(0, 4) === String(year)))
+  const monthly = (projection.data ?? [])
     .map((row) => ({
       competence: competenceBR(row.competence),
       raw: row.competence ?? "",
@@ -115,7 +116,7 @@ function DashboardPage() {
       acc[name]!.value += Number(op.initial_capital ?? 0) + Number(op.total_contributions ?? 0);
       return acc;
     }, {}),
-  ).sort((a, b) => b.value - a.value);
+  ).sort((a: any, b: any) => b.value - a.value);
 
   const topOverdue = scopedOperations
     .map((op) => ({
@@ -157,7 +158,7 @@ function DashboardPage() {
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Capital investido"
-          value={brl(s?.total_invested)}
+          value={brl(s?.capital_investido)}
           hint={`${s?.total_operations ?? 0} ativos`}
           icon={<Wallet className="size-4" />}
           primary
@@ -166,23 +167,23 @@ function DashboardPage() {
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct(s?.recovery_percentage)} do principal`}
+          hint={`${pct((s?.percentual_recuperado ?? 0) / 100)} do principal`}
           icon={<ArrowDownRight className="size-4" />}
           primary
           onClick={() => navigate({ to: "/recebimentos" })}
         />
         <Kpi
           title="Capital a Recuperar"
-          value={brl(s?.capital_to_recover)}
+          value={brl(s?.capital_a_recuperar)}
           hint="Saldo pendente do aporte"
           icon={<ArrowUpRight className="size-4" />}
           primary
-          onClick={() => navigate({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
+          onClick={() => (navigate as any)({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
           title="Total a Receber"
           value={brl(s?.total_a_receber)}
-          hint="Projeção total futura"
+          hint="Saldo aberto (Inad. + Futuro)"
           icon={<TrendingUp className="size-4" />}
           primary
           onClick={() => navigate({ to: "/parcelas" })}
@@ -192,27 +193,27 @@ function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Lucro realizado"
-          value={brl(s?.realized_profit)}
-          hint="Sobre capital retornado"
+          value={brl(s?.lucro_realizado)}
+          hint="Excedente ao principal"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Resultado Projetado"
-          value={brl(s?.projected_result)}
-          hint="Resultado esperado ao final da carteira"
+          value={brl(s?.resultado_projetado)}
+          hint="Previsto - Investido"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Inadimplência"
-          value={brl(s?.overdue_receivable)}
-          hint={`${s?.overdue_installments ?? 0} parcelas vencidas`}
+          value={brl(s?.inadimplencia)}
+          hint="Parcelas vencidas em aberto"
           tone="destructive"
-          onClick={() => navigate({ to: "/parcelas", search: { status: "VENCIDA" } })}
+          onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "VENCIDA" } })}
         />
         <Kpi
-          title="Recebido no mês"
-          value={brl(receivedInMonth.data ?? 0)}
-          hint={`Previsto no mês: ${brl(monthRow?.previsto ?? 0)}`}
+          title="A Receber Futuro"
+          value={brl(s?.a_receber_futuro)}
+          hint={`Recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>
@@ -223,9 +224,9 @@ function DashboardPage() {
             <div>
               <CardTitle className="text-sm font-medium text-muted-foreground">Recuperação do capital</CardTitle>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight text-foreground">{pct(s?.recovery_percentage)}</span>
+                <span className="text-3xl font-bold tracking-tight text-foreground">{pct((s?.percentual_recuperado ?? 0) / 100)}</span>
                 <span className="text-sm text-muted-foreground">
-                  {brl(s?.total_received)} de {brl(s?.total_invested)} recuperados
+                  {brl(s?.total_received)} de {brl(s?.capital_investido)} recuperados
                 </span>
               </div>
             </div>
@@ -233,7 +234,7 @@ function DashboardPage() {
         </CardHeader>
         <CardContent className="pt-4">
           <Progress 
-            value={Number(s?.recovery_percentage ?? 0) * 100} 
+            value={Number(s?.percentual_recuperado ?? 0)} 
             className="h-3 bg-muted"
           />
           <div className="mt-4 flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -273,7 +274,7 @@ function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={byCategory} dataKey="value" nameKey="name" innerRadius={55} outerRadius={95}>
-                  {byCategory.map((entry, index) => (
+                  {byCategory.map((entry: any, index: number) => (
                     <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
@@ -337,7 +338,7 @@ function DashboardPage() {
                   <TableRow 
                     key={op.operation_id} 
                     className="group cursor-pointer transition-colors hover:bg-muted/50"
-                    onClick={() => navigate({ to: "/operacoes/$id", params: { id: op.operation_id ?? "" } })}
+                    onClick={() => (navigate as any)({ to: "/operacoes/$id", params: { id: op.operation_id ?? "" } })}
                   >
                     <TableCell className="font-medium">{op.reference}</TableCell>
                     <TableCell className="text-right text-destructive font-bold tabular-nums">{brl(op.overdue_receivable)}</TableCell>
