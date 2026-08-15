@@ -57,7 +57,6 @@ export async function importParseResult(
       filename,
       mode,
       status: "EM_ANDAMENTO",
-      total_processed: result.operations.length,
       created_by: user.user?.id,
     })
     .select("id")
@@ -254,8 +253,7 @@ export async function importParseResult(
     .from("sync_runs")
     .update({
       status: "CONCLUIDA",
-      new_records: result.operations.length, // Simplificado
-      finished_at: new Date().toISOString(),
+      confirmed_at: new Date().toISOString(),
       summary: {
         operacoes: result.operations.length,
         parcelas: installmentsCount,
