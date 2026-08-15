@@ -161,7 +161,7 @@ export async function importParseResult(
         p_operation_id: existing.id,
         p_incoming_hash: op.sourceHash ?? "",
       });
-      syncStatus = (status as any) || "ALTERADO_NO_EXCEL";
+      syncStatus = (status as "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO") || "ALTERADO_NO_EXCEL";
     }
 
     // Se é modo de sincronização e está inalterado, pulamos a atualização
@@ -193,7 +193,7 @@ export async function importParseResult(
         first_due_date: op.firstDueDate,
         installment_count: op.installmentCount,
         installment_value: op.installmentValue,
-        last_due_date: op.lastDueDate,
+        last_due_date: op.lastDueDate || undefined,
         notes: op.notes,
         source: "IMPORTADO",
         import_status: op.incomplete ? "PENDENTE_REVISAO" : "VALIDADO",

@@ -22,23 +22,20 @@ export function usePortfolioSummary() {
   });
 }
 
-export type PortfolioScope = { year: number } | { scope: "all" };
+export type PortfolioScope = { year: number } | { scope: "all" } | { type: "audit" } | { type: "management"; year: number };
 
 export interface PortfolioMetrics {
-  scope_year: number | null;
-  total_invested: number;
+  capital_investido: number;
   total_received: number;
-  capital_to_recover: number;
-  total_previsto_carteira: number;
+  capital_a_recuperar: number;
+  total_previsto: number;
   total_a_receber: number;
-  overdue_receivable: number;
-  future_receivable: number;
-  realized_profit: number;
-  projected_result: number;
-  recovery_percentage: number;
-  total_operations: number;
-  overdue_installments: number;
-  total_installments: number;
+  inadimplencia: number;
+  a_receber_futuro: number;
+  lucro_realizado: number;
+  resultado_projetado: number;
+  percentual_recuperado: number;
+  total_operations?: number;
 }
 
 /** Camada única de agregação financeira: por ano ou carteira completa. */
@@ -47,18 +44,38 @@ export function getPortfolioMetricsKey(scope: PortfolioScope) {
 }
 
 export function usePortfolioMetrics(scope: PortfolioScope) {
+  const year = "year" in scope ? scope.year : null;
+  const management = "type" in scope && scope.type === "management";
+
   return useQuery({
-    queryKey: getPortfolioMetricsKey(scope),
+    queryKey: ["portfolio-metrics", year, management],
     queryFn: async (): Promise<PortfolioMetrics | null> => {
-      const { data, error } = await supabase.rpc("get_portfolio_metrics" as never, {
-        p_year: "year" in scope ? scope.year : null,
-      } as never);
+      const { data, error } = await supabase.rpc("get_portfolio_metrics" as any, {
+        p_year: year,
+        p_management_mode: management,
+      });
       if (error) throw new Error(error.message);
-      const row = (data as PortfolioMetrics[] | null)?.[0] ?? null;
-      if (!row) return null;
-      return Object.fromEntries(
-        Object.entries(row).map(([key, value]) => [key, key === "scope_year" ? value : Number(value ?? 0)]),
-      ) as unknown as PortfolioMetrics;
+      return data as PortfolioMetrics;
+    },
+  });
+}
+
+export function usePortfolioProjection(year: number | null = null) {
+  return useQuery({
+    queryKey: ["portfolio-projection", year],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_portfolio_projection" as any, {
+        p_year: year,
+      });
+      if (error) throw new Error(error.message);
+      return data as {
+        competence: string;
+        expected: number;
+        received: number;
+        overdue: number;
+        future_receivable: number;
+        installments_count: number;
+      }[];
     },
   });
 }
