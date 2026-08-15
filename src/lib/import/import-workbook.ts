@@ -89,8 +89,24 @@ export async function importParseResult(
 
     let operationId = existing?.id ?? null;
 
-    // Se já existe e o hash é igual, pulamos a atualização da operação base
-    const needsUpdate = !existing || existing.source_hash !== op.sourceHash;
+    // Lógica de Diff/Sync
+    let syncStatus: "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO" = "NOVO";
+    if (existing) {
+      const { data: status } = await supabase.rpc("check_sync_conflict", {
+        p_operation_id: existing.id,
+        p_incoming_hash: op.sourceHash ?? "",
+      });
+      syncStatus = (status as any) || "ALTERADO_NO_EXCEL";
+    }
+
+    // Se é modo de sincronização e está inalterado, pulamos a atualização
+    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "INALTERADO") {
+      continue;
+    }
+
+    // Se há conflito, em um sistema real pediríamos decisão. 
+    // Por enquanto, no modo Carga Histórica forçamos atualização.
+    const needsUpdate = syncStatus !== "INALTERADO";
 
     if (needsUpdate) {
       const payload = {
