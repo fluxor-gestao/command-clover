@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -58,14 +59,29 @@ function ImportPage() {
         sheetList = inspected.sheets;
         setSheets(sheetList);
       }
-      // Padrão: carga histórica completa (todas as abas anuais).
       const target = sheet ?? ALL_SHEETS;
       setSelectedSheet(target);
       const result = await readWorkbookFile(
         selected,
         target && target !== ALL_SHEETS ? { sheets: [target] } : undefined,
       );
-      setPreview(result);
+
+      // Enriquecer com Diff de Sincronização
+      const syncInfo: Record<string, any> = {};
+      const { data: operations } = await supabase.from("investment_operations").select("reference, source_hash");
+      
+      for (const op of result.operations) {
+        const existing = operations?.find(o => o.reference === op.reference);
+        if (!existing) {
+          syncInfo[op.reference] = "NOVO";
+        } else if (existing.source_hash === op.sourceHash) {
+          syncInfo[op.reference] = "INALTERADO";
+        } else {
+          syncInfo[op.reference] = "ALTERADO_NO_EXCEL";
+        }
+      }
+      
+      setPreview({ ...result, syncInfo });
       toast.success("Leitura concluída. Homologue os totais antes de importar.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível ler a planilha.");
