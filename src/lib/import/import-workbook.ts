@@ -104,8 +104,18 @@ export async function importParseResult(
       continue;
     }
 
-    // Se há conflito, em um sistema real pediríamos decisão. 
-    // Por enquanto, no modo Carga Histórica forçamos atualização.
+    // BLOQUEADOR 1: Se há conflito no modo CONTROLE_GERENCIAL, não sobrescrever automaticamente
+    if (mode === "CONTROLE_GERENCIAL" && syncStatus === "CONFLITO") {
+      await supabase.from("investment_import_issues").insert({
+        import_id: importId,
+        source_sheet: filename,
+        reference: op.reference,
+        issue_type: "VALOR_INVALIDO",
+        description: `[CONFLITO] A operação possui alterações manuais no sistema que conflitam com o Excel. Resolução manual necessária.`,
+      });
+      continue;
+    }
+
     const needsUpdate = syncStatus !== "INALTERADO";
 
     if (needsUpdate) {
