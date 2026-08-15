@@ -18,7 +18,7 @@ import { brl, competenceBR, dateBR } from "@/lib/format";
 import { importParseResult, inspectWorkbookFile, readWorkbookFile } from "@/lib/import/import-workbook";
 import type { IssueSeverity, ParseResult } from "@/lib/import/parse-workbook";
 
-export const Route = createFileRoute("/_authenticated/importacao" as any)({
+export const Route = createFileRoute("/_authenticated/importacao")({
   head: () => ({
     meta: [
       { title: "Importação · Nova Era Investimentos" },
