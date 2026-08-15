@@ -3,6 +3,8 @@ import logoAsset from "@/assets/logo.png.asset.json";
 import {
   BarChart3,
   Building2,
+  Calculator,
+  KeyRound,
   CalendarClock,
   ChevronLeft,
   ChevronRight,
