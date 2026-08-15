@@ -1,32 +1,28 @@
-# Plano de Correção Final — Nova Era
+---
+title: Correção Final de Bloqueadores - Fase 3
+description: Resolução de conflitos de sincronização, importação de aluguéis e projeção contínua da carteira.
+---
 
-Este plano detalha a resolução das 3 pendências críticas para a entrega operacional do sistema Nova Era.
+# Plano de Correção Final
 
 ## 1. Conflito de Sincronização
-Atualmente, o sistema realiza UPSERT mesmo em caso de CONFLITO no modo `CONTROLE_GERENCIAL`.
-- **Alteração**: Modificar `import-workbook.ts` para que, se `syncStatus === 'CONFLITO'`, a operação seja ignorada no loop de gravação e adicionada a uma lista de pendências.
-- **UI**: Em `importacao.tsx`, exibir um diálogo de resolução de conflitos comparando "Sistema" vs "Excel" para campos divergentes.
-- **Ações**: Botões "Manter Sistema" (ignora Excel) e "Usar Excel" (força UPSERT).
+- **UI de Resolução**: Em `src/routes/_authenticated/importacao.tsx`, implementar um diálogo ou expansão no diff para quando `syncStatus === 'CONFLITO'`.
+- **Ações**: Adicionar botões "MANTER SISTEMA" (ignora o item da planilha) e "USAR EXCEL" (força o UPSERT sobrescrevendo as alterações manuais).
+- **Lógica**: O botão "USAR EXCEL" disparará o UPSERT via `import-workbook.ts` passando um flag `forceUpdate`.
 
-## 2. Sincronização da Aba Aluguéis
-Integração da aba "Alugueis" ao motor de sincronização.
-- **Leitura**: Adicionar `parseRentalsSheet` em `parse-workbook.ts` para mapear colunas (Imóvel, Categoria, Vencimento, Aluguel, Datas, Fluxo Jan-Dez).
-- **Destino**: Persistir em `rental_properties` e `rental_receipts`.
-- **Regra**: Não criar `investment_operation` para imóveis da aba Aluguéis (patrimônio próprio).
+## 2. Aba Aluguéis
+- **Parser**: Ativar o uso de `parseRentalsSheet` no fluxo de importação.
+- **Diferenciação**: Garantir que imóveis próprios da aba "Alugueis" sejam mapeados para `rental_properties` e `rental_receipts`, e **não** criem registros em `investment_operations`.
+- **KPIs**: Validar que esses valores não se misturam aos investimentos no dashboard.
 
-## 3. Projeção da Carteira Gerencial
-Ajuste da projeção para ser contínua e baseada estritamente na carteira selecionada.
-- **Lógica**: Se o filtro global for "Carteira 2026", buscar operações via `portfolio_memberships`.
-- **Projeção**: Percorrer do `first_due_date` até o `last_due_date` de cada operação, gerando competências mensais até o fim dos contratos (2027, 2028, etc.).
-- **Unificação**: Centralizar essa lógica em um hook ou RPC para que Dashboard e Relatórios exibam os mesmos números.
+## 3. Projeção Contínua
+- **RPC `get_portfolio_metrics`**: A RPC já foi ajustada para remover o filtro de ano, mas os hooks do frontend (`usePortfolioMetrics`) precisam garantir que a projeção ignore limites de dezembro.
+- **Cálculo**: A projeção deve percorrer até o `last_due_date` de cada contrato ativo na carteira selecionada.
 
-## Validação Técnica
-- **Conflito**: Simular alteração manual no banco e tentar reimportar Excel. O sistema deve travar e pedir resolução.
-- **Aluguéis**: Validar carga total vs Excel.
-- **Carteira 2026**: Confirmar contagem de 27 operações (backfill das 5 faltantes via SQL).
-- **Projeção**: Verificar se os gráficos mostram anos além de 2026 se houver contratos longos.
+## 4. Carteira 2026
+- **Vinculação**: Executar script para garantir as 27 operações (vinculando Helton, Moto Ivano, etc).
 
 ## Detalhes Técnicos
-- **RPC `check_sync_conflict`**: Já existe, será integrada à UI de decisão.
-- **Entidades**: `rental_properties`, `rental_receipts`, `portfolio_memberships`.
-- **Framework**: TanStack Start v1 / Supabase.
+- Modificação em `src/lib/import/import-workbook.ts` para aceitar `forceUpdate`.
+- Ajuste em `src/routes/_authenticated/importacao.tsx` para exibir a interface de conflito.
+- Refinamento da lógica de baseline em `src/lib/import/parse-workbook.ts` para aluguéis.

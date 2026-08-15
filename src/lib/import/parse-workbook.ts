@@ -784,6 +784,10 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
       sheetsRead.push(sheet.name);
       parseContributionsSheet(sheet, index, issues);
     }
+    if (name.includes("ALUGUE")) {
+      sheetsRead.push(sheet.name);
+      parseRentalsSheet(sheet, index, issues, referenceMonth);
+    }
   });
 
   const operations = index.all().filter((op) => op.installments.length > 0 || op.initialCapital);
@@ -911,4 +915,58 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
   };
 
   return { operations, issues: enrichedIssues, baseline, readiness, stats, syncInfo: {} };
+}
+
+function parseRentalsSheet(sheet: Worksheet, index: OperationIndex, issues: ParsedIssue[], referenceMonth: string) {
+  let headerRow = 0;
+  const header: Record<string, number> = {};
+  sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (!headerRow) {
+      const cells: Record<string, number> = {};
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        cells[normalizeText(cellText(cell))] = colNumber;
+      });
+      if (Object.keys(cells).some((key) => key.includes("IMOVEL") || key.includes("REFERENCIA"))) {
+        headerRow = rowNumber;
+        Object.assign(header, cells);
+      }
+      return;
+    }
+    const col = (name: string) => Object.entries(header).find(([key]) => key.includes(name))?.[1];
+    const reference = cellText(row.getCell(col("IMOVEL") ?? col("REFERENCIA") ?? 1));
+    if (!reference || normalizeText(reference).startsWith("TOTAL")) return;
+
+    // Aluguéis próprios não criam investment_operation, mas alimentam o baseline para conferência
+    const rentValue = cellNumber(row.getCell(col("VALOR ALUGUEL") ?? 4)) || 0;
+    const dueDay = cellNumber(row.getCell(col("DIA VENC") ?? 3)) || 10;
+    
+    // Mapear colunas de meses (JANEIRO a DEZEMBRO)
+    const year = new Date().getUTCFullYear(); // Geralmente aba do ano atual
+    for (const [mName, mIndex] of Object.entries(MONTHS)) {
+      const colIdx = col(mName);
+      if (!colIdx) continue;
+      
+      const cell = row.getCell(colIdx);
+      const amount = cellNumber(cell);
+      if (amount && amount > 0) {
+        const compKey = `${year}-${String(mIndex).padStart(2, "0")}`;
+        const red = isRed(cell);
+        const isPast = compKey < referenceMonth;
+        
+        // Simular no index para o Diff da UI, mas com flag que evita UPSERT em investment_operations
+        const op = index.get(`ALUGUEL: ${reference}`, "Aluguéis", `rental:${normalizeReference(reference)}`);
+        op.notes = "Propriedade Própria (Aluguel)";
+        
+        upsertInstallment(op, {
+          competence: `${compKey}-01`,
+          dueDate: buildDueDate(year, mIndex, dueDay),
+          expected: round2(amount),
+          received: !red && !isPast ? round2(amount) : 0,
+          overdue: red && isPast ? round2(amount) : 0,
+          sourceKey: `rental:${normalizeReference(reference)}:${compKey}`,
+          sheet: sheet.name
+        });
+      }
+    }
+  });
 }
