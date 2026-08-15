@@ -12,7 +12,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 async function run() {
   console.log("--- VINCULANDO OPERAÇÕES FALTANTES CARTEIRA 2026 ---");
   
-  // Buscar referências por nomes comuns na planilha para 2026
   const { data: allOps } = await supabase
     .from("investment_operations")
     .select("id, reference");
