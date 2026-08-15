@@ -281,6 +281,7 @@ class OperationIndex {
       dueDay: null,
       initialCapital: null,
       firstDueDate: null,
+      lastDueDate: null,
       installmentCount: null,
       installmentValue: null,
       notes: null,
@@ -525,6 +526,8 @@ function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, issues: P
     if (capital && capital > 0) op.initialCapital = capital;
     const firstDue = cellDate(row.getCell(col("1o VENCIMENTO") ?? col("VENCIMENTO") ?? 5));
     if (firstDue) op.firstDueDate = firstDue;
+    const lastDue = cellDate(row.getCell(col("DATA FINAL") ?? col("VENCIMENTO FINAL") ?? 14));
+    if (lastDue) op.lastDueDate = lastDue;
     const count = cellNumber(row.getCell(col("N PARCELAS") ?? col("PARCELAS") ?? 6));
     if (count && count > 0) op.installmentCount = Math.round(count);
     const value = cellNumber(row.getCell(col("VALOR PARCELA") ?? 7));
@@ -687,6 +690,7 @@ export function calculateSourceHash(op: ParsedOperation): string {
     installmentCount: op.installmentCount,
     installmentValue: op.installmentValue,
     firstDueDate: op.firstDueDate,
+    lastDueDate: op.lastDueDate,
     dueDay: op.dueDay,
     category: op.category,
     notes: op.notes,
@@ -785,6 +789,16 @@ export function parseWorkbook(workbook: Workbook, options: ParseOptions = {}): P
   for (const op of operations) {
     op.sourceHash = calculateSourceHash(op);
     op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+
+    // Lógica de derivação de datas conforme BLOQUEADOR 3
+    if (op.firstDueDate && op.installmentCount && !op.lastDueDate) {
+      const { addMonthsClamped } = await import("../finance/contract");
+      op.lastDueDate = addMonthsClamped(op.firstDueDate, op.installmentCount - 1, op.dueDay);
+    } else if (op.lastDueDate && op.installmentCount && !op.firstDueDate) {
+      const { addMonthsClamped } = await import("../finance/contract");
+      op.firstDueDate = addMonthsClamped(op.lastDueDate, -(op.installmentCount - 1), op.dueDay);
+    }
+
     const contractComplete = Boolean(op.installmentCount && op.installmentValue && op.firstDueDate);
     op.incomplete = !contractComplete;
     if (!op.installmentCount) {

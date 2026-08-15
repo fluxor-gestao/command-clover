@@ -117,6 +117,7 @@ export async function importParseResult(
         first_due_date: op.firstDueDate,
         installment_count: op.installmentCount,
         installment_value: op.installmentValue,
+        last_due_date: op.lastDueDate,
         notes: op.notes,
         source: "IMPORTADO",
         import_status: op.incomplete ? "PENDENTE_REVISAO" : "VALIDADO",
