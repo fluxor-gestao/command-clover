@@ -14,7 +14,7 @@ import { brl, competenceBR, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { simulateContract } from "@/lib/finance/contract";
 
-export const Route = createFileRoute("/_authenticated/relatorios" as any)({
+export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({
     meta: [
       { title: "Relatórios · Nova Era Investimentos" },
