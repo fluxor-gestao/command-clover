@@ -492,11 +492,11 @@ function SeverityBadge({ severity }: { severity: IssueSeverity }) {
   return <Badge variant={variant}>{severity}</Badge>;
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="rounded-md border p-3">
       <p className="text-xs uppercase text-muted-foreground">{label}</p>
-      <p className="font-semibold">{value}</p>
+      <p className={cn("font-semibold", color)}>{value}</p>
     </div>
   );
 }
