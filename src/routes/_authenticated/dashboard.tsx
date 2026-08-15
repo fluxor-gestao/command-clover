@@ -163,7 +163,7 @@ function DashboardPage() {
         <Kpi
           title="Capital investido"
           value={brl(s?.total_invested)}
-          hint={`${s?.total_operations ?? 0} operações`}
+          hint={`${s?.total_operations ?? 0} ativos`}
           icon={<Wallet className="size-4" />}
           primary
           onClick={() => navigate({ to: "/operacoes" })}
@@ -171,7 +171,7 @@ function DashboardPage() {
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct(s?.recovery_percentage)} do capital`}
+          hint={`${pct(s?.recovery_percentage)} do principal`}
           icon={<ArrowDownRight className="size-4" />}
           primary
           onClick={() => navigate({ to: "/recebimentos" })}
@@ -182,7 +182,7 @@ function DashboardPage() {
           hint="Saldo pendente do aporte"
           icon={<ArrowUpRight className="size-4" />}
           primary
-          onClick={() => navigate({ to: "/operacoes" })}
+          onClick={() => navigate({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
           title="Total a Receber"
