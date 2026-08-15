@@ -215,11 +215,12 @@ function ImportPage() {
               <CardTitle className="text-base">Resumo da importação</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-4 text-sm">
-                <Stat label="Prontos para importar" value={String(preview.readiness.ready)} />
-                <Stat label="Pendentes de revisão" value={String(preview.readiness.pending)} />
-                <Stat label="Ignorados" value={String(preview.readiness.ignored)} />
-                <Stat label="Erros críticos" value={String(preview.readiness.critical)} />
+              <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 text-sm">
+                <Stat label="Prontos" value={String(preview.readiness.ready)} />
+                <Stat label="Pendentes" value={String(preview.readiness.pending)} />
+                <Stat label="Novos" value={String(Object.values(preview.syncInfo ?? {}).filter(v => v === 'NOVO').length)} />
+                <Stat label="Alterados" value={String(Object.values(preview.syncInfo ?? {}).filter(v => v === 'ALTERADO_NO_EXCEL').length)} />
+                <Stat label="Conflitos" value={String(Object.values(preview.syncInfo ?? {}).filter(v => v === 'CONFLITO').length)} color="text-destructive" />
               </div>
               <button
                 type="button"
