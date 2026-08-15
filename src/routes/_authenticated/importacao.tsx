@@ -38,6 +38,7 @@ const ALL_SHEETS = "__ALL__";
 function ImportPage() {
   const imports = useImports();
   const invalidate = useInvalidateAll();
+  const [importMode, setImportMode] = useState<"CARGA_HISTORICA" | "CONTROLE_GERENCIAL">("CARGA_HISTORICA");
   const [file, setFile] = useState<File | null>(null);
   const [sheets, setSheets] = useState<string[]>([]);
   const [selectedSheet, setSelectedSheet] = useState<string>(ALL_SHEETS);
