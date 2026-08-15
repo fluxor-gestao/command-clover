@@ -527,7 +527,8 @@ function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, issues: P
     if (capital && capital > 0) op.initialCapital = capital;
     const firstDue = cellDate(row.getCell(col("1o VENCIMENTO") ?? col("VENCIMENTO") ?? 5));
     if (firstDue) op.firstDueDate = firstDue;
-    const lastDue = cellDate(row.getCell(col("DATA FINAL") ?? col("VENCIMENTO FINAL") ?? 14));
+    const lastDueCell = row.getCell(col("DATA FINAL") ?? col("VENCIMENTO FINAL") ?? 14);
+    const lastDue = cellDate(lastDueCell);
     if (lastDue) op.lastDueDate = lastDue;
     const count = cellNumber(row.getCell(col("N PARCELAS") ?? col("PARCELAS") ?? 6));
     if (count && count > 0) op.installmentCount = Math.round(count);
