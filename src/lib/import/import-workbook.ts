@@ -80,31 +80,39 @@ export async function importParseResult(
     const sourceKey = `imp-op:${normalizeReference(op.reference)}`;
     const { data: existing } = await supabase
       .from("investment_operations")
-      .select("id")
+      .select("id, source_hash, import_status")
       .or(`source_key.eq.${sourceKey},reference.ilike.${op.reference.replace(/[,()]/g, " ")}`)
       .limit(1)
       .maybeSingle();
 
     let operationId = existing?.id ?? null;
 
-    if (!operationId) {
-      const { data: inserted, error } = await supabase
+    // Se já existe e o hash é igual, pulamos a atualização da operação base
+    const needsUpdate = !existing || existing.source_hash !== op.sourceHash;
+
+    if (needsUpdate) {
+      const payload = {
+        reference: op.reference,
+        category_id: categoryId(op.category),
+        due_day: op.dueDay,
+        initial_capital: op.initialCapital ?? 0,
+        first_due_date: op.firstDueDate,
+        installment_count: op.installmentCount,
+        installment_value: op.installmentValue,
+        notes: op.notes,
+        source: "IMPORTADO",
+        import_status: op.incomplete ? "PENDENTE_REVISAO" : "IMPORTADO",
+        source_key: sourceKey,
+        source_hash: op.sourceHash,
+        last_synced_at: new Date().toISOString(),
+      };
+
+      const { data: saved, error } = await supabase
         .from("investment_operations")
-        .insert({
-          reference: op.reference,
-          category_id: categoryId(op.category),
-          due_day: op.dueDay,
-          initial_capital: op.initialCapital ?? 0,
-          first_due_date: op.firstDueDate,
-          installment_count: op.installmentCount,
-          installment_value: op.installmentValue,
-          notes: op.notes,
-          source: "IMPORTADO",
-          import_status: op.incomplete ? "PENDENTE_REVISAO" : "IMPORTADO",
-          source_key: sourceKey,
-        })
+        .upsert(payload, { onConflict: "source_key" })
         .select("id")
         .single();
+
       if (error) {
         await supabase.from("investment_import_issues").insert({
           import_id: importId,
@@ -115,7 +123,21 @@ export async function importParseResult(
         });
         continue;
       }
-      operationId = inserted.id;
+      operationId = saved.id;
+    }
+
+    // Se é uma aba de gestão (Base2026), vincular à carteira gerencial
+    if (op.isManagement && operationId) {
+      const yearMatch = op.sheets.find(s => s.startsWith("Base"))?.match(/\d{4}/);
+      if (yearMatch) {
+        const year = parseInt(yearMatch[0]);
+        await supabase
+          .from("portfolio_memberships")
+          .upsert(
+            { operation_id: operationId, portfolio_year: year, is_active: true },
+            { onConflict: "operation_id,portfolio_year" }
+          );
+      }
     }
 
     if (op.installments.length > 0) {
