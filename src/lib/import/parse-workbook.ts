@@ -87,6 +87,7 @@ export interface ParsedOperation {
   dueDay: number | null;
   initialCapital: number | null;
   firstDueDate: string | null;
+  lastDueDate: string | null;
   installmentCount: number | null;
   installmentValue: number | null;
   notes: string | null;
