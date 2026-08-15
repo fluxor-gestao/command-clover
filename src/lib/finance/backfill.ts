@@ -30,9 +30,9 @@ export async function backfillContractDates() {
       .order("due_date", { ascending: true });
 
     if (installments && installments.length > 0) {
-      if (!firstDate) firstDate = installments[0].due_date;
+      if (!firstDate && installments[0]) firstDate = installments[0].due_date;
       if (!count) count = installments.length;
-      if (!value) value = Number(installments[0].expected_amount);
+      if (!value && installments[0]) value = Number(installments[0].expected_amount);
       
       const lastDateFromInst = installments[installments.length - 1].due_date;
       
