@@ -78,7 +78,7 @@ function ImportPage() {
           // Usar RPC para detecção precisa de CONFLITO
           const { data: conflictStatus } = await supabase.rpc("check_sync_conflict", {
             p_operation_id: existing.id,
-            p_incoming_hash: op.sourceHash
+            p_incoming_hash: op.sourceHash || ""
           });
           const status = (conflictStatus as "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO") || "ALTERADO_NO_EXCEL";
           syncInfo[op.reference] = status;
