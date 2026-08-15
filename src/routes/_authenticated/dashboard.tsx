@@ -34,7 +34,7 @@ import {
 import { brl, brlCompact, competenceBR, pct, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard" as any)({
   head: () => ({
     meta: [
       { title: "Dashboard executivo · Nova Era Investimentos" },
