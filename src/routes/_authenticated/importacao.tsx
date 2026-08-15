@@ -94,12 +94,31 @@ function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Importação</h1>
-        <p className="text-sm text-muted-foreground">
-          Envie as planilhas históricas (.xlsx). Nada é gravado durante a prévia — a carga acontece apenas ao confirmar e é
-          idempotente.
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight">Importação de Dados</h1>
+          <p className="text-sm text-muted-foreground">
+            Sincronize o sistema com as planilhas oficiais (Base Histórica ou Controle Gerencial).
+          </p>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1">
+          <Button
+            variant={importMode === "CARGA_HISTORICA" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 text-[10px] font-bold uppercase tracking-wider"
+            onClick={() => setImportMode("CARGA_HISTORICA")}
+          >
+            Carga Histórica
+          </Button>
+          <Button
+            variant={importMode === "CONTROLE_GERENCIAL" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 text-[10px] font-bold uppercase tracking-wider"
+            onClick={() => setImportMode("CONTROLE_GERENCIAL")}
+          >
+            Sincronizar Carteira
+          </Button>
+        </div>
       </header>
 
       <Card>
