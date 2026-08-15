@@ -76,9 +76,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          last_synced_at: string | null
           notes: string | null
           operation_id: string
           source: string
+          source_hash: string | null
           source_key: string | null
           type: string
         }
@@ -89,9 +91,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          last_synced_at?: string | null
           notes?: string | null
           operation_id: string
           source?: string
+          source_hash?: string | null
           source_key?: string | null
           type?: string
         }
@@ -102,9 +106,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          last_synced_at?: string | null
           notes?: string | null
           operation_id?: string
           source?: string
+          source_hash?: string | null
           source_key?: string | null
           type?: string
         }
@@ -200,6 +206,7 @@ export type Database = {
           fingerprint: string | null
           finished_at: string | null
           id: string
+          mode: string
           rows_error: number
           rows_existing: number
           rows_imported: number
@@ -215,6 +222,7 @@ export type Database = {
           fingerprint?: string | null
           finished_at?: string | null
           id?: string
+          mode?: string
           rows_error?: number
           rows_existing?: number
           rows_imported?: number
@@ -230,6 +238,7 @@ export type Database = {
           fingerprint?: string | null
           finished_at?: string | null
           id?: string
+          mode?: string
           rows_error?: number
           rows_existing?: number
           rows_imported?: number
@@ -315,11 +324,14 @@ export type Database = {
           installment_count: number | null
           installment_value: number | null
           investment_date: string | null
+          is_own_property: boolean
           last_due_date: string | null
+          last_synced_at: string | null
           notes: string | null
           reference: string
           reference_id: string | null
           source: string
+          source_hash: string | null
           source_key: string | null
           status: string
           updated_at: string
@@ -338,11 +350,14 @@ export type Database = {
           installment_count?: number | null
           installment_value?: number | null
           investment_date?: string | null
+          is_own_property?: boolean
           last_due_date?: string | null
+          last_synced_at?: string | null
           notes?: string | null
           reference: string
           reference_id?: string | null
           source?: string
+          source_hash?: string | null
           source_key?: string | null
           status?: string
           updated_at?: string
@@ -361,11 +376,14 @@ export type Database = {
           installment_count?: number | null
           installment_value?: number | null
           investment_date?: string | null
+          is_own_property?: boolean
           last_due_date?: string | null
+          last_synced_at?: string | null
           notes?: string | null
           reference?: string
           reference_id?: string | null
           source?: string
+          source_hash?: string | null
           source_key?: string | null
           status?: string
           updated_at?: string
@@ -440,10 +458,12 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          last_synced_at: string | null
           notes: string | null
           operation_id: string
           receipt_date: string
           source: string
+          source_hash: string | null
           source_key: string | null
           total_amount: number
         }
@@ -453,10 +473,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          last_synced_at?: string | null
           notes?: string | null
           operation_id: string
           receipt_date: string
           source?: string
+          source_hash?: string | null
           source_key?: string | null
           total_amount: number
         }
@@ -466,10 +488,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          last_synced_at?: string | null
           notes?: string | null
           operation_id?: string
           receipt_date?: string
           source?: string
+          source_hash?: string | null
           source_key?: string | null
           total_amount?: number
         }
@@ -578,6 +602,170 @@ export type Database = {
             referencedColumns: ["operation_id"]
           },
         ]
+      }
+      rental_properties: {
+        Row: {
+          contract_end: string | null
+          contract_start: string | null
+          created_at: string
+          current_rent: number
+          due_day: number | null
+          id: string
+          last_synced_at: string | null
+          name: string
+          next_adjustment_date: string | null
+          notes: string | null
+          reference_id: string | null
+          source: string
+          source_hash: string | null
+          source_key: string | null
+          status: string
+          tenant_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_end?: string | null
+          contract_start?: string | null
+          created_at?: string
+          current_rent?: number
+          due_day?: number | null
+          id?: string
+          last_synced_at?: string | null
+          name: string
+          next_adjustment_date?: string | null
+          notes?: string | null
+          reference_id?: string | null
+          source?: string
+          source_hash?: string | null
+          source_key?: string | null
+          status?: string
+          tenant_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_end?: string | null
+          contract_start?: string | null
+          created_at?: string
+          current_rent?: number
+          due_day?: number | null
+          id?: string
+          last_synced_at?: string | null
+          name?: string
+          next_adjustment_date?: string | null
+          notes?: string | null
+          reference_id?: string | null
+          source?: string
+          source_hash?: string | null
+          source_key?: string | null
+          status?: string
+          tenant_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_properties_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "investment_references"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rental_receipts: {
+        Row: {
+          amount: number
+          cancelled_at: string | null
+          competence: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          property_id: string
+          receipt_date: string
+          source: string
+          source_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cancelled_at?: string | null
+          competence: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          property_id: string
+          receipt_date?: string
+          source?: string
+          source_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cancelled_at?: string | null
+          competence?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string
+          receipt_date?: string
+          source?: string
+          source_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_receipts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "rental_properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_receipts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_rental_position"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_runs: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          created_by: string | null
+          filename: string
+          id: string
+          mode: string
+          source_fingerprint: string | null
+          status: string
+          summary: Json | null
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          filename: string
+          id?: string
+          mode?: string
+          source_fingerprint?: string | null
+          status?: string
+          summary?: Json | null
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          filename?: string
+          id?: string
+          mode?: string
+          source_fingerprint?: string | null
+          status?: string
+          summary?: Json | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -721,6 +909,38 @@ export type Database = {
           total_received: number | null
         }
         Relationships: []
+      }
+      v_rental_position: {
+        Row: {
+          contract_end: string | null
+          contract_start: string | null
+          created_at: string | null
+          current_rent: number | null
+          due_day: number | null
+          id: string | null
+          last_synced_at: string | null
+          name: string | null
+          next_adjustment_date: string | null
+          notes: string | null
+          receivable_year: number | null
+          received_year: number | null
+          reference_id: string | null
+          source: string | null
+          source_hash: string | null
+          source_key: string | null
+          status: string | null
+          tenant_name: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_properties_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "investment_references"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
