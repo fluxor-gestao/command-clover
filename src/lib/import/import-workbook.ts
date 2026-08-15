@@ -113,7 +113,7 @@ export async function importParseResult(
       .upsert({
         name: rent.reference,
         due_day: rent.dueDay,
-        current_rent: rent.currentRent,
+        current_rent: rent.currentRent ?? 0,
         status: rent.status,
         notes: rent.notes,
         source_key: rent.sourceKey,
