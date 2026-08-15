@@ -8,6 +8,7 @@ import { addMonthsClamped } from "../finance/contract";
 
 export interface ParseOptions {
   referenceMonth?: string;
+  sheets?: string[];
 }
 
 export function listAnnualSheets(workbook: Workbook): string[] {
