@@ -303,6 +303,10 @@ export async function parseWorkbook(workbook: Workbook, options?: ParseOptions):
     if (name.startsWith("A RECEBER") || name.match(/20\d{2}/) || name.startsWith("BASE")) {
       const isBase2026 = name.includes("2026") && name.includes("BASE");
       const year = yearFromSheetName(sheet.name) || (isBase2026 ? 2026 : new Date().getFullYear());
+      
+      // Ignorar abas de anos anteriores a 2026, exceto se for a Base2026 oficial
+      if (year < 2026 && !isBase2026) return;
+
       parseAnnualSheet(sheet, year, index, result.issues, result.baseline, referenceMonth, isBase2026);
       result.stats.sheetsRead.push(sheet.name);
     } else if (name.includes("ALUGUEIS") || name.includes("PATRIMONIO")) {
@@ -340,6 +344,10 @@ function parseAnnualSheet(sheet: Worksheet, year: number, index: OperationIndex,
       const val = cellNumber(row.getCell(col));
       if (val && val > 0) {
         const comp = `${year}-${String(month).padStart(2, "0")}`;
+        
+        // Ponto de corte absoluto: o sistema só processa parcelas a partir de 2026-01
+        if (year < 2026) return;
+
         const red = isRed(row.getCell(col));
         
         // Regra de inadimplência oficial: cutoff_competence = 2026-08
