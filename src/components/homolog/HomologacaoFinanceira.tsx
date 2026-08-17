@@ -380,7 +380,7 @@ export function HomologacaoFinanceira() {
                     </TableRow>
                   ))}
                   <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={2}>TOTAL SISTEMA (Inadimplência < Agosto/2026)</TableCell>
+                    <TableCell colSpan={2}>TOTAL SISTEMA (Inadimplência &lt; Agosto/2026)</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {brl((overdueBreakdown.data ?? []).reduce((acc, r) => acc + Number(r.amount), 0))}
                     </TableCell>
