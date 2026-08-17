@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useInstallments, useOperations, useReferences } from "@/lib/data/hooks";
+import { useInstallments, useOperations, useReferences, useOverdueBreakdown } from "@/lib/data/hooks";
 import { brl, competenceBR, pct, todayISO } from "@/lib/format";
 import {
   buildHomologation,
@@ -95,6 +95,7 @@ export function HomologacaoFinanceira() {
   const operations = useOperations();
   const installments = useInstallments();
   const references = useReferences();
+  const overdueBreakdown = useOverdueBreakdown({ type: "management", year: 2026, cutoff: "2026-08-01" });
 
   const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParseResult | null>(null);
@@ -354,6 +355,42 @@ export function HomologacaoFinanceira() {
                   </TableBody>
                 </Table>
               </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Detalhamento da Inadimplência (Cutoff Agosto/2026)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Operação</TableHead>
+                    <TableHead>Competência</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(overdueBreakdown.data ?? []).map((row: any, i: number) => (
+                    <TableRow key={`${row.reference}-${i}`}>
+                      <TableCell>{row.reference}</TableCell>
+                      <TableCell>{competenceBR(row.competence)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{brl(row.amount)}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="font-bold bg-muted/50">
+                    <TableCell colSpan={2}>TOTAL SISTEMA (Inadimplência &lt; Agosto/2026)</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {brl((overdueBreakdown.data ?? []).reduce((acc: number, r: any) => acc + Number(r.amount), 0))}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="font-bold bg-primary/5 text-primary">
+                    <TableCell colSpan={2}>TOTAL ESPERADO EXCEL</TableCell>
+                    <TableCell className="text-right tabular-nums">{brl(15068.54)}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
 

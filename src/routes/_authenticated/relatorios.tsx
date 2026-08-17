@@ -111,10 +111,10 @@ function ReportsPage() {
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Capital investido", value: brl(metrics.data?.capital_investido) },
+          { label: "Capital investido", value: brl(metrics.data?.invested_capital) },
           { label: "Total recebido", value: brl(metrics.data?.total_received) },
-          { label: "Total a receber", value: brl(metrics.data?.total_a_receber) },
-          { label: "Saldo inadimplente", value: brl(metrics.data?.inadimplencia) },
+          { label: "Total a receber", value: brl(metrics.data?.total_to_receive) },
+          { label: "Saldo inadimplente", value: brl(metrics.data?.overdue_amount) },
         ].map((item) => (
           <Card key={item.label} className="border-none shadow-sm bg-card/50">
             <CardHeader className="pb-1">

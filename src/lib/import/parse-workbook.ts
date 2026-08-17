@@ -161,9 +161,11 @@ export function normalizeText(value: unknown): string {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[,.()\-]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .toUpperCase();
+    .toUpperCase()
+    .replace(/\bAPT\b|\bAPTO\b/g, "APT");
 }
 
 export function normalizeReference(reference: string): string {
@@ -298,9 +300,10 @@ export async function parseWorkbook(workbook: Workbook, options?: ParseOptions):
     // Filtro de abas se fornecido nas opções
     if (options?.sheets && !options.sheets.includes(sheet.name)) return;
 
-    if (name.startsWith("A RECEBER") || name.match(/20\d{2}/)) {
-      const year = yearFromSheetName(sheet.name) || new Date().getFullYear();
-      parseAnnualSheet(sheet, year, index, result.issues, result.baseline, referenceMonth);
+    if (name.startsWith("A RECEBER") || name.match(/20\d{2}/) || name.startsWith("BASE")) {
+      const isBase2026 = name.includes("2026") && name.includes("BASE");
+      const year = yearFromSheetName(sheet.name) || (isBase2026 ? 2026 : new Date().getFullYear());
+      parseAnnualSheet(sheet, year, index, result.issues, result.baseline, referenceMonth, isBase2026);
       result.stats.sheetsRead.push(sheet.name);
     } else if (name.includes("ALUGUEIS") || name.includes("PATRIMONIO")) {
       parseRentalsSheet(sheet, result);
@@ -314,7 +317,7 @@ export async function parseWorkbook(workbook: Workbook, options?: ParseOptions):
   return result;
 }
 
-function parseAnnualSheet(sheet: Worksheet, year: number, index: OperationIndex, issues: ParsedIssue[], baseline: ParseBaseline, referenceMonth: string) {
+function parseAnnualSheet(sheet: Worksheet, year: number, index: OperationIndex, issues: ParsedIssue[], baseline: ParseBaseline, referenceMonth: string, isManagement: boolean = false) {
   let section = "";
   let monthCols: { col: number, month: number }[] = [];
   sheet.eachRow((row, rowNum) => {
@@ -331,18 +334,26 @@ function parseAnnualSheet(sheet: Worksheet, year: number, index: OperationIndex,
     if (!ref || rowNum < 3 || normalizeText(ref).includes("TOTAL")) return;
     
     const op = index.get(ref, categoryFromSection(section));
+    if (isManagement) op.isManagement = true;
+    
     monthCols.forEach(({ col, month }) => {
       const val = cellNumber(row.getCell(col));
       if (val && val > 0) {
         const comp = `${year}-${String(month).padStart(2, "0")}`;
         const red = isRed(row.getCell(col));
-        const isPast = comp < referenceMonth;
+        
+        // Regra de inadimplência oficial: cutoff_competence = 2026-08
+        // Apenas para auditoria no baseline, o sistema usará a RPC
+        const cutoffMonth = "2026-08";
+        const isOverdue = red && comp < cutoffMonth;
+        const isPast = comp < cutoffMonth;
+
         upsertInstallment(op, {
           competence: `${comp}-01`,
           dueDate: buildDueDate(year, month, op.dueDay),
           expected: val,
           received: !red && isPast ? val : 0,
-          overdue: red && isPast ? val : 0,
+          overdue: isOverdue ? val : 0,
           sourceKey: `hist:${normalizeReference(ref)}:${comp}`,
           sheet: sheet.name
         });
