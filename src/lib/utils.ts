@@ -10,5 +10,8 @@ export function normalizeString(str: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[,.()\-]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\bapt\b|\bapto\b/g, "apt");
 }
