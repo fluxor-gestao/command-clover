@@ -147,8 +147,8 @@ export async function importParseResult(
     const sourceKey = `imp-op:${normalizeReference(op.reference)}`;
     const { data: existing } = await supabase
       .from("investment_operations")
-      .select("id, source_hash, import_status")
-      .or(`source_key.eq.${sourceKey},reference.ilike.${op.reference.replace(/[,()]/g, " ")}`)
+      .select("id, source_hash, import_status, reference")
+      .or(`source_key.eq.${sourceKey},reference.ilike.${op.reference.replace(/[,.()\-]/g, " ").replace(/\s+/g, " ").trim()}`)
       .limit(1)
       .maybeSingle();
 
@@ -231,10 +231,12 @@ export async function importParseResult(
             { operation_id: operationId, portfolio_year: 2026, is_active: true },
             { onConflict: "operation_id,portfolio_year" }
           );
-      } else if (mode === "CONTROLE_GERENCIAL") {
-         // Opcional: inativar se não estiver na Base2026? 
-         // O requisito diz: "Apenas retirar/inativar membership 2026 após confirmação."
-         // Por enquanto, apenas inserimos quem está na Base2026.
+      } else {
+         // Se é CONTROLE_GERENCIAL mas não está na Base2026, inativamos
+         await supabase
+           .from("portfolio_memberships")
+           .update({ is_active: false })
+           .match({ operation_id: operationId, portfolio_year: 2026 });
       }
     }
 
