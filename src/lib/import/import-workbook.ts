@@ -275,32 +275,63 @@ export async function importParseResult(
       installmentsCount += savedInstallments?.length ?? 0;
 
 
-      const withReceipt = (savedInstallments ?? []).filter((i) => Number(i.received_amount) > 0);
-      if (withReceipt.length > 0) {
-        const receiptRows = withReceipt.map((inst) => ({
-          operation_id: operationId!,
-          receipt_date: inst.due_date,
-          total_amount: Number(inst.received_amount),
-          notes: "Recebimento importado da base histórica",
-          source: "IMPORTADO",
-          source_key: `imp-rec:${inst.source_key}`,
-        }));
+      // Recebimentos: na v3 vêm linha a linha da aba "Recebimentos";
+      // no layout legado são derivados das parcelas já baixadas.
+      const instByCompetence = new Map(
+        (savedInstallments ?? []).map((i) => [String(i.source_key).split(":").pop() ?? "", i]),
+      );
+
+      type PendingReceipt = {
+        sourceKey: string;
+        receiptDate: string;
+        amount: number;
+        notes: string | null;
+        competence: string;
+      };
+
+      const pendingReceipts: PendingReceipt[] =
+        op.receipts.length > 0
+          ? op.receipts.map((rec) => ({
+              sourceKey: `imp-rec:${rec.sourceKey}`,
+              receiptDate: rec.receiptDate,
+              amount: rec.amount,
+              notes: rec.notes,
+              competence: rec.competence,
+            }))
+          : (savedInstallments ?? [])
+              .filter((i) => Number(i.received_amount) > 0)
+              .map((i) => ({
+                sourceKey: `imp-rec:${i.source_key}`,
+                receiptDate: String(i.due_date),
+                amount: Number(i.received_amount),
+                notes: "Recebimento importado da base histórica",
+                competence: `${String(i.due_date).slice(0, 7)}-01`,
+              }));
+
+      if (pendingReceipts.length > 0) {
         const { data: savedReceipts, error: receiptError } = await supabase
           .from("investment_receipts")
-          .upsert(receiptRows, { onConflict: "source_key" })
+          .upsert(
+            pendingReceipts.map((rec) => ({
+              operation_id: operationId!,
+              receipt_date: rec.receiptDate,
+              total_amount: rec.amount,
+              notes: rec.notes,
+              source: "IMPORTADO",
+              source_key: rec.sourceKey,
+            })),
+            { onConflict: "source_key" },
+          )
           .select("id, source_key");
         if (receiptError) throw new Error(receiptError.message);
         receiptsCount += savedReceipts?.length ?? 0;
 
         const allocations = (savedReceipts ?? [])
           .map((receipt) => {
-            const installment = withReceipt.find((i) => `imp-rec:${i.source_key}` === receipt.source_key);
-            if (!installment) return null;
-            return {
-              receipt_id: receipt.id,
-              installment_id: installment.id,
-              amount: Number(installment.received_amount),
-            };
+            const source = pendingReceipts.find((r) => r.sourceKey === receipt.source_key);
+            const installment = source ? instByCompetence.get(source.competence) : null;
+            if (!source || !installment) return null;
+            return { receipt_id: receipt.id, installment_id: installment.id, amount: source.amount };
           })
           .filter((row): row is { receipt_id: string; installment_id: string; amount: number } => row !== null);
 
@@ -311,15 +342,16 @@ export async function importParseResult(
             .select("receipt_id")
             .in("receipt_id", receiptIds);
           const already = new Set((existingAllocations ?? []).map((a) => a.receipt_id));
-          const pending = allocations.filter((a) => !already.has(a.receipt_id));
-          if (pending.length > 0) {
+          const missing = allocations.filter((a) => !already.has(a.receipt_id));
+          if (missing.length > 0) {
             const { error: allocError } = await supabase
               .from("investment_receipt_allocations")
-              .insert(pending);
+              .insert(missing);
             if (allocError) throw new Error(allocError.message);
           }
         }
       }
+
     }
 
     if (op.contributions.length > 0) {
