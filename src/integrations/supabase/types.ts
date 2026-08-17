@@ -949,6 +949,7 @@ export type Database = {
         Args: { p_incoming_hash: string; p_operation_id: string }
         Returns: string
       }
+      clear_portfolio_data: { Args: { p_year: number }; Returns: undefined }
       generate_schedule: { Args: { p_operation_id: string }; Returns: number }
       get_overdue_breakdown: {
         Args: { p_cutoff_competence?: string; p_year?: number }

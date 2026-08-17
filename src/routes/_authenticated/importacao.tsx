@@ -115,6 +115,30 @@ function ImportPage() {
     }
   };
 
+  const clearPortfolio = async () => {
+    const year = 2026;
+    if (!window.confirm(`ATENÇÃO: Isso apagará permanentemente todos os dados (operações, parcelas e recebimentos) atrelados à Carteira Gerencial ${year}. Esta ação não pode ser desfeita. Deseja continuar?`)) {
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("clear_portfolio_data" as any, { p_year: year });
+      if (error) throw new Error(error.message);
+      
+      toast.success(`Carteira ${year} limpa com sucesso.`);
+      invalidate();
+      setPreview(null);
+      setFile(null);
+      setSheets([]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao limpar a carteira.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -124,24 +148,36 @@ function ImportPage() {
             Sincronize o sistema com as planilhas oficiais (Base Histórica ou Controle Gerencial).
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1">
-          <Button
-            variant={importMode === "CARGA_HISTORICA" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 text-[10px] font-bold uppercase tracking-wider"
-            onClick={() => setImportMode("CARGA_HISTORICA")}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-destructive hover:bg-destructive/10 border-destructive/20"
+            disabled={busy}
+            onClick={clearPortfolio}
           >
-            Carga Histórica
+            Limpar Carteira 2026
           </Button>
-          <Button
-            variant={importMode === "CONTROLE_GERENCIAL" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 text-[10px] font-bold uppercase tracking-wider"
-            onClick={() => setImportMode("CONTROLE_GERENCIAL")}
-          >
-            Sincronizar Carteira
-          </Button>
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1">
+            <Button
+              variant={importMode === "CARGA_HISTORICA" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 text-[10px] font-bold uppercase tracking-wider"
+              onClick={() => setImportMode("CARGA_HISTORICA")}
+            >
+              Carga Histórica
+            </Button>
+            <Button
+              variant={importMode === "CONTROLE_GERENCIAL" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 text-[10px] font-bold uppercase tracking-wider"
+              onClick={() => setImportMode("CONTROLE_GERENCIAL")}
+            >
+              Sincronizar Carteira
+            </Button>
+          </div>
         </div>
+
       </header>
 
       <Card>
