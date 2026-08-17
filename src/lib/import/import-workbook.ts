@@ -222,16 +222,19 @@ export async function importParseResult(
     }
 
     // Se é uma aba de gestão (Base2026), vincular à carteira gerencial
-    if (op.isManagement && operationId) {
-      const yearMatch = op.sheets.find(s => s.startsWith("Base"))?.match(/\d{4}/);
-      if (yearMatch) {
-        const year = parseInt(yearMatch[0]);
+    if (mode === "CONTROLE_GERENCIAL" && operationId) {
+      // Se a operação foi lida da Base2026, vinculamos
+      if (op.isManagement) {
         await supabase
           .from("portfolio_memberships")
           .upsert(
-            { operation_id: operationId, portfolio_year: year, is_active: true },
+            { operation_id: operationId, portfolio_year: 2026, is_active: true },
             { onConflict: "operation_id,portfolio_year" }
           );
+      } else if (mode === "CONTROLE_GERENCIAL") {
+         // Opcional: inativar se não estiver na Base2026? 
+         // O requisito diz: "Apenas retirar/inativar membership 2026 após confirmação."
+         // Por enquanto, apenas inserimos quem está na Base2026.
       }
     }
 
