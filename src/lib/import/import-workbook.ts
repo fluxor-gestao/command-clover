@@ -223,7 +223,6 @@ export async function importParseResult(
 
     // Se é uma aba de gestão (Base2026), vincular à carteira gerencial
     if (mode === "CONTROLE_GERENCIAL" && operationId) {
-      // Se a operação foi lida da Base2026, vinculamos
       if (op.isManagement) {
         await supabase
           .from("portfolio_memberships")
@@ -231,13 +230,9 @@ export async function importParseResult(
             { operation_id: operationId, portfolio_year: 2026, is_active: true },
             { onConflict: "operation_id,portfolio_year" }
           );
-      } else {
-         // Se é CONTROLE_GERENCIAL mas não está na Base2026, inativamos
-         await supabase
-           .from("portfolio_memberships")
-           .update({ is_active: false })
-           .match({ operation_id: operationId, portfolio_year: 2026 });
       }
+      // NOTA: A inativação global de memberships que não estão na planilha agora 
+      // é feita no final do processo de importação para ser atômica e segura.
     }
 
     if (op.installments.length > 0) {
@@ -346,6 +341,30 @@ export async function importParseResult(
       if (error) throw new Error(error.message);
     }
   }
+
+  // Se é CONTROLE_GERENCIAL, inativar memberships de 2026 que não foram processados nesta rodada
+  if (mode === "CONTROLE_GERENCIAL") {
+    const importedOpIds = result.operations
+      .filter(op => op.isManagement)
+      .map(op => `imp-op:${normalizeReference(op.reference)}`);
+    
+    // Inativar operações que não estão na Base2026
+    const { data: currentOps } = await supabase
+      .from("investment_operations")
+      .select("id")
+      .in("source_key", importedOpIds);
+    
+    const validIds = (currentOps || []).map(o => o.id);
+    
+    if (validIds.length > 0) {
+      await supabase
+        .from("portfolio_memberships")
+        .update({ is_active: false })
+        .match({ portfolio_year: 2026 })
+        .not("operation_id", "in", `(${validIds.join(",")})`);
+    }
+  }
+
 
   await supabase
     .from("sync_runs")
