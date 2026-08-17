@@ -159,24 +159,25 @@ function ImportPage() {
             Limpar Carteira 2026
           </Button>
           <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1">
-
-          <Button
-            variant={importMode === "CARGA_HISTORICA" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 text-[10px] font-bold uppercase tracking-wider"
-            onClick={() => setImportMode("CARGA_HISTORICA")}
-          >
-            Carga Histórica
-          </Button>
-          <Button
-            variant={importMode === "CONTROLE_GERENCIAL" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 text-[10px] font-bold uppercase tracking-wider"
-            onClick={() => setImportMode("CONTROLE_GERENCIAL")}
-          >
-            Sincronizar Carteira
-          </Button>
+            <Button
+              variant={importMode === "CARGA_HISTORICA" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 text-[10px] font-bold uppercase tracking-wider"
+              onClick={() => setImportMode("CARGA_HISTORICA")}
+            >
+              Carga Histórica
+            </Button>
+            <Button
+              variant={importMode === "CONTROLE_GERENCIAL" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 text-[10px] font-bold uppercase tracking-wider"
+              onClick={() => setImportMode("CONTROLE_GERENCIAL")}
+            >
+              Sincronizar Carteira
+            </Button>
+          </div>
         </div>
+
       </header>
 
       <Card>
