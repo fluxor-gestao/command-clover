@@ -177,7 +177,7 @@ function InstallmentsPage() {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+            </Table>
           </div>
         </CardContent>
       </Card>
