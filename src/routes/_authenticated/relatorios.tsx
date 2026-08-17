@@ -193,8 +193,9 @@ function ReportsPage() {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
         </TabsContent>
 
         <TabsContent value="carteira">

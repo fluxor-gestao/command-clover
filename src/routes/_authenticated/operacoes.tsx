@@ -154,7 +154,7 @@ function OperationsPage() {
             </div>
 
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-9 w-full md:w-40 text-xs border-none bg-muted/50">
+              <SelectTrigger className="h-9 w-full sm:w-40 text-xs border-none bg-muted/50">
                 <Filter className="mr-2 size-3 text-muted-foreground" />
                 <SelectValue placeholder="Situação" />
               </SelectTrigger>
@@ -167,7 +167,7 @@ function OperationsPage() {
             </Select>
 
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-9 w-full md:w-44 text-xs border-none bg-muted/50">
+              <SelectTrigger className="h-9 w-full sm:w-44 text-xs border-none bg-muted/50">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -278,6 +278,7 @@ function OperationsPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
             </div>
           </CardContent>
         </Card>
