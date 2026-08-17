@@ -3,12 +3,14 @@ import ExcelJS from "exceljs";
 import { supabase } from "@/integrations/supabase/client";
 
 import {
+  CUTOFF_COMPETENCE,
   listAnnualSheets,
   normalizeReference,
   parseWorkbook,
   type ParseOptions,
   type ParseResult,
 } from "./parse-workbook";
+
 
 export interface ImportProgress {
   step: string;
