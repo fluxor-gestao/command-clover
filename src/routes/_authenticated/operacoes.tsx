@@ -142,8 +142,8 @@ function OperationsPage() {
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl border bg-card/50 p-3 backdrop-blur-sm">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative w-full md:w-72">
+          <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por referência..."

@@ -146,8 +146,9 @@ function ReportsPage() {
               <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Competência por Competência</CardTitle>
               <CardDescription>Visão mensal de recebíveis e realização</CardDescription>
             </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <Table>
+            <CardContent className="p-0 sm:p-6">
+              <div className="w-full overflow-x-auto">
+                <Table>
                 <TableHeader className="bg-muted/10">
                   <TableRow className="hover:bg-transparent border-none">
                     <TableHead className="text-[10px] uppercase font-bold tracking-wider pl-6">Mês/Ano</TableHead>
