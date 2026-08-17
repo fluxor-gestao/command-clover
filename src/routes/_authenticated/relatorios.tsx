@@ -109,7 +109,7 @@ function ReportsPage() {
         </div>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Capital investido", value: brl(metrics.data?.invested_capital) },
           { label: "Total recebido", value: brl(metrics.data?.total_received) },
@@ -197,7 +197,7 @@ function ReportsPage() {
         </TabsContent>
 
         <TabsContent value="carteira">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             <Card className="border-none shadow-sm bg-card/50 flex flex-col items-center justify-center p-12 text-center text-muted-foreground border-2 border-dashed">
               <PieChart className="size-12 mb-4 opacity-10" />
               <p className="text-sm font-medium">Análise de carteira em desenvolvimento...</p>
