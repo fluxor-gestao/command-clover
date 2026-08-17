@@ -117,7 +117,7 @@ function ImportPage() {
 
   const clearPortfolio = async () => {
     const year = 2026;
-    if (!window.confirm(`ATENÇÃO: Isso apagará permanentemente todos os dados (operações, parcelas e recebimentos) atrelados à Carteira Gerencial ${year}. Esta ação não pode ser desfeita. Deseja continuar?`)) {
+    if (!window.confirm(`ATENÇÃO CRÍTICA: Isso apagará permanentemente TODOS os dados:\n- Operações ${year}\n- Parcelas e Vencimentos\n- Recebimentos e Aportes\n- Imóveis Próprios e Aluguéis\n\nEsta ação NÃO pode ser desfeita. Deseja zerar o sistema completamente para 2026?`)) {
       return;
     }
 
@@ -126,8 +126,12 @@ function ImportPage() {
       const { error } = await supabase.rpc("clear_portfolio_data" as any, { p_year: year });
       if (error) throw new Error(error.message);
       
-      toast.success(`Carteira ${year} limpa com sucesso.`);
+      toast.success(`Sistema zerado com sucesso para a base ${year}.`);
       invalidate();
+      
+      // Forçar atualização do dashboard e outras telas
+      window.location.reload(); 
+      
       setPreview(null);
       setFile(null);
       setSheets([]);
