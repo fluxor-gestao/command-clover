@@ -3,12 +3,14 @@ import ExcelJS from "exceljs";
 import { supabase } from "@/integrations/supabase/client";
 
 import {
+  CUTOFF_COMPETENCE,
   listAnnualSheets,
   normalizeReference,
   parseWorkbook,
   type ParseOptions,
   type ParseResult,
 } from "./parse-workbook";
+
 
 export interface ImportProgress {
   step: string;
@@ -126,14 +128,26 @@ export async function importParseResult(
     if (error) continue;
     rentalsCount += 1;
 
-    // Sincronizar recebíveis de aluguel (opcional/simplificado)
-    for (const [comp, val] of Object.entries(rent.monthlyValues)) {
-        if (val <= 0) continue;
-        const isPast = comp < result.stats.referenceMonth;
-        // Se for passado e não estiver marcado como vermelho (no parser), assumimos recebido
-        // Aqui o parser já calculou receivedAmount, mas poderíamos detalhar parcelas se houvesse tabela rental_receipts adequada
+    // Recebimentos mensais do aluguel (idempotentes por source_key)
+    const rentalReceipts = Object.entries(rent.monthlyValues)
+      .filter(([, val]) => val > 0)
+      .filter(([comp]) => comp.slice(0, 7) < CUTOFF_COMPETENCE)
+      .map(([comp, val]) => ({
+        property_id: saved.id,
+        competence: comp,
+        receipt_date: comp,
+        amount: val,
+        source: "IMPORTADO",
+        source_key: `imp-rent:${rent.sourceKey}:${comp.slice(0, 7)}`,
+      }));
+
+    if (rentalReceipts.length > 0) {
+      await supabase
+        .from("rental_receipts")
+        .upsert(rentalReceipts, { onConflict: "source_key" });
     }
   }
+
 
   for (const op of result.operations) {
     // Aba Aluguéis / Patrimônio: Ignorar se for imóvel próprio na carteira de investimentos
@@ -261,32 +275,63 @@ export async function importParseResult(
       installmentsCount += savedInstallments?.length ?? 0;
 
 
-      const withReceipt = (savedInstallments ?? []).filter((i) => Number(i.received_amount) > 0);
-      if (withReceipt.length > 0) {
-        const receiptRows = withReceipt.map((inst) => ({
-          operation_id: operationId!,
-          receipt_date: inst.due_date,
-          total_amount: Number(inst.received_amount),
-          notes: "Recebimento importado da base histórica",
-          source: "IMPORTADO",
-          source_key: `imp-rec:${inst.source_key}`,
-        }));
+      // Recebimentos: na v3 vêm linha a linha da aba "Recebimentos";
+      // no layout legado são derivados das parcelas já baixadas.
+      const instByCompetence = new Map(
+        (savedInstallments ?? []).map((i) => [String(i.source_key).split(":").pop() ?? "", i]),
+      );
+
+      type PendingReceipt = {
+        sourceKey: string;
+        receiptDate: string;
+        amount: number;
+        notes: string | null;
+        competence: string;
+      };
+
+      const pendingReceipts: PendingReceipt[] =
+        op.receipts.length > 0
+          ? op.receipts.map((rec) => ({
+              sourceKey: `imp-rec:${rec.sourceKey}`,
+              receiptDate: rec.receiptDate,
+              amount: rec.amount,
+              notes: rec.notes,
+              competence: rec.competence,
+            }))
+          : (savedInstallments ?? [])
+              .filter((i) => Number(i.received_amount) > 0)
+              .map((i) => ({
+                sourceKey: `imp-rec:${i.source_key}`,
+                receiptDate: String(i.due_date),
+                amount: Number(i.received_amount),
+                notes: "Recebimento importado da base histórica",
+                competence: `${String(i.due_date).slice(0, 7)}-01`,
+              }));
+
+      if (pendingReceipts.length > 0) {
         const { data: savedReceipts, error: receiptError } = await supabase
           .from("investment_receipts")
-          .upsert(receiptRows, { onConflict: "source_key" })
+          .upsert(
+            pendingReceipts.map((rec) => ({
+              operation_id: operationId!,
+              receipt_date: rec.receiptDate,
+              total_amount: rec.amount,
+              notes: rec.notes,
+              source: "IMPORTADO",
+              source_key: rec.sourceKey,
+            })),
+            { onConflict: "source_key" },
+          )
           .select("id, source_key");
         if (receiptError) throw new Error(receiptError.message);
         receiptsCount += savedReceipts?.length ?? 0;
 
         const allocations = (savedReceipts ?? [])
           .map((receipt) => {
-            const installment = withReceipt.find((i) => `imp-rec:${i.source_key}` === receipt.source_key);
-            if (!installment) return null;
-            return {
-              receipt_id: receipt.id,
-              installment_id: installment.id,
-              amount: Number(installment.received_amount),
-            };
+            const source = pendingReceipts.find((r) => r.sourceKey === receipt.source_key);
+            const installment = source ? instByCompetence.get(source.competence) : null;
+            if (!source || !installment) return null;
+            return { receipt_id: receipt.id, installment_id: installment.id, amount: source.amount };
           })
           .filter((row): row is { receipt_id: string; installment_id: string; amount: number } => row !== null);
 
@@ -297,15 +342,16 @@ export async function importParseResult(
             .select("receipt_id")
             .in("receipt_id", receiptIds);
           const already = new Set((existingAllocations ?? []).map((a) => a.receipt_id));
-          const pending = allocations.filter((a) => !already.has(a.receipt_id));
-          if (pending.length > 0) {
+          const missing = allocations.filter((a) => !already.has(a.receipt_id));
+          if (missing.length > 0) {
             const { error: allocError } = await supabase
               .from("investment_receipt_allocations")
-              .insert(pending);
+              .insert(missing);
             if (allocError) throw new Error(allocError.message);
           }
         }
       }
+
     }
 
     if (op.contributions.length > 0) {
