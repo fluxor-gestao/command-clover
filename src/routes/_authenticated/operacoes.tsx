@@ -279,7 +279,6 @@ function OperationsPage() {
                 </TableBody>
               </Table>
             </div>
-            </div>
           </CardContent>
         </Card>
       </div>
