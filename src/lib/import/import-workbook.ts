@@ -126,14 +126,26 @@ export async function importParseResult(
     if (error) continue;
     rentalsCount += 1;
 
-    // Sincronizar recebíveis de aluguel (opcional/simplificado)
-    for (const [comp, val] of Object.entries(rent.monthlyValues)) {
-        if (val <= 0) continue;
-        const isPast = comp < result.stats.referenceMonth;
-        // Se for passado e não estiver marcado como vermelho (no parser), assumimos recebido
-        // Aqui o parser já calculou receivedAmount, mas poderíamos detalhar parcelas se houvesse tabela rental_receipts adequada
+    // Recebimentos mensais do aluguel (idempotentes por source_key)
+    const rentalReceipts = Object.entries(rent.monthlyValues)
+      .filter(([, val]) => val > 0)
+      .filter(([comp]) => comp.slice(0, 7) < CUTOFF_COMPETENCE)
+      .map(([comp, val]) => ({
+        property_id: saved.id,
+        competence: comp,
+        receipt_date: comp,
+        amount: val,
+        source: "IMPORTADO",
+        source_key: `imp-rent:${rent.sourceKey}:${comp.slice(0, 7)}`,
+      }));
+
+    if (rentalReceipts.length > 0) {
+      await supabase
+        .from("rental_receipts")
+        .upsert(rentalReceipts, { onConflict: "source_key" });
     }
   }
+
 
   for (const op of result.operations) {
     // Aba Aluguéis / Patrimônio: Ignorar se for imóvel próprio na carteira de investimentos
