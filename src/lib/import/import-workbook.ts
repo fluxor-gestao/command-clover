@@ -223,7 +223,6 @@ export async function importParseResult(
 
     // Se é uma aba de gestão (Base2026), vincular à carteira gerencial
     if (mode === "CONTROLE_GERENCIAL" && operationId) {
-      // Se a operação foi lida da Base2026, vinculamos
       if (op.isManagement) {
         await supabase
           .from("portfolio_memberships")
@@ -231,13 +230,9 @@ export async function importParseResult(
             { operation_id: operationId, portfolio_year: 2026, is_active: true },
             { onConflict: "operation_id,portfolio_year" }
           );
-      } else {
-         // Se é CONTROLE_GERENCIAL mas não está na Base2026, inativamos
-         await supabase
-           .from("portfolio_memberships")
-           .update({ is_active: false })
-           .match({ operation_id: operationId, portfolio_year: 2026 });
       }
+      // NOTA: A inativação global de memberships que não estão na planilha agora 
+      // é feita no final do processo de importação para ser atômica e segura.
     }
 
     if (op.installments.length > 0) {
