@@ -950,8 +950,20 @@ export type Database = {
         Returns: string
       }
       generate_schedule: { Args: { p_operation_id: string }; Returns: number }
+      get_overdue_breakdown: {
+        Args: { p_cutoff_competence?: string; p_year?: number }
+        Returns: {
+          amount: number
+          competence: string
+          reference: string
+        }[]
+      }
       get_portfolio_metrics:
         | { Args: { p_year?: number }; Returns: Json[] }
+        | {
+            Args: { p_cutoff_competence?: string; p_year?: number }
+            Returns: Json
+          }
         | {
             Args: { p_management_mode?: boolean; p_year?: number }
             Returns: Json
