@@ -171,7 +171,9 @@ function indicator(
 
 export function buildHomologation(input: HomologInput): HomologResult {
   const { base, operations, installments, referencesCount, today } = input;
-  const currentMonth = today.slice(0, 7);
+  // Ponto de corte oficial: Agosto 2026
+  const cutoffCompetence = "2026-08-01";
+  const cutoffMonth = cutoffCompetence.slice(0, 7);
 
   // ---------- BASE (Excel) ----------
   const baseOps = base.operations;
@@ -198,22 +200,29 @@ export function buildHomologation(input: HomologInput): HomologResult {
   for (const op of baseOps) {
     baseTotals.capital = r2(baseTotals.capital + (op.initialCapital ?? 0));
     for (const inst of op.installments) {
+      const key = inst.competence.slice(0, 7);
+      const isOverdue = key < cutoffMonth && inst.overdue > 0;
+      
       baseTotals.installments += 1;
       baseTotals.expected = r2(baseTotals.expected + inst.expected);
       baseTotals.received = r2(baseTotals.received + inst.received);
-      baseTotals.overdue = r2(baseTotals.overdue + inst.overdue);
+      
       const open = r2(inst.expected - inst.received);
       if (inst.received >= inst.expected - 0.005) baseTotals.installmentsReceived += 1;
       else baseTotals.installmentsOpen += 1;
-      if (inst.overdue > 0) baseTotals.installmentsOverdue += 1;
+      
+      if (isOverdue) {
+        baseTotals.installmentsOverdue += 1;
+        baseTotals.overdue = r2(baseTotals.overdue + inst.overdue);
+      }
+      
       baseTotals.toReceive = r2(baseTotals.toReceive + Math.max(open, 0));
-      if (inst.overdue <= 0) baseTotals.futureReceivable = r2(baseTotals.futureReceivable + Math.max(open, 0));
+      if (!isOverdue) baseTotals.futureReceivable = r2(baseTotals.futureReceivable + Math.max(open, 0));
 
-      const key = inst.competence.slice(0, 7);
       const bucket = baseCompetence.get(key) ?? { expected: 0, received: 0, overdue: 0 };
       bucket.expected = r2(bucket.expected + inst.expected);
       bucket.received = r2(bucket.received + inst.received);
-      bucket.overdue = r2(bucket.overdue + inst.overdue);
+      if (isOverdue) bucket.overdue = r2(bucket.overdue + inst.overdue);
       baseCompetence.set(key, bucket);
     }
   }
@@ -251,7 +260,8 @@ export function buildHomologation(input: HomologInput): HomologResult {
     const received = num(inst.received_amount);
     const open = r2(Math.max(expected - received, 0));
     const due = (inst.due_date ?? "").slice(0, 10);
-    const isOverdue = open > 0.005 && due !== "" && due < today;
+    const compKey = (inst.competence ?? due).slice(0, 7);
+    const isOverdue = open > 0.005 && compKey < cutoffMonth;
 
     sysTotals.installments += 1;
     sysTotals.expected = r2(sysTotals.expected + expected);
@@ -265,7 +275,7 @@ export function buildHomologation(input: HomologInput): HomologResult {
       sysTotals.futureReceivable = r2(sysTotals.futureReceivable + open);
     }
 
-    const key = (inst.competence ?? due).slice(0, 7);
+    const key = compKey;
     const bucket = sysCompetence.get(key) ?? { expected: 0, received: 0, overdue: 0 };
     bucket.expected = r2(bucket.expected + expected);
     bucket.received = r2(bucket.received + received);

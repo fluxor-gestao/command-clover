@@ -22,40 +22,61 @@ export function usePortfolioSummary() {
   });
 }
 
-export type PortfolioScope = { year: number } | { scope: "all" } | { type: "audit" } | { type: "management"; year: number };
+export type PortfolioScope = 
+  | { type: "all" } 
+  | { type: "audit" } 
+  | { type: "management"; year: number; cutoff?: string };
 
 export interface PortfolioMetrics {
-  capital_investido: number;
+  invested_capital: number;
   total_received: number;
-  capital_a_recuperar: number;
-  total_previsto: number;
-  total_a_receber: number;
-  inadimplencia: number;
-  a_receber_futuro: number;
-  lucro_realizado: number;
-  resultado_projetado: number;
-  percentual_recuperado: number;
-  total_operations?: number;
+  capital_to_recover: number;
+  overdue_amount: number;
+  future_amount: number;
+  total_to_receive: number;
+  active_operations: number;
+  recovery_rate: number;
+  profit_amount: number;
 }
 
 /** Camada única de agregação financeira: por ano ou carteira completa. */
 export function getPortfolioMetricsKey(scope: PortfolioScope) {
-  return ["portfolio-metrics", "year" in scope ? scope.year : "all"] as const;
+  if (scope.type === "management") {
+    return ["portfolio-metrics", "management", scope.year, scope.cutoff] as const;
+  }
+  return ["portfolio-metrics", scope.type] as const;
 }
 
 export function usePortfolioMetrics(scope: PortfolioScope) {
-  const year = "year" in scope ? scope.year : null;
-  const management = "type" in scope && scope.type === "management";
+  const year = scope.type === "management" ? scope.year : null;
+  const cutoff = scope.type === "management" ? (scope.cutoff ?? "2026-08-01") : null;
 
   return useQuery({
-    queryKey: ["portfolio-metrics", year, management],
+    queryKey: getPortfolioMetricsKey(scope),
     queryFn: async (): Promise<PortfolioMetrics | null> => {
       const { data, error } = await supabase.rpc("get_portfolio_metrics" as any, {
         p_year: year,
-        p_management_mode: management,
+        p_cutoff_competence: cutoff,
       });
       if (error) throw new Error(error.message);
       return data as PortfolioMetrics;
+    },
+  });
+}
+
+export function useOverdueBreakdown(scope: PortfolioScope) {
+  const year = scope.type === "management" ? scope.year : null;
+  const cutoff = scope.type === "management" ? (scope.cutoff ?? "2026-08-01") : null;
+
+  return useQuery({
+    queryKey: ["overdue-breakdown", year, cutoff],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_overdue_breakdown" as any, {
+        p_year: year,
+        p_cutoff_competence: cutoff,
+      });
+      if (error) throw new Error(error.message);
+      return data as { reference: string; competence: string; amount: number }[];
     },
   });
 }
