@@ -115,6 +115,30 @@ function ImportPage() {
     }
   };
 
+  const clearPortfolio = async () => {
+    const year = 2026;
+    if (!window.confirm(`ATENÇÃO: Isso apagará permanentemente todos os dados (operações, parcelas e recebimentos) atrelados à Carteira Gerencial ${year}. Esta ação não pode ser desfeita. Deseja continuar?`)) {
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("clear_portfolio_data" as any, { p_year: year });
+      if (error) throw new Error(error.message);
+      
+      toast.success(`Carteira ${year} limpa com sucesso.`);
+      invalidate();
+      setPreview(null);
+      setFile(null);
+      setSheets([]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao limpar a carteira.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
