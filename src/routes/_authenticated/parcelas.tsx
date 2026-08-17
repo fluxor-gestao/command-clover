@@ -121,63 +121,65 @@ function InstallmentsPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Operação</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>#</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead className="text-right">Previsto</TableHead>
-                <TableHead className="text-right">Recebido</TableHead>
-                <TableHead className="text-right">Saldo</TableHead>
-                <TableHead className="text-right">Atraso</TableHead>
-                 <TableHead>Situação</TableHead>
-                 <TableHead className="text-right">Ações</TableHead>
-               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.slice(0, 500).map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.reference}</TableCell>
-                  <TableCell>{row.category ?? "—"}</TableCell>
-                  <TableCell>{row.installment_number}</TableCell>
-                  <TableCell>{dateBR(row.due_date)}</TableCell>
-                  <TableCell className="text-right">{brl(row.expected_amount)}</TableCell>
-                  <TableCell className="text-right">{brl(row.received_amount)}</TableCell>
-                  <TableCell className="text-right">{brl(row.outstanding_amount)}</TableCell>
-                  <TableCell className="text-right">
-                    {(row.days_overdue ?? 0) > 0 ? `${row.days_overdue} dias` : "—"}
-                  </TableCell>
-                   <TableCell>
-                     <Badge variant={row.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
-                       {row.financial_status}
-                     </Badge>
-                   </TableCell>
-                   <TableCell className="text-right">
-                     <div className="flex justify-end gap-1">
-                       <Link 
-                         to="/recebimentos" 
-                         search={{ operationId: row.operation_id ?? undefined }}
-                         className="inline-flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
-                         title="Registrar recebimento"
-                       >
-                         <Receipt className="h-4 w-4" />
-                       </Link>
-                     </div>
-                   </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
+        <CardContent className="p-0">
+          <div className="w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="text-sm text-muted-foreground">
-                    Nenhuma parcela encontrada.
-                  </TableCell>
+                  <TableHead>Operação</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>#</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead className="text-right">Previsto</TableHead>
+                  <TableHead className="text-right">Recebido</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                  <TableHead className="text-right">Atraso</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.slice(0, 500).map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-medium">{row.reference}</TableCell>
+                    <TableCell>{row.category ?? "—"}</TableCell>
+                    <TableCell>{row.installment_number}</TableCell>
+                    <TableCell>{dateBR(row.due_date)}</TableCell>
+                    <TableCell className="text-right">{brl(row.expected_amount)}</TableCell>
+                    <TableCell className="text-right">{brl(row.received_amount)}</TableCell>
+                    <TableCell className="text-right">{brl(row.outstanding_amount)}</TableCell>
+                    <TableCell className="text-right">
+                      {(row.days_overdue ?? 0) > 0 ? `${row.days_overdue} dias` : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={row.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
+                        {row.financial_status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Link 
+                          to="/recebimentos" 
+                          search={{ operationId: row.operation_id ?? undefined }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
+                          title="Registrar recebimento"
+                        >
+                          <Receipt className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-sm text-muted-foreground">
+                      Nenhuma parcela encontrada.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

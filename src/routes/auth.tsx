@@ -109,7 +109,7 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
-      <Card className="w-full max-w-md border-none shadow-2xl bg-card/80 backdrop-blur-xl">
+      <Card className="w-full max-w-[400px] border-none shadow-2xl bg-card/80 backdrop-blur-xl">
         <CardHeader className="items-center text-center pt-10 pb-6">
           <div className="mb-6 flex h-24 w-24 items-center justify-center transition-transform hover:scale-105 duration-300">
             <img

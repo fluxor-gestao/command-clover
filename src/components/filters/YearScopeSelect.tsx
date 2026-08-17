@@ -15,11 +15,11 @@ export function YearScopeSelect({ value, onChange }: { value: string; onChange: 
   const isManagement = value !== ALL_SCOPE;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
       <div className="flex items-center gap-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Visão</span>
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className="h-9 w-[190px] text-xs font-semibold bg-card/50">
+          <SelectTrigger className="h-9 w-full sm:w-[190px] text-xs font-semibold bg-card/50">
             <SelectValue placeholder="Selecione o período" />
           </SelectTrigger>
           <SelectContent>

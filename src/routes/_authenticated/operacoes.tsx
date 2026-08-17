@@ -142,8 +142,8 @@ function OperationsPage() {
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl border bg-card/50 p-3 backdrop-blur-sm">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative w-full md:w-72">
+          <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por referência..."
@@ -154,7 +154,7 @@ function OperationsPage() {
             </div>
 
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-9 w-full md:w-40 text-xs border-none bg-muted/50">
+              <SelectTrigger className="h-9 w-full sm:w-40 text-xs border-none bg-muted/50">
                 <Filter className="mr-2 size-3 text-muted-foreground" />
                 <SelectValue placeholder="Situação" />
               </SelectTrigger>
@@ -167,7 +167,7 @@ function OperationsPage() {
             </Select>
 
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-9 w-full md:w-44 text-xs border-none bg-muted/50">
+              <SelectTrigger className="h-9 w-full sm:w-44 text-xs border-none bg-muted/50">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -195,7 +195,7 @@ function OperationsPage() {
 
         <Card className="border-none shadow-sm overflow-hidden bg-card/50">
           <CardContent className="p-0">
-            <div className="relative overflow-x-auto">
+            <div className="relative w-full overflow-x-auto">
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">

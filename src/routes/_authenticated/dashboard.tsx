@@ -155,7 +155,7 @@ function DashboardPage() {
         <YearScopeSelect value={scopeValue} onChange={setScopeValue} />
       </header>
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Capital investido"
           value={brl(s?.invested_capital)}
@@ -190,7 +190,7 @@ function DashboardPage() {
         />
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Lucro realizado"
           value={brl(s?.profit_amount)}
