@@ -342,6 +342,30 @@ export async function importParseResult(
     }
   }
 
+  // Se é CONTROLE_GERENCIAL, inativar memberships de 2026 que não foram processados nesta rodada
+  if (mode === "CONTROLE_GERENCIAL") {
+    const importedOpIds = result.operations
+      .filter(op => op.isManagement)
+      .map(op => `imp-op:${normalizeReference(op.reference)}`);
+    
+    // Inativar operações que não estão na Base2026
+    const { data: currentOps } = await supabase
+      .from("investment_operations")
+      .select("id")
+      .in("source_key", importedOpIds);
+    
+    const validIds = (currentOps || []).map(o => o.id);
+    
+    if (validIds.length > 0) {
+      await supabase
+        .from("portfolio_memberships")
+        .update({ is_active: false })
+        .match({ portfolio_year: 2026 })
+        .not("operation_id", "in", `(${validIds.join(",")})`);
+    }
+  }
+
+
   await supabase
     .from("sync_runs")
     .update({
