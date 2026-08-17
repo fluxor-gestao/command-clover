@@ -273,7 +273,17 @@ function yearFromSheetName(name: string): number | null {
 }
 
 function hashOf(parts: unknown[]): string {
-  return createHash("md5").update(parts.map((p) => String(p ?? "")).join("|")).digest("hex");
+  // Hash estável e compatível com o navegador (FNV-1a 64 bits simplificado).
+  const text = parts.map((p) => String(p ?? "")).join("|");
+  let h1 = 0x811c9dc5;
+  let h2 = 0x1000193;
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 ^ ((code << 3) | i % 7), 0x85ebca6b) >>> 0;
+  }
+  return `${h1.toString(16).padStart(8, "0")}${h2.toString(16).padStart(8, "0")}`;
+
 }
 
 /* ------------------------------------------------------------------ */
