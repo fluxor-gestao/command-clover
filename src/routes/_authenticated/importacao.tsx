@@ -148,7 +148,18 @@ function ImportPage() {
             Sincronize o sistema com as planilhas oficiais (Base Histórica ou Controle Gerencial).
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-destructive hover:bg-destructive/10 border-destructive/20"
+            disabled={busy}
+            onClick={clearPortfolio}
+          >
+            Limpar Carteira 2026
+          </Button>
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1">
+
           <Button
             variant={importMode === "CARGA_HISTORICA" ? "secondary" : "ghost"}
             size="sm"
