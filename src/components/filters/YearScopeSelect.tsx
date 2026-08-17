@@ -7,7 +7,7 @@ import { usePortfolioYears } from "@/lib/data/hooks";
 export const ALL_SCOPE = "all";
 
 export function scopeFromValue(value: string): PortfolioScope {
-  return value === ALL_SCOPE ? { scope: "all" } : { year: Number(value) };
+  return value === ALL_SCOPE ? { type: "all" } : { type: "management", year: Number(value) };
 }
 
 export function YearScopeSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {

@@ -509,10 +509,10 @@ export function buildHomologation(input: HomologInput): HomologResult {
     `${sysTotals.overdue.toFixed(2)} ≤ ${sysTotals.toReceive.toFixed(2)}`,
   );
   push(
-    "Inadimplência apenas em competências anteriores a " + currentMonth,
+    "Inadimplência apenas em competências anteriores a " + cutoffMonth,
     !installments.some(
       (i) =>
-        (i.competence ?? "").slice(0, 7) >= currentMonth &&
+        (i.competence ?? "").slice(0, 7) >= cutoffMonth &&
         (i.financial_status ?? "").includes("INADIMPL"),
     ),
     "leitura de vermelho restrita a meses passados",

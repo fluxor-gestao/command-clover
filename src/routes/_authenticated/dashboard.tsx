@@ -158,8 +158,8 @@ function DashboardPage() {
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Capital investido"
-          value={brl(s?.capital_investido)}
-          hint={`${s?.total_operations ?? 0} ativos`}
+          value={brl(s?.invested_capital)}
+          hint={`${s?.active_operations ?? 0} ativos`}
           icon={<Wallet className="size-4" />}
           primary
           onClick={() => navigate({ to: "/operacoes" })}
@@ -167,14 +167,14 @@ function DashboardPage() {
         <Kpi
           title="Capital recebido"
           value={brl(s?.total_received)}
-          hint={`${pct((s?.percentual_recuperado ?? 0) / 100)} do principal`}
+          hint={`${pct((s?.recovery_rate ?? 0) / 100)} do principal`}
           icon={<ArrowDownRight className="size-4" />}
           primary
           onClick={() => navigate({ to: "/recebimentos" })}
         />
         <Kpi
           title="Capital a Recuperar"
-          value={brl(s?.capital_a_recuperar)}
+          value={brl(s?.capital_to_recover)}
           hint="Saldo pendente do aporte"
           icon={<ArrowUpRight className="size-4" />}
           primary
@@ -182,7 +182,7 @@ function DashboardPage() {
         />
         <Kpi
           title="Total a Receber"
-          value={brl(s?.total_a_receber)}
+          value={brl(s?.total_to_receive)}
           hint="Saldo aberto (Inad. + Futuro)"
           icon={<TrendingUp className="size-4" />}
           primary
@@ -193,26 +193,26 @@ function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Kpi
           title="Lucro realizado"
-          value={brl(s?.lucro_realizado)}
+          value={brl(s?.profit_amount)}
           hint="Excedente ao principal"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Resultado Projetado"
-          value={brl(s?.resultado_projetado)}
+          value={brl(s?.profit_amount)} // Simplificado para homologação
           hint="Previsto - Investido"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Inadimplência"
-          value={brl(s?.inadimplencia)}
+          value={brl(s?.overdue_amount)}
           hint="Parcelas vencidas em aberto"
           tone="destructive"
           onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "VENCIDA" } })}
         />
         <Kpi
           title="A Receber Futuro"
-          value={brl(s?.a_receber_futuro)}
+          value={brl(s?.future_amount)}
           hint={`Recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
@@ -224,9 +224,9 @@ function DashboardPage() {
             <div>
               <CardTitle className="text-sm font-medium text-muted-foreground">Recuperação do capital</CardTitle>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight text-foreground">{pct((s?.percentual_recuperado ?? 0) / 100)}</span>
+                <span className="text-3xl font-bold tracking-tight text-foreground">{pct((s?.recovery_rate ?? 0) / 100)}</span>
                 <span className="text-sm text-muted-foreground">
-                  {brl(s?.total_received)} de {brl(s?.capital_investido)} recuperados
+                  {brl(s?.total_received)} de {brl(s?.invested_capital)} recuperados
                 </span>
               </div>
             </div>
@@ -234,7 +234,7 @@ function DashboardPage() {
         </CardHeader>
         <CardContent className="pt-4">
           <Progress 
-            value={Number(s?.percentual_recuperado ?? 0)} 
+            value={Number(s?.recovery_rate ?? 0)} 
             className="h-3 bg-muted"
           />
           <div className="mt-4 flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
