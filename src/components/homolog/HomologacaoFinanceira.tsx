@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useInstallments, useOperations, useReferences } from "@/lib/data/hooks";
+import { useInstallments, useOperations, useReferences, useOverdueBreakdown } from "@/lib/data/hooks";
 import { brl, competenceBR, pct, todayISO } from "@/lib/format";
 import {
   buildHomologation,
@@ -372,7 +372,7 @@ export function HomologacaoFinanceira() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(overdueBreakdown.data ?? []).map((row, i) => (
+                  {(overdueBreakdown.data ?? []).map((row: any, i: number) => (
                     <TableRow key={`${row.reference}-${i}`}>
                       <TableCell>{row.reference}</TableCell>
                       <TableCell>{competenceBR(row.competence)}</TableCell>
@@ -382,7 +382,7 @@ export function HomologacaoFinanceira() {
                   <TableRow className="font-bold bg-muted/50">
                     <TableCell colSpan={2}>TOTAL SISTEMA (Inadimplência &lt; Agosto/2026)</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {brl((overdueBreakdown.data ?? []).reduce((acc, r) => acc + Number(r.amount), 0))}
+                      {brl((overdueBreakdown.data ?? []).reduce((acc: number, r: any) => acc + Number(r.amount), 0))}
                     </TableCell>
                   </TableRow>
                   <TableRow className="font-bold bg-primary/5 text-primary">
