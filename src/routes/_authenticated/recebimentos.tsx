@@ -159,7 +159,7 @@ function ReceiptsPage() {
                       <div className="h-px flex-1 bg-border/50" />
                     </div>
                     
-                    <div className="rounded-xl border border-border/50 overflow-hidden">
+                    <div className="rounded-xl border border-border/50 w-full overflow-x-auto">
                       <Table>
                         <TableHeader className="bg-muted/30">
                           <TableRow className="hover:bg-transparent border-none">

@@ -34,6 +34,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -163,9 +164,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </Sidebar>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md">
-          <div className="flex items-center gap-4">
-            <h2 className="text-sm font-semibold text-foreground tracking-tight">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-md">
+          <div className="flex items-center gap-2 md:gap-4">
+            <SidebarTrigger className="md:hidden" />
+            <h2 className="text-sm font-semibold text-foreground tracking-tight truncate max-w-[150px] sm:max-w-none">
               {getPageTitle()}
             </h2>
           </div>

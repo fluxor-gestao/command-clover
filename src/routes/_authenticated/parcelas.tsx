@@ -121,8 +121,8 @@ function InstallmentsPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
+        <CardContent className="p-0">
+          <div className="w-full overflow-x-auto">
             <TableHeader>
               <TableRow>
                 <TableHead>Operação</TableHead>
@@ -178,6 +178,7 @@ function InstallmentsPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

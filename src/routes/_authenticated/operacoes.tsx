@@ -195,7 +195,7 @@ function OperationsPage() {
 
         <Card className="border-none shadow-sm overflow-hidden bg-card/50">
           <CardContent className="p-0">
-            <div className="relative overflow-x-auto">
+            <div className="relative w-full overflow-x-auto">
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
