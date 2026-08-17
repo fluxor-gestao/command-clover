@@ -161,9 +161,11 @@ export function normalizeText(value: unknown): string {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[,.()\-]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .toUpperCase();
+    .toUpperCase()
+    .replace(/\bAPT\b|\bAPTO\b/g, "APT");
 }
 
 export function normalizeReference(reference: string): string {
