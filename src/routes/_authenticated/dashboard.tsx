@@ -181,9 +181,9 @@ function DashboardPage() {
           onClick={() => (navigate as any)({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
-          title="Total a Receber"
-          value={brl(s?.total_to_receive)}
-          hint="Saldo aberto (Inad. + Futuro)"
+          title="Lucro Real Projetado"
+          value={brl(projectedProfit)}
+          hint="Total contratado − capital investido"
           icon={<TrendingUp className="size-4" />}
           primary
           onClick={() => navigate({ to: "/parcelas" })}
