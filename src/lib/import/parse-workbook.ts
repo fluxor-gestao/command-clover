@@ -819,6 +819,7 @@ function computeStats(result: ParseResult) {
   stats.overdueTotal = 0;
   stats.toReceiveTotal = 0;
   stats.investedTotal = 0;
+  // stats.expectedTotal, stats.receivedTotal e stats.overdueTotal serão calculados pelas parcelas
   result.readiness = { ready: 0, pending: 0, ignored: 0, critical: 0 };
 
   for (const op of result.operations) {
@@ -836,10 +837,14 @@ function computeStats(result: ParseResult) {
       stats.installments += 1;
       stats.expectedTotal = round2(stats.expectedTotal + inst.expected);
       stats.receivedTotal = round2(stats.receivedTotal + inst.received);
+      
+      const pending = round2(Math.max(inst.expected - inst.received, 0));
+      const isOverdue = inst.overdue > 0;
+      
       stats.overdueTotal = round2(stats.overdueTotal + inst.overdue);
       stats.toReceiveTotal = round2(stats.toReceiveTotal + pending);
       if (inst.received > 0) stats.receivedInstallments += 1;
-      if (inst.overdue > 0) stats.overdueInstallments += 1;
+      if (isOverdue) stats.overdueInstallments += 1;
 
       bucket.installments += 1;
       bucket.expected = round2(bucket.expected + inst.expected);
