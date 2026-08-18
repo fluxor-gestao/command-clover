@@ -558,16 +558,25 @@ function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, result: P
   });
 }
 
-/** Cronograma projetado: 1º vencimento + nº parcelas, limitado pela data final. */
+/**
+ * Cronograma projetado pela janela contratual do Excel:
+ * uma competência para cada mês entre o 1º vencimento e a Data Final,
+ * com o Valor Parcela do contrato (mesma regra do SUMIFS da aba Projeção).
+ * Sem Data Final, cai para o Nº de Parcelas.
+ */
 function generateSchedule(op: ParsedOperation, sheetName: string, baseline: ParseBaseline) {
   const count = op.installmentCount ?? 0;
   const value = op.installmentValue ?? 0;
-  if (!op.firstDueDate || count <= 0 || value <= 0) return;
+  if (!op.firstDueDate || value <= 0) return;
 
-  for (let i = 0; i < count; i += 1) {
+  const limitByCount = !op.lastDueDate;
+  if (limitByCount && count <= 0) return;
+  const months = limitByCount ? count : monthsBetween(op.firstDueDate, op.lastDueDate!) + 1;
+
+  for (let i = 0; i < months; i += 1) {
     const dueDate = addMonthsClamped(op.firstDueDate, i, op.dueDay);
-    if (op.lastDueDate && dueDate > op.lastDueDate) break;
     const competence = `${dueDate.slice(0, 7)}-01`;
+    if (op.lastDueDate && competence.slice(0, 7) > op.lastDueDate.slice(0, 7)) break;
     const compMonth = competence.slice(0, 7);
     if (compMonth < MIN_COMPETENCE) continue;
 
@@ -584,6 +593,14 @@ function generateSchedule(op: ParsedOperation, sheetName: string, baseline: Pars
     baseline.monthlyTotal = round2(baseline.monthlyTotal + value);
   }
 }
+
+/** Diferença em meses entre duas datas ISO (YYYY-MM-DD). */
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = [Number(from.slice(0, 4)), Number(from.slice(5, 7))];
+  const [ty, tm] = [Number(to.slice(0, 4)), Number(to.slice(5, 7))];
+  return Math.max((ty - fy) * 12 + (tm - fm), 0);
+}
+
 
 /** Aba Recebimentos: baixas efetivas por competência. */
 function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: ParseResult) {
