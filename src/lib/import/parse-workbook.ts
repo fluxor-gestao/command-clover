@@ -646,35 +646,81 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: Par
     seq.set(key, next);
 
     const receiptDate = (cDate ? cellDate(row.getCell(cDate)) : null) ?? dueDateForCompetence(competence, op.dueDay);
-    op.receipts.push({
+    const receipt: ParsedReceipt = {
       competence,
       receiptDate,
       amount,
       notes: cNotes ? cellText(row.getCell(cNotes)) || null : null,
       sourceKey: `rec:${key}:${next}`,
-    });
+    };
+    op.receipts.push(receipt);
 
     const installment = op.installments.find((i) => i.competence === competence);
     if (installment) {
       installment.received = round2(installment.received + amount);
-      // Recalcular overdue imediatamente para o baseline
-      const pending = round2(Math.max(installment.expected - installment.received, 0));
-      installment.overdue = competence.slice(0, 7) < CUTOFF_COMPETENCE ? pending : 0;
     } else {
-      // Baixa fora do cronograma contratual: cria a parcela correspondente.
-      upsertInstallment(op, {
-        competence,
-        dueDate: receiptDate,
-        expected: amount,
-        received: amount,
-        overdue: 0,
-        sourceKey: `inst:${normalizeReference(reference)}:${competence.slice(0, 7)}`,
-        sheet: sheet.name,
+      // Baixa antecipada: não cria parcela nova (não infla previsto nem contagem).
+      // Aloca na primeira competência contratual ainda em aberto.
+      op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+      const target = op.installments.find((i) => round2(i.expected - i.received) > 0.005);
+      if (target) {
+        target.received = round2(target.received + amount);
+        receipt.allocatedCompetence = target.competence;
+      } else {
+        receipt.advance = true;
+      }
+      result.issues.push({
+        sheet: sheet.name, row: String(rowNum), reference, issueType: "POSSIVEL_INADIMPLENCIA",
+        severity: "INFORMATIVO",
+        description: target
+          ? `Baixa antecipada em ${competence.slice(0, 7)} (fora do cronograma contratual) alocada na parcela de ${target.competence.slice(0, 7)}.`
+          : `Baixa antecipada em ${competence.slice(0, 7)} registrada como crédito — não há parcela contratual em aberto.`,
+        action: "Confira o 1º vencimento e a Data Final do contrato na aba Operações.",
       });
     }
     result.baseline.receivedTotal = round2(result.baseline.receivedTotal + amount);
   });
 }
+
+/**
+ * Aba Inadimplência: lista oficial e manual do que está inadimplente.
+ * Colunas: Referência / Competência / Valor / Data Vencimento / Observação.
+ */
+function parseDelinquencySheet(sheet: Worksheet, index: OperationIndex, result: ParseResult) {
+  const header = findHeader(sheet, ["REFERENCIA", "COMPETENCIA"]);
+  if (!header) return;
+
+  const cRef = col(header, "REFERENCIA")!;
+  const cCompetence = col(header, "COMPETENCIA")!;
+  const cAmount = col(header, "VALOR");
+
+  sheet.eachRow((row: Row, rowNum: number) => {
+    if (rowNum <= header.row) return;
+    const reference = cellText(row.getCell(cRef));
+    if (!reference || normalizeText(reference).includes("TOTAL")) return;
+
+    const competenceDate = cellDate(row.getCell(cCompetence));
+    const amount = cAmount ? cellNumber(row.getCell(cAmount)) : null;
+    if (!competenceDate || !amount || amount <= 0) return;
+
+    const competence = `${competenceDate.slice(0, 7)}-01`;
+    const op = index.find(reference);
+    if (!op) {
+      result.issues.push({
+        sheet: sheet.name, row: String(rowNum), reference, issueType: "OPERACAO_NAO_ENCONTRADA",
+        severity: "ATENCAO",
+        description: "Inadimplência informada sem operação correspondente na aba Operações.",
+        action: "Corrija a referência na aba Inadimplência.",
+      });
+      return;
+    }
+
+    const current = op.delinquency ?? (op.delinquency = {});
+    current[competence] = round2((current[competence] ?? 0) + amount);
+    result.baseline.overdueTotal = round2(result.baseline.overdueTotal + amount);
+  });
+}
+
 
 function dueDateForCompetence(competence: string, dueDay: number | null): string {
   const year = Number(competence.slice(0, 4));
