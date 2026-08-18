@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useUsers, useCurrentUserRole, type UserWithRole } from "@/lib/data/hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { adminCreateUser, adminDeleteUser, adminUpdateUserRole } from "@/lib/users.functions";
+import { adminCreateUser, adminDeleteUser, adminUpdateUserRole, adminListUsers } from "@/lib/users.functions";
 import { 
   Table, 
   TableBody, 
