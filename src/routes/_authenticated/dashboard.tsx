@@ -216,12 +216,12 @@ function DashboardPage() {
           value={brl(s?.overdue_amount)}
           hint="Parcelas vencidas em aberto"
           tone="destructive"
-          onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "VENCIDA" } })}
+          onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
-          title="A Receber Futuro"
-          value={brl(s?.future_amount)}
-          hint={`Recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
+          title="Valor Total"
+          value={brl(totalValue)}
+          hint={`Capital investido + lucro projetado · recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>
