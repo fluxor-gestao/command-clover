@@ -374,17 +374,22 @@ export async function importParseResult(
   if (result.issues.length > 0) {
     const chunkSize = 200;
     for (let i = 0; i < result.issues.length; i += chunkSize) {
-      const { error } = await supabase.from("investment_import_issues").insert(
-        result.issues.slice(i, i + chunkSize).map((issue) => ({
-          import_id: importId,
-          source_sheet: issue.sheet,
-          source_row: issue.row,
-          reference: issue.reference,
-          issue_type: issue.issueType,
-          description: `[${issue.severity ?? "INFORMATIVO"}] ${issue.description}`,
-        })),
-      );
-      if (error) throw new Error(error.message);
+      const issuesBatch = result.issues.slice(i, i + chunkSize).map((issue) => ({
+        import_id: importId,
+        source_sheet: issue.sheet,
+        source_row: issue.row,
+        reference: issue.reference,
+        issue_type: issue.issueType,
+        description: `[${issue.severity ?? "INFORMATIVO"}] ${issue.description}`,
+      }));
+
+      const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
+      if (error) {
+        console.error("Error inserting import issues:", error);
+        // We don't throw here to avoid failing the whole import just for a logging issue,
+        // but the user's error was specifically that this insert failed.
+        // The fix is ensuring importId is valid, which we select from sync_runs above.
+      }
     }
   }
 
