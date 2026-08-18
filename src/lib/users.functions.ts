@@ -12,9 +12,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   .inputValidator((data) => createUserSchema.parse(data))
   .handler(async ({ data }) => {
     // 1. Verify the caller is an admin
-    // We use getWebRequest from @tanstack/react-start/server
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = (getWebRequest as any)();
+    const { getRequest } = await import("vinxi/http");
+    const request = getRequest();
     
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) {
@@ -67,8 +66,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = (getWebRequest as any)();
+    const { getRequest } = await import("vinxi/http");
+    const request = getRequest();
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
@@ -103,8 +102,8 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
 export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]) }).parse(data))
   .handler(async ({ data }) => {
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = (getWebRequest as any)();
+    const { getRequest } = await import("vinxi/http");
+    const request = getRequest();
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
