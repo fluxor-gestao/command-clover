@@ -186,10 +186,10 @@ export async function importParseResult(
       }
     }
 
-    // Se é modo de sincronização e está inalterado, pulamos a atualização
+    // Se é modo de sincronização e está inalterado, garantimos o membership e pulamos
     if (mode === "CONTROLE_GERENCIAL" && syncStatus === "INALTERADO") {
-      // Garantir que o membership exista mesmo se inalterado
       if (operationId && op.isManagement) {
+        console.log(`[SYNC] Operation ${op.reference} unchanged, ensuring management membership.`);
         await supabase
           .from("portfolio_memberships")
           .upsert(
@@ -255,15 +255,17 @@ export async function importParseResult(
     // Se é uma aba de gestão (Base2026), vincular à carteira gerencial
     if (mode === "CONTROLE_GERENCIAL" && operationId) {
       if (op.isManagement) {
-        await supabase
+        console.log(`[SYNC] Linking ${op.reference} to 2026 portfolio.`);
+        const { error: memberError } = await supabase
           .from("portfolio_memberships")
           .upsert(
             { operation_id: operationId, portfolio_year: 2026, is_active: true },
             { onConflict: "operation_id,portfolio_year" }
           );
+        if (memberError) {
+          console.error(`[SYNC] Failed to link ${op.reference}:`, memberError.message);
+        }
       }
-      // NOTA: A inativação global de memberships que não estão na planilha agora 
-      // é feita no final do processo de importação para ser atômica e segura.
     }
 
     if (op.installments.length > 0) {
@@ -400,9 +402,13 @@ export async function importParseResult(
         description: `[${issue.severity ?? "INFORMATIVO"}] ${issue.description}`,
       }));
 
-      const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
-      if (error) {
-        console.error("Error inserting import issues batch:", error.message, issuesBatch);
+      try {
+        const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
+        if (error) {
+          console.error("Error inserting import issues batch (non-fatal):", error.message);
+        }
+      } catch (err) {
+        console.error("Critical error inserting import issues (non-fatal):", err);
       }
     }
   }
