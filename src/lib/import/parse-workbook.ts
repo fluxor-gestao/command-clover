@@ -173,7 +173,10 @@ export interface ParseResult {
     receivedTotal: number;
     overdueTotal: number;
     toReceiveTotal: number;
+    futureReceivableTotal: number;
+    capitalToRecoverTotal: number;
     investedTotal: number;
+
     byYear: {
       year: string;
       operations: number;
