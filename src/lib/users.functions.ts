@@ -10,15 +10,17 @@ const createUserSchema = z.object({
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+import { supabaseAdmin as admin } from "@/integrations/supabase/client.server";
+
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => createUserSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // The requireSupabaseAuth middleware ensures the user is authenticated
-    // and provides the supabase client and userId in the context.
-    const { data: roleData, error: roleQueryError } = await supabase
+    // We use the admin client to check the role to bypass RLS
+    // but the userId comes from the verified auth token in context.
+    const { data: roleData, error: roleQueryError } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
@@ -66,7 +68,7 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     
-    const { data: roleData, error: roleQueryError } = await supabase
+    const { data: roleData, error: roleQueryError } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
@@ -99,7 +101,7 @@ export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     
-    const { data: roleData, error: roleQueryError } = await supabase
+    const { data: roleData, error: roleQueryError } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
