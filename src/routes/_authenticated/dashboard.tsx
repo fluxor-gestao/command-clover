@@ -107,13 +107,11 @@ function DashboardPage() {
     {},
   );
 
-  const contractedTotal = scopedInstallments.reduce(
-    (acc, row) => acc + Number(row.expected_amount ?? 0),
-    0,
-  );
   const investedCapital = Number(s?.invested_capital ?? 0);
-  const projectedProfit = contractedTotal - investedCapital;
-  const totalValue = investedCapital + projectedProfit;
+  const overdueAmount = Number(s?.overdue_amount ?? 0);
+  const projectedProfit = contractTotals.data?.projectedProfit ?? 0;
+  const projectedResult = investedCapital + projectedProfit;
+  const totalValue = projectedResult + overdueAmount;
 
   const scopedOperations = (operations.data ?? []).filter(
     (op) => year === null || (op.operation_id != null && scopedOperationIds.has(op.operation_id)),
