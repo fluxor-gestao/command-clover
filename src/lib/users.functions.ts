@@ -16,14 +16,22 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: roleData } = await supabase
+    // The requireSupabaseAuth middleware ensures the user is authenticated
+    // and provides the supabase client and userId in the context.
+    const { data: roleData, error: roleQueryError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
+    if (roleQueryError) {
+      console.error("[adminCreateUser] Role check error:", roleQueryError);
+      throw new Error(`Database error: ${roleQueryError.message}`);
+    }
+
     if (!roleData) {
+      console.error(`[adminCreateUser] Unauthorized access attempt by user ${userId}`);
       throw new Error("Forbidden: Admin role required");
     }
 
@@ -58,12 +66,17 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     
-    const { data: roleData } = await supabase
+    const { data: roleData, error: roleQueryError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
+
+    if (roleQueryError) {
+      console.error("[adminDeleteUser] Role check error:", roleQueryError);
+      throw new Error(`Database error: ${roleQueryError.message}`);
+    }
 
     if (!roleData) throw new Error("Forbidden");
 
@@ -86,12 +99,17 @@ export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     
-    const { data: roleData } = await supabase
+    const { data: roleData, error: roleQueryError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
+
+    if (roleQueryError) {
+      console.error("[adminUpdateUserRole] Role check error:", roleQueryError);
+      throw new Error(`Database error: ${roleQueryError.message}`);
+    }
 
     if (!roleData) throw new Error("Forbidden");
 
