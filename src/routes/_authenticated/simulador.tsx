@@ -146,8 +146,8 @@ function SimulatorPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="space-y-6 min-w-0">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             <Kpi label="Total contratado" value={brl(result.contractedTotal)} />
             <Kpi label="Lucro projetado" value={brl(result.profit)} tone={result.profit >= 0 ? "positive" : "negative"} />
             <Kpi label="ROI total" value={pct(result.roiTotal)} />
@@ -206,14 +206,15 @@ function SimulatorPage() {
 
 function Kpi({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
   return (
-    <Card>
-      <CardContent className="space-y-1 pt-6">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+    <Card className="overflow-hidden">
+      <CardContent className="flex flex-col justify-center space-y-1 p-4 sm:p-6 min-h-[100px]">
+        <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
+          {label}
+        </p>
         <p
           className={
-            tone === "negative"
-              ? "text-xl font-semibold tabular-nums text-destructive"
-              : "text-xl font-semibold tabular-nums"
+            (tone === "negative" ? "text-destructive " : "text-foreground ") +
+            "text-lg sm:text-xl font-bold tabular-nums leading-tight break-words"
           }
         >
           {value}
