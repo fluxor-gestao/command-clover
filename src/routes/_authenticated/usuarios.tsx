@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useUsers, useCurrentUserRole, type UserWithRole } from "@/lib/data/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 import { adminCreateUser, adminDeleteUser, adminUpdateUserRole } from "@/lib/users.functions";
 import { 
   Table, 
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/usuarios")({
 
 function UsuariosPage() {
   const { data: users, isLoading, refetch } = useUsers();
+  const queryClient = useQueryClient();
   const { data: currentRole } = useCurrentUserRole();
   const createUserFn = useServerFn(adminCreateUser);
   const deleteUserFn = useServerFn(adminDeleteUser);
@@ -60,7 +62,10 @@ function UsuariosPage() {
       setEmail("");
       setPassword("");
       setRole("user");
-      refetch();
+      
+      // Force aggressive cache invalidation
+      await queryClient.invalidateQueries({ queryKey: ["users-list"] });
+      await refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar usuário");
     } finally {
@@ -192,7 +197,7 @@ function UsuariosPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              users?.map((user: UserWithRole) => (
+              users?.filter(u => u && u.id).map((user: UserWithRole) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
