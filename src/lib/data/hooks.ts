@@ -646,3 +646,31 @@ export function useRegisterRentalReceipt() {
     },
   });
 }
+
+export function useUsers() {
+  return useQuery({
+    queryKey: ["users-list"],
+    queryFn: async (): Promise<UserWithRole[]> => {
+      const { data, error } = await supabase.rpc("list_users_with_roles");
+      if (error) throw new Error(error.message);
+      return (data as any[]) ?? [];
+    },
+  });
+}
+
+export function useCurrentUserRole() {
+  return useQuery({
+    queryKey: ["current-user-role"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data?.role as "admin" | "moderator" | "user" | null;
+    },
+  });
+}
