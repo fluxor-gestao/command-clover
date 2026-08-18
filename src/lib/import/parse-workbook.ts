@@ -403,13 +403,17 @@ function upsertInstallment(op: ParsedOperation, inst: ParsedInstallment) {
 function emptyResult(referenceMonth: string): ParseResult {
   return {
     operations: [], rentals: [], issues: [],
-    baseline: { operationRows: 0, capitalTotal: 0, monthlyTotal: 0, receivedTotal: 0, overdueTotal: 0, toReceiveTotal: 0, monthlyCells: 0, ignoredRows: 0 },
+    baseline: {
+      operationRows: 0, capitalTotal: 0, monthlyTotal: 0, receivedTotal: 0, overdueTotal: 0,
+      toReceiveTotal: 0, futureReceivableTotal: 0, capitalToRecoverTotal: 0, monthlyCells: 0, ignoredRows: 0,
+    },
     readiness: { ready: 0, pending: 0, ignored: 0, critical: 0 },
     stats: {
       sheetsRead: [], availableSheets: [], referenceMonth, operations: 0, rentals: 0, installments: 0,
       receivedInstallments: 0, overdueInstallments: 0, contributions: 0, expectedTotal: 0, receivedTotal: 0,
-      overdueTotal: 0, toReceiveTotal: 0, investedTotal: 0, byYear: [],
+      overdueTotal: 0, toReceiveTotal: 0, futureReceivableTotal: 0, capitalToRecoverTotal: 0, investedTotal: 0, byYear: [],
     },
+
   };
 }
 
