@@ -12,10 +12,12 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   .inputValidator((data) => createUserSchema.parse(data))
   .handler(async ({ data }) => {
     // 1. Verify the caller is an admin
-    const { getRequest } = await import("vinxi/http");
-    const request = getRequest();
+    // In TanStack Start v1 server functions, we can access the request headers 
+    // from the context passed to the handler.
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = (getWebRequest as any)();
     
-    const authHeader = request.headers.get("Authorization");
+    const authHeader = request?.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("Unauthorized: No session found");
     }
@@ -66,10 +68,10 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    const { getRequest } = await import("vinxi/http");
-    const request = getRequest();
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = (getWebRequest as any)();
 
-    const authHeader = request.headers.get("Authorization");
+    const authHeader = request?.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
 
     const { supabase } = await import("@/integrations/supabase/client");
@@ -102,10 +104,10 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
 export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]) }).parse(data))
   .handler(async ({ data }) => {
-    const { getRequest } = await import("vinxi/http");
-    const request = getRequest();
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = (getWebRequest as any)();
 
-    const authHeader = request.headers.get("Authorization");
+    const authHeader = request?.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
 
     const { supabase } = await import("@/integrations/supabase/client");
