@@ -11,20 +11,16 @@ const createUserSchema = z.object({
 export const adminCreateUser = createServerFn({ method: "POST" })
   .inputValidator((data) => createUserSchema.parse(data))
   .handler(async ({ data }) => {
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = getWebRequest()!;
-
     // 1. Verify the caller is an admin
-    // In TanStack Start, we should ideally use middleware for this.
-    // For now, we'll verify the session/role inside the handler for security.
+    // We use getWebRequest from @tanstack/react-start/server
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = (getWebRequest as any)();
+    
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("Unauthorized: No session found");
     }
 
-    // Since we're using supabaseAdmin for the creation, we MUST manually 
-    // verify the caller's JWT/Role first using the standard client or a secure check.
-    // We'll import the client dynamically to ensure it doesn't leak.
     const { supabase } = await import("@/integrations/supabase/client");
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     
@@ -32,7 +28,6 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       throw new Error("Unauthorized: Invalid session");
     }
 
-    // Check if the user has the admin role
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
@@ -44,7 +39,6 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       throw new Error("Forbidden: Admin role required");
     }
 
-    // 2. Create the user in Auth
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -55,16 +49,14 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       throw new Error(`Error creating user: ${createError.message}`);
     }
 
-    // 3. Assign the role
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({
+      .upsert({
         user_id: newUser.user.id,
         role: data.role,
       });
 
     if (roleError) {
-      // Cleanup: if role assignment fails, we might want to delete the auth user
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       throw new Error(`Error assigning role: ${roleError.message}`);
     }
@@ -76,7 +68,7 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = getWebRequest()!;
+    const request = (getWebRequest as any)();
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
@@ -95,7 +87,6 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
 
     if (!roleData) throw new Error("Forbidden");
 
-    // Prevent self-deletion
     if (user.id === data.userId) {
       throw new Error("Cannot delete your own account");
     }
@@ -113,7 +104,7 @@ export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]) }).parse(data))
   .handler(async ({ data }) => {
     const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = getWebRequest()!;
+    const request = (getWebRequest as any)();
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
