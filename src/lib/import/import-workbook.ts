@@ -402,9 +402,13 @@ export async function importParseResult(
         description: `[${issue.severity ?? "INFORMATIVO"}] ${issue.description}`,
       }));
 
-      const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
-      if (error) {
-        console.error("Error inserting import issues batch (non-fatal):", error.message);
+      try {
+        const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
+        if (error) {
+          console.error("Error inserting import issues batch (non-fatal):", error.message);
+        }
+      } catch (err) {
+        console.error("Critical error inserting import issues (non-fatal):", err);
       }
     }
   }
