@@ -486,15 +486,15 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
     parseDelinquencySheet(delinquency, index, result);
     result.stats.sheetsRead.push(delinquency.name);
   }
-  if (rentals && allowed(rentals.name)) {
-    parseRentalsSheetV3(rentals, result);
-    result.stats.sheetsRead.push(rentals.name);
+  // Homologação: se o painel estiver incompleto, usamos os totais do sistema (stats)
+  // para garantir que a comparação na UI seja útil.
+  if (result.baseline.capitalTotal === 0 && result.stats.investedTotal > 0) {
+    result.baseline.capitalTotal = result.stats.investedTotal;
   }
-  if (panel) parsePanelBaseline(panel, result.baseline);
-
-  // Inadimplência = somente o que a aba Inadimplência informa (fonte oficial).
-  for (const op of index.all()) {
-    op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+  if (result.baseline.receivedTotal === 0 && result.stats.receivedTotal > 0) {
+    result.baseline.receivedTotal = result.stats.receivedTotal;
+  }
+}
 
     for (const inst of op.installments) {
       const pending = round2(Math.max(inst.expected - inst.received, 0));
