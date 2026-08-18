@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
 import {
+  useContractTotals,
   useInstallments,
   useMonthlyFlow,
   useOperations,
