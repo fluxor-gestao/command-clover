@@ -255,15 +255,17 @@ export async function importParseResult(
     // Se é uma aba de gestão (Base2026), vincular à carteira gerencial
     if (mode === "CONTROLE_GERENCIAL" && operationId) {
       if (op.isManagement) {
-        await supabase
+        console.log(`[SYNC] Linking ${op.reference} to 2026 portfolio.`);
+        const { error: memberError } = await supabase
           .from("portfolio_memberships")
           .upsert(
             { operation_id: operationId, portfolio_year: 2026, is_active: true },
             { onConflict: "operation_id,portfolio_year" }
           );
+        if (memberError) {
+          console.error(`[SYNC] Failed to link ${op.reference}:`, memberError.message);
+        }
       }
-      // NOTA: A inativação global de memberships que não estão na planilha agora 
-      // é feita no final do processo de importação para ser atômica e segura.
     }
 
     if (op.installments.length > 0) {
