@@ -205,7 +205,7 @@ function InstallmentsPage() {
                       {(row.days_overdue ?? 0) > 0 ? `${row.days_overdue} dias` : "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={row.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
+                      <Badge variant={row.financial_status === "INADIMPLENTE" ? "destructive" : "secondary"}>
                         {row.financial_status}
                       </Badge>
                     </TableCell>
@@ -219,6 +219,40 @@ function InstallmentsPage() {
                         >
                           <Receipt className="h-4 w-4" />
                         </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" title="Alterar situação">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Alterar situação</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                updateStatus.mutate({
+                                  id: row.id!,
+                                  receivedAmount: Number(row.expected_amount ?? 0),
+                                })
+                              }
+                            >
+                              Marcar como Paga
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => updateStatus.mutate({ id: row.id!, receivedAmount: 0 })}
+                            >
+                              Marcar como Em aberto
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setPartialRow(row);
+                                setPartialValue(String(row.received_amount ?? 0));
+                              }}
+                            >
+                              Marcar como Parcial…
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
