@@ -73,6 +73,7 @@ function DashboardPage() {
   const projection = usePortfolioProjection(year);
   const flow = useMonthlyFlow();
   const receivedInMonth = useReceivedInMonth(currentMonth);
+  const contractTotals = useContractTotals(scope);
 
   const s = metrics.data;
 
