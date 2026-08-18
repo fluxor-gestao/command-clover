@@ -78,7 +78,12 @@ export interface ParsedReceipt {
   amount: number;
   notes: string | null;
   sourceKey: string;
+  /** Competência da parcela em que a baixa antecipada foi alocada. */
+  allocatedCompetence?: string;
+  /** Baixa antecipada sem parcela contratual em aberto. */
+  advance?: boolean;
 }
+
 
 export interface ParsedContribution {
   date: string;
