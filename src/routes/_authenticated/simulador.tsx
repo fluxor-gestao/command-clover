@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deriveContractDates, simulateContract, type ContractMode } from "@/lib/finance/contract";
 import { brl, dateBR, pct, todayISO } from "@/lib/format";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/simulador")({
   head: () => ({
@@ -142,6 +144,30 @@ function SimulatorPage() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Alerta de Viabilidade */}
+            <div
+              className={cn(
+                "mt-4 flex items-center gap-3 rounded-lg border p-4 transition-all duration-300 animate-in fade-in slide-in-from-top-1",
+                result.roiMonthlyAverage >= 0.035
+                  ? "border-success/20 bg-success/10 text-success"
+                  : "border-destructive/20 bg-destructive/10 text-destructive"
+              )}
+            >
+              {result.roiMonthlyAverage >= 0.035 ? (
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
+              ) : (
+                <AlertCircle className="h-5 w-5 shrink-0" />
+              )}
+              <div className="flex flex-col">
+                <span className="text-sm font-bold leading-none">
+                  {result.roiMonthlyAverage >= 0.035 ? "Negócio favorável!" : "Analisar viabilidade!"}
+                </span>
+                <span className="mt-1 text-[10px] opacity-80 uppercase tracking-wider font-medium">
+                  Status de Rentabilidade
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
