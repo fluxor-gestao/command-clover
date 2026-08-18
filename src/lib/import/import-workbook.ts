@@ -404,7 +404,7 @@ export async function importParseResult(
 
       const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
       if (error) {
-        console.error("Error inserting import issues batch:", error.message, issuesBatch);
+        console.error("Error inserting import issues batch (non-fatal):", error.message);
       }
     }
   }
