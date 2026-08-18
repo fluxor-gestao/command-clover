@@ -874,18 +874,17 @@ function parsePanelBaseline(sheet: Worksheet, baseline: ParseBaseline) {
     return null;
   };
 
+  // Rótulos reais do Painel do Excel.
   const invested = get("CAPITAL INVESTIDO");
   const received = get("TOTAL RECEBIDO");
-  const toReceive = get("CAPITAL A RECEBER");
-  const overdue = get("SALDO INADIMPLENTE");
-  const expected = get("PREVISTO EXCEL") || get("TOTAL PREVISTO");
+  const capitalToRecover = get("CAPITAL A RECEBER");
 
   if (invested !== null) baseline.capitalTotal = invested;
   if (received !== null) baseline.receivedTotal = received;
-  if (toReceive !== null) baseline.toReceiveTotal = toReceive;
-  if (overdue !== null) baseline.overdueTotal = overdue;
-  if (expected !== null) baseline.monthlyTotal = expected;
+  if (capitalToRecover !== null) baseline.capitalToRecoverTotal = capitalToRecover;
+  else baseline.capitalToRecoverTotal = round2(Math.max(baseline.capitalTotal - baseline.receivedTotal, 0));
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Estatísticas do sistema (lado "Sistema" da homologação)             */
