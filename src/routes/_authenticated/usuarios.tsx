@@ -53,6 +53,7 @@ function UsuariosPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const queryClient = (window as any).queryClient;
     try {
       await createUserFn({ data: { email, password, role } });
       toast.success("Usuário criado com sucesso");
@@ -60,7 +61,12 @@ function UsuariosPage() {
       setEmail("");
       setPassword("");
       setRole("user");
-      refetch();
+      
+      // Force aggressive cache invalidation
+      if (queryClient) {
+        await queryClient.invalidateQueries({ queryKey: ["users-list"] });
+      }
+      await refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar usuário");
     } finally {
@@ -192,7 +198,7 @@ function UsuariosPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              users?.map((user: UserWithRole) => (
+              users?.filter(u => u && u.id).map((user: UserWithRole) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
