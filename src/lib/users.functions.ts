@@ -10,7 +10,10 @@ const createUserSchema = z.object({
 
 export const adminCreateUser = createServerFn({ method: "POST" })
   .inputValidator((data) => createUserSchema.parse(data))
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = getWebRequest()!;
+
     // 1. Verify the caller is an admin
     // In TanStack Start, we should ideally use middleware for this.
     // For now, we'll verify the session/role inside the handler for security.
@@ -71,7 +74,10 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = getWebRequest()!;
+
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
 
@@ -105,7 +111,10 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
 
 export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]) }).parse(data))
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const request = getWebRequest()!;
+
     const authHeader = request.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
 

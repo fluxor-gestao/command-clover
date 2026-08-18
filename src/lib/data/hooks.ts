@@ -6,6 +6,15 @@ import type { Database } from "@/integrations/supabase/types";
 export type PortfolioSummary = Database["public"]["Views"]["v_portfolio_summary"]["Row"];
 export type OperationPosition = Database["public"]["Views"]["v_operation_position"]["Row"];
 
+export type UserWithRole = {
+  id: string;
+  email: string;
+  last_sign_in_at: string | null;
+  created_at: string;
+  role: "admin" | "moderator" | "user" | null;
+};
+
+
 const unwrap = <T,>({ data, error }: { data: T[] | null; error: { message: string } | null }): T[] => {
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -387,7 +396,9 @@ export function useInvalidateAll() {
       "import-issues",
       "audit-log",
       "references",
+      "users-list",
     ]) {
+
       queryClient.invalidateQueries({ queryKey: [key] });
     }
   };
