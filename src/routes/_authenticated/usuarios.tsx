@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/usuarios")({
 
 function UsuariosPage() {
   const { data: users, isLoading, refetch } = useUsers();
+  const queryClient = useQueryClient();
   const { data: currentRole } = useCurrentUserRole();
   const createUserFn = useServerFn(adminCreateUser);
   const deleteUserFn = useServerFn(adminDeleteUser);
@@ -53,7 +54,6 @@ function UsuariosPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const queryClient = (window as any).queryClient;
     try {
       await createUserFn({ data: { email, password, role } });
       toast.success("Usuário criado com sucesso");
@@ -63,9 +63,7 @@ function UsuariosPage() {
       setRole("user");
       
       // Force aggressive cache invalidation
-      if (queryClient) {
-        await queryClient.invalidateQueries({ queryKey: ["users-list"] });
-      }
+      await queryClient.invalidateQueries({ queryKey: ["users-list"] });
       await refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar usuário");
