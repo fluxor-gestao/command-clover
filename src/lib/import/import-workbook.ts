@@ -186,10 +186,10 @@ export async function importParseResult(
       }
     }
 
-    // Se é modo de sincronização e está inalterado, pulamos a atualização
+    // Se é modo de sincronização e está inalterado, garantimos o membership e pulamos
     if (mode === "CONTROLE_GERENCIAL" && syncStatus === "INALTERADO") {
-      // Garantir que o membership exista mesmo se inalterado
       if (operationId && op.isManagement) {
+        console.log(`[SYNC] Operation ${op.reference} unchanged, ensuring management membership.`);
         await supabase
           .from("portfolio_memberships")
           .upsert(
