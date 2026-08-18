@@ -51,16 +51,18 @@ function SimulatorPage() {
     [mode, firstDueDate, finalDate, installmentCount, dueDay],
   );
 
+  const netInstallmentValue = useMemo(() => (Number(installmentValue) || 0) * 0.9, [installmentValue]);
+
   const result = useMemo(
     () =>
       simulateContract({
         capital: Number(capital) || 0,
-        installmentValue: Number(installmentValue) || 0,
+        installmentValue: netInstallmentValue,
         installmentCount: Number(installmentCount) || 0,
         firstDueDate: dates.firstDueDate,
         dueDay: Number(dueDay) || null,
       }),
-    [capital, installmentValue, installmentCount, dates.firstDueDate, dueDay],
+    [capital, netInstallmentValue, installmentCount, dates.firstDueDate, dueDay],
   );
 
   return (
