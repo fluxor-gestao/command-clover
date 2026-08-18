@@ -147,7 +147,7 @@ function SimulatorPage() {
         </Card>
 
         <div className="space-y-6 min-w-0">
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             <Kpi label="Total contratado" value={brl(result.contractedTotal)} />
             <Kpi label="Lucro projetado" value={brl(result.profit)} tone={result.profit >= 0 ? "positive" : "negative"} />
             <Kpi label="ROI total" value={pct(result.roiTotal)} />
