@@ -49,6 +49,7 @@ function UsuariosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isAdmin = currentRole === "admin";
+  console.log("Current user role:", currentRole, "Is Admin:", isAdmin);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
