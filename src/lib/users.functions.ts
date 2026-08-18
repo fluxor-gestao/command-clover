@@ -11,19 +11,10 @@ const createUserSchema = z.object({
 export const adminCreateUser = createServerFn({ method: "POST" })
   .inputValidator((data) => createUserSchema.parse(data))
   .handler(async ({ data }) => {
-    // 1. Verify the caller is an admin
-    // In TanStack Start v1 server functions, we can access the request headers 
-    // from the context passed to the handler.
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = (getWebRequest as any)();
-    
-    const authHeader = request?.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Unauthorized: No session found");
-    }
-
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    
+    // We try to get the session from the client-side cookie if it exists
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
       throw new Error("Unauthorized: Invalid session");
@@ -68,14 +59,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = (getWebRequest as any)();
-
-    const authHeader = request?.headers.get("Authorization");
-    if (!authHeader) throw new Error("Unauthorized");
-
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) throw new Error("Unauthorized");
 
@@ -104,14 +89,8 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
 export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]) }).parse(data))
   .handler(async ({ data }) => {
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const request = (getWebRequest as any)();
-
-    const authHeader = request?.headers.get("Authorization");
-    if (!authHeader) throw new Error("Unauthorized");
-
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) throw new Error("Unauthorized");
 
