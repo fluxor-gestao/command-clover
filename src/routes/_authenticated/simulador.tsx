@@ -51,16 +51,18 @@ function SimulatorPage() {
     [mode, firstDueDate, finalDate, installmentCount, dueDay],
   );
 
+  const netInstallmentValue = useMemo(() => (Number(installmentValue) || 0) * 0.9, [installmentValue]);
+
   const result = useMemo(
     () =>
       simulateContract({
         capital: Number(capital) || 0,
-        installmentValue: Number(installmentValue) || 0,
+        installmentValue: netInstallmentValue,
         installmentCount: Number(installmentCount) || 0,
         firstDueDate: dates.firstDueDate,
         dueDay: Number(dueDay) || null,
       }),
-    [capital, installmentValue, installmentCount, dates.firstDueDate, dueDay],
+    [capital, netInstallmentValue, installmentCount, dates.firstDueDate, dueDay],
   );
 
   return (
@@ -98,7 +100,10 @@ function SimulatorPage() {
                 <Input type="number" step="0.01" value={capital} onChange={(e) => setCapital(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Valor da parcela</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Valor da parcela</Label>
+                  <span className="text-[10px] font-medium text-success">Líquido: {brl(netInstallmentValue)}</span>
+                </div>
                 <Input
                   type="number"
                   step="0.01"
