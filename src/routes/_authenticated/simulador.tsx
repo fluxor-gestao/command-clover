@@ -206,16 +206,17 @@ function SimulatorPage() {
 
 function Kpi({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="flex flex-col justify-center space-y-1 p-4 sm:p-6 min-h-[100px]">
-        <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
+    <Card className="overflow-hidden border-none bg-muted/20 shadow-none">
+      <CardContent className="flex flex-col justify-center space-y-0.5 p-3 min-h-[70px]">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 truncate">
           {label}
         </p>
         <p
           className={
             (tone === "negative" ? "text-destructive " : "text-foreground ") +
-            "text-lg sm:text-xl font-bold tabular-nums leading-tight break-words"
+            "text-base sm:text-lg font-bold tabular-nums leading-tight truncate"
           }
+          title={value}
         >
           {value}
         </p>
