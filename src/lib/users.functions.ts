@@ -10,20 +10,30 @@ const createUserSchema = z.object({
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+import { supabaseAdmin as admin } from "@/integrations/supabase/client.server";
+
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => createUserSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: roleData } = await supabase
+    // We use the admin client to check the role to bypass RLS
+    // but the userId comes from the verified auth token in context.
+    const { data: roleData, error: roleQueryError } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
+    if (roleQueryError) {
+      console.error("[adminCreateUser] Role check error:", roleQueryError);
+      throw new Error(`Database error: ${roleQueryError.message}`);
+    }
+
     if (!roleData) {
+      console.error(`[adminCreateUser] Unauthorized access attempt by user ${userId}`);
       throw new Error("Forbidden: Admin role required");
     }
 
@@ -58,12 +68,17 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     
-    const { data: roleData } = await supabase
+    const { data: roleData, error: roleQueryError } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
+
+    if (roleQueryError) {
+      console.error("[adminDeleteUser] Role check error:", roleQueryError);
+      throw new Error(`Database error: ${roleQueryError.message}`);
+    }
 
     if (!roleData) throw new Error("Forbidden");
 
@@ -86,12 +101,17 @@ export const adminUpdateUserRole = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     
-    const { data: roleData } = await supabase
+    const { data: roleData, error: roleQueryError } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
+
+    if (roleQueryError) {
+      console.error("[adminUpdateUserRole] Role check error:", roleQueryError);
+      throw new Error(`Database error: ${roleQueryError.message}`);
+    }
 
     if (!roleData) throw new Error("Forbidden");
 
