@@ -61,6 +61,38 @@ function InstallmentsPage() {
   const navigate = useNavigate();
   const searchParams = Route.useSearch();
   const installments = useInstallments();
+  const queryClient = useQueryClient();
+
+  const [partialRow, setPartialRow] = useState<any | null>(null);
+  const [partialValue, setPartialValue] = useState("");
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, receivedAmount }: { id: string; receivedAmount: number }) => {
+      const { error } = await supabase
+        .from("investment_installments")
+        .update({ received_amount: receivedAmount })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      toast.success("Situação da parcela atualizada");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const savePartial = () => {
+    if (!partialRow) return;
+    const parsed = Number(partialValue.replace(/\./g, "").replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      toast.error("Informe um valor recebido válido");
+      return;
+    }
+    updateStatus.mutate({ id: partialRow.id, receivedAmount: parsed });
+    setPartialRow(null);
+  };
+
+
   
   const search = searchParams.search || "";
   const status = searchParams.status || "TODAS";
