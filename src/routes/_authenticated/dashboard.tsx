@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { YearScopeSelect, scopeFromValue } from "@/components/filters/YearScopeSelect";
 import {
+  useContractTotals,
   useInstallments,
   useMonthlyFlow,
   useOperations,
@@ -72,6 +73,7 @@ function DashboardPage() {
   const projection = usePortfolioProjection(year);
   const flow = useMonthlyFlow();
   const receivedInMonth = useReceivedInMonth(currentMonth);
+  const contractTotals = useContractTotals(scope);
 
   const s = metrics.data;
 
@@ -105,13 +107,11 @@ function DashboardPage() {
     {},
   );
 
-  const contractedTotal = scopedInstallments.reduce(
-    (acc, row) => acc + Number(row.expected_amount ?? 0),
-    0,
-  );
   const investedCapital = Number(s?.invested_capital ?? 0);
-  const projectedProfit = contractedTotal - investedCapital;
-  const totalValue = investedCapital + projectedProfit;
+  const overdueAmount = Number(s?.overdue_amount ?? 0);
+  const projectedProfit = contractTotals.data?.projectedProfit ?? 0;
+  const projectedResult = investedCapital + projectedProfit;
+  const totalValue = projectedResult + overdueAmount;
 
   const scopedOperations = (operations.data ?? []).filter(
     (op) => year === null || (op.operation_id != null && scopedOperationIds.has(op.operation_id)),
@@ -191,29 +191,23 @@ function DashboardPage() {
         <Kpi
           title="Lucro Real Projetado"
           value={brl(projectedProfit)}
-          hint="Total contratado − capital investido"
+          hint="Nº parcelas × valor da parcela − capital inicial"
           icon={<TrendingUp className="size-4" />}
           primary
           onClick={() => navigate({ to: "/parcelas" })}
         />
       </section>
 
-      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi
-          title="Lucro realizado"
-          value={brl(s?.profit_amount)}
-          hint="Excedente ao principal"
-          onClick={() => navigate({ to: "/relatorios" })}
-        />
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Kpi
           title="Resultado Projetado"
-          value={brl(s?.profit_amount)} // Simplificado para homologação
-          hint="Previsto - Investido"
+          value={brl(projectedResult)}
+          hint="Capital investido + lucro real projetado"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Inadimplência"
-          value={brl(s?.overdue_amount)}
+          value={brl(overdueAmount)}
           hint="Parcelas vencidas em aberto"
           tone="destructive"
           onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "INADIMPLENTE" } })}
@@ -221,7 +215,7 @@ function DashboardPage() {
         <Kpi
           title="Valor Total"
           value={brl(totalValue)}
-          hint={`Capital investido + lucro projetado · recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
+          hint={`Capital + lucro projetado + inadimplência · recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>

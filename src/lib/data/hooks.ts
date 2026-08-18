@@ -64,6 +64,45 @@ export function usePortfolioMetrics(scope: PortfolioScope) {
   });
 }
 
+export interface ContractTotals {
+  contractedTotal: number;
+  investedCapital: number;
+  projectedProfit: number;
+}
+
+/** Totais contratuais (nº parcelas × valor da parcela) por escopo de carteira. */
+export function useContractTotals(scope: PortfolioScope) {
+  const year = scope.type === "management" ? scope.year : null;
+
+  return useQuery({
+    queryKey: ["contract-totals", year],
+    queryFn: async (): Promise<ContractTotals> => {
+      let query = supabase
+        .from("investment_operations")
+        .select("id, initial_capital, installment_count, installment_value, portfolio_memberships!inner(portfolio_year, is_active)")
+        .eq("portfolio_memberships.is_active", true);
+      if (year !== null) query = query.eq("portfolio_memberships.portfolio_year", year);
+
+      const { data, error } = await query.limit(5000);
+      if (error) throw new Error(error.message);
+
+      return ((data as any[]) ?? []).reduce<ContractTotals>(
+        (acc, row) => {
+          const count = Number(row.installment_count ?? 0);
+          const value = Number(row.installment_value ?? 0);
+          const capital = Number(row.initial_capital ?? 0);
+          if (!count || !value) return acc;
+          acc.contractedTotal += count * value;
+          acc.investedCapital += capital;
+          acc.projectedProfit += count * value - capital;
+          return acc;
+        },
+        { contractedTotal: 0, investedCapital: 0, projectedProfit: 0 },
+      );
+    },
+  });
+}
+
 export function useOverdueBreakdown(scope: PortfolioScope) {
   const year = scope.type === "management" ? scope.year : null;
   const cutoff = scope.type === "management" ? (scope.cutoff ?? "2026-08-01") : null;
