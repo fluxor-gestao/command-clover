@@ -78,7 +78,12 @@ export interface ParsedReceipt {
   amount: number;
   notes: string | null;
   sourceKey: string;
+  /** Competência da parcela em que a baixa antecipada foi alocada. */
+  allocatedCompetence?: string;
+  /** Baixa antecipada sem parcela contratual em aberto. */
+  advance?: boolean;
 }
+
 
 export interface ParsedContribution {
   date: string;
@@ -104,6 +109,8 @@ export interface ParsedOperation {
   installments: ParsedInstallment[];
   receipts: ParsedReceipt[];
   contributions: ParsedContribution[];
+  /** Inadimplência informada na aba Inadimplência: competência -> valor. */
+  delinquency?: Record<string, number>;
   incomplete: boolean;
   sheets: string[];
 }
@@ -130,9 +137,14 @@ export interface ParseBaseline {
   receivedTotal: number;
   overdueTotal: number;
   toReceiveTotal: number;
+  /** Saldo aberto de competências >= ponto de corte (A Receber Futuro). */
+  futureReceivableTotal: number;
+  /** Capital Investido − Total Recebido (Painel: Capital a Receber). */
+  capitalToRecoverTotal: number;
   monthlyCells: number;
   ignoredRows: number;
 }
+
 
 export interface ParseResult {
   operations: ParsedOperation[];
@@ -161,7 +173,10 @@ export interface ParseResult {
     receivedTotal: number;
     overdueTotal: number;
     toReceiveTotal: number;
+    futureReceivableTotal: number;
+    capitalToRecoverTotal: number;
     investedTotal: number;
+
     byYear: {
       year: string;
       operations: number;
@@ -391,13 +406,17 @@ function upsertInstallment(op: ParsedOperation, inst: ParsedInstallment) {
 function emptyResult(referenceMonth: string): ParseResult {
   return {
     operations: [], rentals: [], issues: [],
-    baseline: { operationRows: 0, capitalTotal: 0, monthlyTotal: 0, receivedTotal: 0, overdueTotal: 0, toReceiveTotal: 0, monthlyCells: 0, ignoredRows: 0 },
+    baseline: {
+      operationRows: 0, capitalTotal: 0, monthlyTotal: 0, receivedTotal: 0, overdueTotal: 0,
+      toReceiveTotal: 0, futureReceivableTotal: 0, capitalToRecoverTotal: 0, monthlyCells: 0, ignoredRows: 0,
+    },
     readiness: { ready: 0, pending: 0, ignored: 0, critical: 0 },
     stats: {
       sheetsRead: [], availableSheets: [], referenceMonth, operations: 0, rentals: 0, installments: 0,
       receivedInstallments: 0, overdueInstallments: 0, contributions: 0, expectedTotal: 0, receivedTotal: 0,
-      overdueTotal: 0, toReceiveTotal: 0, investedTotal: 0, byYear: [],
+      overdueTotal: 0, toReceiveTotal: 0, futureReceivableTotal: 0, capitalToRecoverTotal: 0, investedTotal: 0, byYear: [],
     },
+
   };
 }
 
@@ -447,6 +466,7 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
   const operations = sheetByName(workbook, "OPERACOES");
   const receipts = sheetByName(workbook, "RECEBIMENTOS");
   const contributions = sheetByName(workbook, "APORTES");
+  const delinquency = sheetByName(workbook, "INADIMPLENCIA");
   const rentals = sheetByName(workbook, "ALUGUEIS");
   const panel = sheetByName(workbook, "PAINEL");
 
@@ -462,23 +482,26 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
     parseContributionsSheet(contributions, index, result);
     result.stats.sheetsRead.push(contributions.name);
   }
+  if (delinquency) {
+    parseDelinquencySheet(delinquency, index, result);
+    result.stats.sheetsRead.push(delinquency.name);
+  }
   if (rentals && allowed(rentals.name)) {
     parseRentalsSheetV3(rentals, result);
     result.stats.sheetsRead.push(rentals.name);
   }
   if (panel) parsePanelBaseline(panel, result.baseline);
 
-  // Status derivado das parcelas depois de aplicar todas as baixas.
+  // Inadimplência = somente o que a aba Inadimplência informa (fonte oficial).
   for (const op of index.all()) {
-    // Ordenar por competência para garantir projeção correta
     op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
-    
+
     for (const inst of op.installments) {
-      const competence = inst.competence.slice(0, 7);
       const pending = round2(Math.max(inst.expected - inst.received, 0));
-      // Inadimplência Stricto Sensu: apenas se for antes do Ponto de Corte (Agosto 2026)
-      inst.overdue = competence < CUTOFF_COMPETENCE ? pending : 0;
+      const informed = op.delinquency?.[inst.competence] ?? 0;
+      inst.overdue = informed > 0 ? round2(Math.min(informed, Math.max(pending, informed))) : 0;
     }
+
   }
 }
 
@@ -558,16 +581,25 @@ function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, result: P
   });
 }
 
-/** Cronograma projetado: 1º vencimento + nº parcelas, limitado pela data final. */
+/**
+ * Cronograma projetado pela janela contratual do Excel:
+ * uma competência para cada mês entre o 1º vencimento e a Data Final,
+ * com o Valor Parcela do contrato (mesma regra do SUMIFS da aba Projeção).
+ * Sem Data Final, cai para o Nº de Parcelas.
+ */
 function generateSchedule(op: ParsedOperation, sheetName: string, baseline: ParseBaseline) {
   const count = op.installmentCount ?? 0;
   const value = op.installmentValue ?? 0;
-  if (!op.firstDueDate || count <= 0 || value <= 0) return;
+  if (!op.firstDueDate || value <= 0) return;
 
-  for (let i = 0; i < count; i += 1) {
+  const limitByCount = !op.lastDueDate;
+  if (limitByCount && count <= 0) return;
+  const months = limitByCount ? count : monthsBetween(op.firstDueDate, op.lastDueDate!) + 1;
+
+  for (let i = 0; i < months; i += 1) {
     const dueDate = addMonthsClamped(op.firstDueDate, i, op.dueDay);
-    if (op.lastDueDate && dueDate > op.lastDueDate) break;
     const competence = `${dueDate.slice(0, 7)}-01`;
+    if (op.lastDueDate && competence.slice(0, 7) > op.lastDueDate.slice(0, 7)) break;
     const compMonth = competence.slice(0, 7);
     if (compMonth < MIN_COMPETENCE) continue;
 
@@ -584,6 +616,14 @@ function generateSchedule(op: ParsedOperation, sheetName: string, baseline: Pars
     baseline.monthlyTotal = round2(baseline.monthlyTotal + value);
   }
 }
+
+/** Diferença em meses entre duas datas ISO (YYYY-MM-DD). */
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = [Number(from.slice(0, 4)), Number(from.slice(5, 7))];
+  const [ty, tm] = [Number(to.slice(0, 4)), Number(to.slice(5, 7))];
+  return Math.max((ty - fy) * 12 + (tm - fm), 0);
+}
+
 
 /** Aba Recebimentos: baixas efetivas por competência. */
 function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: ParseResult) {
@@ -629,35 +669,81 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: Par
     seq.set(key, next);
 
     const receiptDate = (cDate ? cellDate(row.getCell(cDate)) : null) ?? dueDateForCompetence(competence, op.dueDay);
-    op.receipts.push({
+    const receipt: ParsedReceipt = {
       competence,
       receiptDate,
       amount,
       notes: cNotes ? cellText(row.getCell(cNotes)) || null : null,
       sourceKey: `rec:${key}:${next}`,
-    });
+    };
+    op.receipts.push(receipt);
 
     const installment = op.installments.find((i) => i.competence === competence);
     if (installment) {
       installment.received = round2(installment.received + amount);
-      // Recalcular overdue imediatamente para o baseline
-      const pending = round2(Math.max(installment.expected - installment.received, 0));
-      installment.overdue = competence.slice(0, 7) < CUTOFF_COMPETENCE ? pending : 0;
     } else {
-      // Baixa fora do cronograma contratual: cria a parcela correspondente.
-      upsertInstallment(op, {
-        competence,
-        dueDate: receiptDate,
-        expected: amount,
-        received: amount,
-        overdue: 0,
-        sourceKey: `inst:${normalizeReference(reference)}:${competence.slice(0, 7)}`,
-        sheet: sheet.name,
+      // Baixa antecipada: não cria parcela nova (não infla previsto nem contagem).
+      // Aloca na primeira competência contratual ainda em aberto.
+      op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+      const target = op.installments.find((i) => round2(i.expected - i.received) > 0.005);
+      if (target) {
+        target.received = round2(target.received + amount);
+        receipt.allocatedCompetence = target.competence;
+      } else {
+        receipt.advance = true;
+      }
+      result.issues.push({
+        sheet: sheet.name, row: String(rowNum), reference, issueType: "POSSIVEL_INADIMPLENCIA",
+        severity: "INFORMATIVO",
+        description: target
+          ? `Baixa antecipada em ${competence.slice(0, 7)} (fora do cronograma contratual) alocada na parcela de ${target.competence.slice(0, 7)}.`
+          : `Baixa antecipada em ${competence.slice(0, 7)} registrada como crédito — não há parcela contratual em aberto.`,
+        action: "Confira o 1º vencimento e a Data Final do contrato na aba Operações.",
       });
     }
     result.baseline.receivedTotal = round2(result.baseline.receivedTotal + amount);
   });
 }
+
+/**
+ * Aba Inadimplência: lista oficial e manual do que está inadimplente.
+ * Colunas: Referência / Competência / Valor / Data Vencimento / Observação.
+ */
+function parseDelinquencySheet(sheet: Worksheet, index: OperationIndex, result: ParseResult) {
+  const header = findHeader(sheet, ["REFERENCIA", "COMPETENCIA"]);
+  if (!header) return;
+
+  const cRef = col(header, "REFERENCIA")!;
+  const cCompetence = col(header, "COMPETENCIA")!;
+  const cAmount = col(header, "VALOR");
+
+  sheet.eachRow((row: Row, rowNum: number) => {
+    if (rowNum <= header.row) return;
+    const reference = cellText(row.getCell(cRef));
+    if (!reference || normalizeText(reference).includes("TOTAL")) return;
+
+    const competenceDate = cellDate(row.getCell(cCompetence));
+    const amount = cAmount ? cellNumber(row.getCell(cAmount)) : null;
+    if (!competenceDate || !amount || amount <= 0) return;
+
+    const competence = `${competenceDate.slice(0, 7)}-01`;
+    const op = index.find(reference);
+    if (!op) {
+      result.issues.push({
+        sheet: sheet.name, row: String(rowNum), reference, issueType: "OPERACAO_NAO_ENCONTRADA",
+        severity: "ATENCAO",
+        description: "Inadimplência informada sem operação correspondente na aba Operações.",
+        action: "Corrija a referência na aba Inadimplência.",
+      });
+      return;
+    }
+
+    const current = op.delinquency ?? (op.delinquency = {});
+    current[competence] = round2((current[competence] ?? 0) + amount);
+    result.baseline.overdueTotal = round2(result.baseline.overdueTotal + amount);
+  });
+}
+
 
 function dueDateForCompetence(competence: string, dueDay: number | null): string {
   const year = Number(competence.slice(0, 4));
@@ -788,18 +874,17 @@ function parsePanelBaseline(sheet: Worksheet, baseline: ParseBaseline) {
     return null;
   };
 
+  // Rótulos reais do Painel do Excel.
   const invested = get("CAPITAL INVESTIDO");
   const received = get("TOTAL RECEBIDO");
-  const toReceive = get("CAPITAL A RECEBER");
-  const overdue = get("SALDO INADIMPLENTE");
-  const expected = get("PREVISTO EXCEL") || get("TOTAL PREVISTO");
+  const capitalToRecover = get("CAPITAL A RECEBER");
 
   if (invested !== null) baseline.capitalTotal = invested;
   if (received !== null) baseline.receivedTotal = received;
-  if (toReceive !== null) baseline.toReceiveTotal = toReceive;
-  if (overdue !== null) baseline.overdueTotal = overdue;
-  if (expected !== null) baseline.monthlyTotal = expected;
+  if (capitalToRecover !== null) baseline.capitalToRecoverTotal = capitalToRecover;
+  else baseline.capitalToRecoverTotal = round2(Math.max(baseline.capitalTotal - baseline.receivedTotal, 0));
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Estatísticas do sistema (lado "Sistema" da homologação)             */
@@ -818,6 +903,8 @@ function computeStats(result: ParseResult) {
   stats.receivedTotal = 0;
   stats.overdueTotal = 0;
   stats.toReceiveTotal = 0;
+  stats.futureReceivableTotal = 0;
+  stats.capitalToRecoverTotal = 0;
   stats.investedTotal = 0;
   // stats.expectedTotal, stats.receivedTotal e stats.overdueTotal serão calculados pelas parcelas
   result.readiness = { ready: 0, pending: 0, ignored: 0, critical: 0 };
@@ -837,9 +924,13 @@ function computeStats(result: ParseResult) {
       stats.installments += 1;
       stats.expectedTotal = round2(stats.expectedTotal + inst.expected);
       stats.receivedTotal = round2(stats.receivedTotal + inst.received);
-      
+
       stats.overdueTotal = round2(stats.overdueTotal + inst.overdue);
       stats.toReceiveTotal = round2(stats.toReceiveTotal + currentPending);
+      // A Receber Futuro (regra do Excel): saldo aberto de competências >= corte.
+      if (inst.competence.slice(0, 7) >= CUTOFF_COMPETENCE) {
+        stats.futureReceivableTotal = round2(stats.futureReceivableTotal + currentPending);
+      }
       if (inst.received > 0) stats.receivedInstallments += 1;
       if (inst.overdue > 0) stats.overdueInstallments += 1;
 
@@ -857,10 +948,23 @@ function computeStats(result: ParseResult) {
     }
   }
 
+  stats.capitalToRecoverTotal = round2(Math.max(stats.investedTotal - stats.receivedTotal, 0));
+
+  // Baseline (lado Excel): previsto e futuro derivados da janela contratual lida.
+  result.baseline.monthlyTotal = stats.expectedTotal;
+  if (!result.baseline.monthlyCells) result.baseline.monthlyCells = stats.installments;
+
+  result.baseline.toReceiveTotal = stats.futureReceivableTotal;
+  result.baseline.futureReceivableTotal = stats.futureReceivableTotal;
+  if (!result.baseline.capitalToRecoverTotal) {
+    result.baseline.capitalToRecoverTotal = round2(Math.max(result.baseline.capitalTotal - result.baseline.receivedTotal, 0));
+  }
+
   result.readiness.critical = result.issues.filter((i) => i.severity === "CRITICO").length;
   result.readiness.ignored = result.baseline.ignoredRows;
   stats.byYear = [...byYear.values()].sort((a, b) => a.year.localeCompare(b.year));
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Layout legado                                                       */

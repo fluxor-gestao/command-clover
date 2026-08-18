@@ -406,10 +406,12 @@ function HomologationTable({ preview }: { preview: ParseResult }) {
       { label: "Capital Investido", excel: baseline.capitalTotal, system: stats.investedTotal, money: true },
       { label: "Valor Previsto", excel: baseline.monthlyTotal, system: stats.expectedTotal, money: true },
       { label: "Total Recebido", excel: baseline.receivedTotal, system: stats.receivedTotal, money: true },
+      { label: "Capital a Recuperar", excel: baseline.capitalToRecoverTotal, system: stats.capitalToRecoverTotal, money: true },
       { label: "Saldo Inadimplente", excel: baseline.overdueTotal, system: stats.overdueTotal, money: true },
-      { label: "Total a Receber", excel: baseline.toReceiveTotal, system: stats.toReceiveTotal, money: true },
+      { label: "A Receber Futuro", excel: baseline.futureReceivableTotal, system: stats.futureReceivableTotal, money: true },
       { label: "Parcelas", excel: baseline.monthlyCells, system: stats.installments, money: false },
     ];
+
   }, [preview]);
 
   const fmt = (value: number, money: boolean) => (money ? brl(value) : String(value));
