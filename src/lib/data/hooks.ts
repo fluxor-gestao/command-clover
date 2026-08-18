@@ -651,8 +651,8 @@ export function useUsers() {
   return useQuery({
     queryKey: ["users-list"],
     queryFn: async (): Promise<UserWithRole[]> => {
-      const { data, error } = await supabase.rpc("list_users_with_roles");
-      if (error) throw new Error(error.message);
+      const { adminListUsers } = await import("@/lib/users.functions");
+      const data = await adminListUsers();
       return (data as any[]) ?? [];
     },
   });
