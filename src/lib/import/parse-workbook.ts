@@ -470,9 +470,13 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
 
   // Status derivado das parcelas depois de aplicar todas as baixas.
   for (const op of index.all()) {
+    // Ordenar por competência para garantir projeção correta
+    op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+    
     for (const inst of op.installments) {
       const competence = inst.competence.slice(0, 7);
       const pending = round2(Math.max(inst.expected - inst.received, 0));
+      // Inadimplência Stricto Sensu: apenas se for antes do Ponto de Corte (Agosto 2026)
       inst.overdue = competence < CUTOFF_COMPETENCE ? pending : 0;
     }
   }
@@ -603,7 +607,8 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: Par
     if (!competenceDate || !amount || amount <= 0) return;
 
     const competence = `${competenceDate.slice(0, 7)}-01`;
-    if (competence.slice(0, 7) < MIN_COMPETENCE) {
+    const compMonth = competence.slice(0, 7);
+    if (compMonth < MIN_COMPETENCE) {
       result.baseline.ignoredRows += 1;
       return;
     }
@@ -635,6 +640,9 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: Par
     const installment = op.installments.find((i) => i.competence === competence);
     if (installment) {
       installment.received = round2(installment.received + amount);
+      // Recalcular overdue imediatamente para o baseline
+      const pending = round2(Math.max(installment.expected - installment.received, 0));
+      installment.overdue = competence.slice(0, 7) < CUTOFF_COMPETENCE ? pending : 0;
     } else {
       // Baixa fora do cronograma contratual: cria a parcela correspondente.
       upsertInstallment(op, {
