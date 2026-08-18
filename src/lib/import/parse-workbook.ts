@@ -378,8 +378,10 @@ class OperationIndex {
 function upsertInstallment(op: ParsedOperation, inst: ParsedInstallment) {
   const existing = op.installments.find((i) => i.competence === inst.competence);
   if (existing) {
+    // No layout V3, Operações gera o cronograma e Recebimentos abate.
+    // Não devemos somar expected, mas sim manter o maior ou o do contrato.
     existing.expected = Math.max(existing.expected, inst.expected);
-    existing.received = Math.max(existing.received, inst.received);
+    existing.received = round2(existing.received + inst.received);
     existing.overdue = Math.max(existing.overdue, inst.overdue);
   } else {
     op.installments.push(inst);
@@ -468,9 +470,13 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
 
   // Status derivado das parcelas depois de aplicar todas as baixas.
   for (const op of index.all()) {
+    // Ordenar por competência para garantir projeção correta
+    op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+    
     for (const inst of op.installments) {
       const competence = inst.competence.slice(0, 7);
       const pending = round2(Math.max(inst.expected - inst.received, 0));
+      // Inadimplência Stricto Sensu: apenas se for antes do Ponto de Corte (Agosto 2026)
       inst.overdue = competence < CUTOFF_COMPETENCE ? pending : 0;
     }
   }
@@ -562,7 +568,8 @@ function generateSchedule(op: ParsedOperation, sheetName: string, baseline: Pars
     const dueDate = addMonthsClamped(op.firstDueDate, i, op.dueDay);
     if (op.lastDueDate && dueDate > op.lastDueDate) break;
     const competence = `${dueDate.slice(0, 7)}-01`;
-    if (competence.slice(0, 7) < MIN_COMPETENCE) continue;
+    const compMonth = competence.slice(0, 7);
+    if (compMonth < MIN_COMPETENCE) continue;
 
     upsertInstallment(op, {
       competence,
@@ -600,7 +607,8 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: Par
     if (!competenceDate || !amount || amount <= 0) return;
 
     const competence = `${competenceDate.slice(0, 7)}-01`;
-    if (competence.slice(0, 7) < MIN_COMPETENCE) {
+    const compMonth = competence.slice(0, 7);
+    if (compMonth < MIN_COMPETENCE) {
       result.baseline.ignoredRows += 1;
       return;
     }
@@ -632,6 +640,9 @@ function parseReceiptsSheet(sheet: Worksheet, index: OperationIndex, result: Par
     const installment = op.installments.find((i) => i.competence === competence);
     if (installment) {
       installment.received = round2(installment.received + amount);
+      // Recalcular overdue imediatamente para o baseline
+      const pending = round2(Math.max(installment.expected - installment.received, 0));
+      installment.overdue = competence.slice(0, 7) < CUTOFF_COMPETENCE ? pending : 0;
     } else {
       // Baixa fora do cronograma contratual: cria a parcela correspondente.
       upsertInstallment(op, {
@@ -781,11 +792,13 @@ function parsePanelBaseline(sheet: Worksheet, baseline: ParseBaseline) {
   const received = get("TOTAL RECEBIDO");
   const toReceive = get("CAPITAL A RECEBER");
   const overdue = get("SALDO INADIMPLENTE");
+  const expected = get("PREVISTO EXCEL") || get("TOTAL PREVISTO");
 
   if (invested !== null) baseline.capitalTotal = invested;
   if (received !== null) baseline.receivedTotal = received;
   if (toReceive !== null) baseline.toReceiveTotal = toReceive;
   if (overdue !== null) baseline.overdueTotal = overdue;
+  if (expected !== null) baseline.monthlyTotal = expected;
 }
 
 /* ------------------------------------------------------------------ */
@@ -806,6 +819,7 @@ function computeStats(result: ParseResult) {
   stats.overdueTotal = 0;
   stats.toReceiveTotal = 0;
   stats.investedTotal = 0;
+  // stats.expectedTotal, stats.receivedTotal e stats.overdueTotal serão calculados pelas parcelas
   result.readiness = { ready: 0, pending: 0, ignored: 0, critical: 0 };
 
   for (const op of result.operations) {
@@ -818,13 +832,14 @@ function computeStats(result: ParseResult) {
     for (const inst of op.installments) {
       const year = inst.competence.slice(0, 4);
       const bucket = byYear.get(year) ?? { year, operations: 0, rentals: 0, installments: 0, expected: 0, received: 0, overdue: 0 };
-      const pending = round2(Math.max(inst.expected - inst.received, 0));
+      const currentPending = round2(Math.max(inst.expected - inst.received, 0));
 
       stats.installments += 1;
       stats.expectedTotal = round2(stats.expectedTotal + inst.expected);
       stats.receivedTotal = round2(stats.receivedTotal + inst.received);
+      
       stats.overdueTotal = round2(stats.overdueTotal + inst.overdue);
-      stats.toReceiveTotal = round2(stats.toReceiveTotal + pending);
+      stats.toReceiveTotal = round2(stats.toReceiveTotal + currentPending);
       if (inst.received > 0) stats.receivedInstallments += 1;
       if (inst.overdue > 0) stats.overdueInstallments += 1;
 
