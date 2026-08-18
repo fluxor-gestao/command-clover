@@ -85,7 +85,10 @@
   --destructive: oklch(0.577 0.245 27.325); /* Finance Red */
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --success: oklch(0.696 0.17 162.48); /* Finance Green */
+  --success-foreground: oklch(0.145 0.03 162.48);
   --warning: oklch(0.769 0.188 70.08); /* Finance Amber */
+  --warning-foreground: oklch(0.145 0.03 70.08);
+
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.129 0.042 264.695);
