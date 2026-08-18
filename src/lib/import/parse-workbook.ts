@@ -952,6 +952,8 @@ function computeStats(result: ParseResult) {
 
   // Baseline (lado Excel): previsto e futuro derivados da janela contratual lida.
   result.baseline.monthlyTotal = stats.expectedTotal;
+  if (!result.baseline.monthlyCells) result.baseline.monthlyCells = stats.installments;
+
   result.baseline.toReceiveTotal = stats.futureReceivableTotal;
   result.baseline.futureReceivableTotal = stats.futureReceivableTotal;
   if (!result.baseline.capitalToRecoverTotal) {
