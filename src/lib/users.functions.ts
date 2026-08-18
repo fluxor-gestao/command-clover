@@ -8,22 +8,18 @@ const createUserSchema = z.object({
   role: z.enum(["admin", "moderator", "user"]),
 });
 
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 export const adminCreateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => createUserSchema.parse(data))
-  .handler(async ({ data }) => {
-    const { supabase } = await import("@/integrations/supabase/client");
-    
-    // We try to get the session from the client-side cookie if it exists
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      throw new Error("Unauthorized: Invalid session");
-    }
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
 
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
@@ -57,23 +53,21 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user } } = await supabase.auth.getUser();
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     
-    if (!user) throw new Error("Unauthorized");
-
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
     if (!roleData) throw new Error("Forbidden");
 
-    if (user.id === data.userId) {
+    if (userId === data.userId) {
       throw new Error("Cannot delete your own account");
     }
 
@@ -87,17 +81,15 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   });
 
 export const adminUpdateUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ userId: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]) }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user } } = await supabase.auth.getUser();
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     
-    if (!user) throw new Error("Unauthorized");
-
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
