@@ -153,9 +153,9 @@ function InstallmentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="TODAS">Todas as situações</SelectItem>
-                <SelectItem value="A_VENCER">A vencer</SelectItem>
-                <SelectItem value="VENCIDA">Vencida</SelectItem>
-                <SelectItem value="PAGA">Paga</SelectItem>
+                <SelectItem value="A_RECEBER">A vencer</SelectItem>
+                <SelectItem value="INADIMPLENTE">Inadimplente</SelectItem>
+                <SelectItem value="RECEBIDO">Recebida</SelectItem>
                 <SelectItem value="PARCIAL">Parcial</SelectItem>
               </SelectContent>
             </Select>
