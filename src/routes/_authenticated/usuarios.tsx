@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useUsers, useCurrentUserRole } from "@/lib/data/hooks";
+import { useUsers, useCurrentUserRole, type UserWithRole } from "@/lib/data/hooks";
 import { adminCreateUser, adminDeleteUser, adminUpdateUserRole } from "@/lib/users.functions";
 import { 
   Table, 
@@ -192,7 +192,7 @@ function UsuariosPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              users?.map((user) => (
+              users?.map((user: UserWithRole) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
