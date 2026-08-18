@@ -191,29 +191,23 @@ function DashboardPage() {
         <Kpi
           title="Lucro Real Projetado"
           value={brl(projectedProfit)}
-          hint="Total contratado − capital investido"
+          hint="Nº parcelas × valor da parcela − capital inicial"
           icon={<TrendingUp className="size-4" />}
           primary
           onClick={() => navigate({ to: "/parcelas" })}
         />
       </section>
 
-      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi
-          title="Lucro realizado"
-          value={brl(s?.profit_amount)}
-          hint="Excedente ao principal"
-          onClick={() => navigate({ to: "/relatorios" })}
-        />
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Kpi
           title="Resultado Projetado"
-          value={brl(s?.profit_amount)} // Simplificado para homologação
-          hint="Previsto - Investido"
+          value={brl(projectedResult)}
+          hint="Capital investido + lucro real projetado"
           onClick={() => navigate({ to: "/relatorios" })}
         />
         <Kpi
           title="Inadimplência"
-          value={brl(s?.overdue_amount)}
+          value={brl(overdueAmount)}
           hint="Parcelas vencidas em aberto"
           tone="destructive"
           onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "INADIMPLENTE" } })}
@@ -221,7 +215,7 @@ function DashboardPage() {
         <Kpi
           title="Valor Total"
           value={brl(totalValue)}
-          hint={`Capital investido + lucro projetado · recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
+          hint={`Capital + lucro projetado + inadimplência · recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>
