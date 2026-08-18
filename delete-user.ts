@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "./integrations/supabase/client.server";
+import { supabaseAdmin } from "./src/integrations/supabase/client.server";
 
 async function run() {
   const userId = "b2c4188b-c96e-4690-ad70-3c0a4bb06200";
