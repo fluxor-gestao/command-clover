@@ -98,7 +98,10 @@ function SimulatorPage() {
                 <Input type="number" step="0.01" value={capital} onChange={(e) => setCapital(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Valor da parcela</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Valor da parcela</Label>
+                  <span className="text-[10px] font-medium text-success">Líquido: {brl(netInstallmentValue)}</span>
+                </div>
                 <Input
                   type="number"
                   step="0.01"
