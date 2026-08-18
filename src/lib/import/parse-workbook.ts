@@ -466,6 +466,7 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
   const operations = sheetByName(workbook, "OPERACOES");
   const receipts = sheetByName(workbook, "RECEBIMENTOS");
   const contributions = sheetByName(workbook, "APORTES");
+  const delinquency = sheetByName(workbook, "INADIMPLENCIA");
   const rentals = sheetByName(workbook, "ALUGUEIS");
   const panel = sheetByName(workbook, "PAINEL");
 
@@ -481,23 +482,26 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
     parseContributionsSheet(contributions, index, result);
     result.stats.sheetsRead.push(contributions.name);
   }
+  if (delinquency) {
+    parseDelinquencySheet(delinquency, index, result);
+    result.stats.sheetsRead.push(delinquency.name);
+  }
   if (rentals && allowed(rentals.name)) {
     parseRentalsSheetV3(rentals, result);
     result.stats.sheetsRead.push(rentals.name);
   }
   if (panel) parsePanelBaseline(panel, result.baseline);
 
-  // Status derivado das parcelas depois de aplicar todas as baixas.
+  // Inadimplência = somente o que a aba Inadimplência informa (fonte oficial).
   for (const op of index.all()) {
-    // Ordenar por competência para garantir projeção correta
     op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
-    
+
     for (const inst of op.installments) {
-      const competence = inst.competence.slice(0, 7);
       const pending = round2(Math.max(inst.expected - inst.received, 0));
-      // Inadimplência Stricto Sensu: apenas se for antes do Ponto de Corte (Agosto 2026)
-      inst.overdue = competence < CUTOFF_COMPETENCE ? pending : 0;
+      const informed = op.delinquency?.[inst.competence] ?? 0;
+      inst.overdue = informed > 0 ? round2(Math.min(informed, Math.max(pending, informed))) : 0;
     }
+
   }
 }
 
