@@ -995,6 +995,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_users_with_roles: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          last_sign_in_at: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       register_receipt: {
         Args: {
           p_allocations: Json

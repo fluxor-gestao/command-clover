@@ -6,6 +6,15 @@ import type { Database } from "@/integrations/supabase/types";
 export type PortfolioSummary = Database["public"]["Views"]["v_portfolio_summary"]["Row"];
 export type OperationPosition = Database["public"]["Views"]["v_operation_position"]["Row"];
 
+export type UserWithRole = {
+  id: string;
+  email: string;
+  last_sign_in_at: string | null;
+  created_at: string;
+  role: "admin" | "moderator" | "user" | null;
+};
+
+
 const unwrap = <T,>({ data, error }: { data: T[] | null; error: { message: string } | null }): T[] => {
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -387,7 +396,9 @@ export function useInvalidateAll() {
       "import-issues",
       "audit-log",
       "references",
+      "users-list",
     ]) {
+
       queryClient.invalidateQueries({ queryKey: [key] });
     }
   };
@@ -632,6 +643,34 @@ export function useRegisterRentalReceipt() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rental-receipts"] });
       queryClient.invalidateQueries({ queryKey: ["rental-properties"] });
+    },
+  });
+}
+
+export function useUsers() {
+  return useQuery({
+    queryKey: ["users-list"],
+    queryFn: async (): Promise<UserWithRole[]> => {
+      const { data, error } = await supabase.rpc("list_users_with_roles");
+      if (error) throw new Error(error.message);
+      return (data as any[]) ?? [];
+    },
+  });
+}
+
+export function useCurrentUserRole() {
+  return useQuery({
+    queryKey: ["current-user-role"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data?.role as "admin" | "moderator" | "user" | null;
     },
   });
 }

@@ -23,6 +23,7 @@ import { Route as AuthenticatedRecebimentosRouteImport } from './routes/_authent
 import { Route as AuthenticatedReferenciasRouteImport } from './routes/_authenticated/referencias'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedSimuladorRouteImport } from './routes/_authenticated/simulador'
+import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedOperacoesIdRouteImport } from './routes/_authenticated/operacoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -96,6 +97,11 @@ const AuthenticatedSimuladorRoute = AuthenticatedSimuladorRouteImport.update({
   path: '/simulador',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOperacoesIdRoute =
   AuthenticatedOperacoesIdRouteImport.update({
     id: '/$id',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/referencias': typeof AuthenticatedReferenciasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRoutesByTo {
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/referencias': typeof AuthenticatedReferenciasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRoutesById {
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/_authenticated/referencias': typeof AuthenticatedReferenciasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
 }
 export interface FileRouteTypes {
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/referencias'
     | '/relatorios'
     | '/simulador'
+    | '/usuarios'
     | '/operacoes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/referencias'
     | '/relatorios'
     | '/simulador'
+    | '/usuarios'
     | '/operacoes/$id'
   id:
     | '__root__'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/_authenticated/referencias'
     | '/_authenticated/relatorios'
     | '/_authenticated/simulador'
+    | '/_authenticated/usuarios'
     | '/_authenticated/operacoes/$id'
   fileRoutesById: FileRoutesById
 }
@@ -311,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimuladorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/usuarios': {
+      id: '/_authenticated/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/operacoes/$id': {
       id: '/_authenticated/operacoes/$id'
       path: '/$id'
@@ -347,6 +366,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReferenciasRoute: typeof AuthenticatedReferenciasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSimuladorRoute: typeof AuthenticatedSimuladorRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -361,6 +381,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReferenciasRoute: AuthenticatedReferenciasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSimuladorRoute: AuthenticatedSimuladorRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
