@@ -109,6 +109,8 @@ export interface ParsedOperation {
   installments: ParsedInstallment[];
   receipts: ParsedReceipt[];
   contributions: ParsedContribution[];
+  /** Inadimplência informada na aba Inadimplência: competência -> valor. */
+  delinquency?: Record<string, number>;
   incomplete: boolean;
   sheets: string[];
 }
@@ -135,9 +137,14 @@ export interface ParseBaseline {
   receivedTotal: number;
   overdueTotal: number;
   toReceiveTotal: number;
+  /** Saldo aberto de competências >= ponto de corte (A Receber Futuro). */
+  futureReceivableTotal: number;
+  /** Capital Investido − Total Recebido (Painel: Capital a Receber). */
+  capitalToRecoverTotal: number;
   monthlyCells: number;
   ignoredRows: number;
 }
+
 
 export interface ParseResult {
   operations: ParsedOperation[];
