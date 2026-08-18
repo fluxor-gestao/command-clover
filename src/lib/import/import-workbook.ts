@@ -248,9 +248,12 @@ export async function importParseResult(
     const needsUpdate = syncStatus !== "INALTERADO" || isForced;
 
     if (needsUpdate) {
+      const referenceId = await ensureReferenceId(op.reference, op.category ?? null);
       const payload = {
         reference: op.reference,
+        reference_id: referenceId,
         category_id: categoryId(op.category),
+
         due_day: op.dueDay,
         initial_capital: op.initialCapital ?? 0,
         first_due_date: op.firstDueDate,
