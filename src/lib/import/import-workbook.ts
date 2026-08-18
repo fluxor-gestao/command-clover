@@ -159,27 +159,44 @@ export async function importParseResult(
     done += 1;
 
     const sourceKey = `imp-op:${normalizeReference(op.reference)}`;
-    const { data: existing } = await supabase
+    const { data: existing, error: findError } = await supabase
       .from("investment_operations")
       .select("id, source_hash, import_status, reference")
-      .or(`source_key.eq.${sourceKey},reference.ilike.${op.reference.replace(/[,.()\-]/g, " ").replace(/\s+/g, " ").trim()}`)
-      .limit(1)
+      .eq("source_key", sourceKey)
       .maybeSingle();
+
+    if (findError) {
+      console.warn(`Error looking up operation ${op.reference}:`, findError.message);
+    }
 
     let operationId = existing?.id ?? null;
 
     // Lógica de Diff/Sync
     let syncStatus: "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO" = "NOVO";
     if (existing) {
-      const { data: status } = await supabase.rpc("check_sync_conflict", {
+      const { data: status, error: conflictError } = await supabase.rpc("check_sync_conflict", {
         p_operation_id: existing.id,
         p_incoming_hash: op.sourceHash ?? "",
       });
-      syncStatus = (status as "NOVO" | "ALTERADO_NO_EXCEL" | "INALTERADO" | "CONFLITO") || "ALTERADO_NO_EXCEL";
+      if (conflictError) {
+        console.warn(`Error checking sync conflict for ${op.reference}:`, conflictError.message);
+        syncStatus = "ALTERADO_NO_EXCEL";
+      } else {
+        syncStatus = (status as any) || "ALTERADO_NO_EXCEL";
+      }
     }
 
     // Se é modo de sincronização e está inalterado, pulamos a atualização
     if (mode === "CONTROLE_GERENCIAL" && syncStatus === "INALTERADO") {
+      // Garantir que o membership exista mesmo se inalterado
+      if (operationId && op.isManagement) {
+        await supabase
+          .from("portfolio_memberships")
+          .upsert(
+            { operation_id: operationId, portfolio_year: 2026, is_active: true },
+            { onConflict: "operation_id,portfolio_year" }
+          );
+      }
       continue;
     }
 
@@ -385,10 +402,7 @@ export async function importParseResult(
 
       const { error } = await supabase.from("investment_import_issues").insert(issuesBatch);
       if (error) {
-        console.error("Error inserting import issues:", error);
-        // We don't throw here to avoid failing the whole import just for a logging issue,
-        // but the user's error was specifically that this insert failed.
-        // The fix is ensuring importId is valid, which we select from sync_runs above.
+        console.error("Error inserting import issues batch:", error.message, issuesBatch);
       }
     }
   }

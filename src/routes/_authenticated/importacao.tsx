@@ -100,15 +100,27 @@ function ImportPage() {
     if (!file || !preview) return;
     setBusy(true);
     try {
+      console.log("Starting import for file:", file.name, "Mode:", importMode);
       const outcome = await importParseResult(file.name, preview, importMode, undefined, { forceUpdateRefs });
+      console.log("Import outcome:", outcome);
+      
       toast.success(
         `Importação concluída: ${outcome.operations} operações, ${outcome.installments} parcelas, ${outcome.receipts} recebimentos.`,
       );
-      invalidate();
-      setPreview(null);
-      setFile(null);
-      setSheets([]);
+      
+      // Limpar caches e recarregar dados
+      await invalidate();
+      
+      // Forçar um delay pequeno para garantir que o Supabase processou as views
+      setTimeout(() => {
+        invalidate();
+        setPreview(null);
+        setFile(null);
+        setSheets([]);
+      }, 500);
+      
     } catch (error) {
+      console.error("Import error details:", error);
       toast.error(error instanceof Error ? error.message : "Falha na importação.");
     } finally {
       setBusy(false);
