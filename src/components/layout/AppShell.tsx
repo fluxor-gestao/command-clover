@@ -62,7 +62,9 @@ const NAV_SYSTEM = [
   { to: "/importacao", label: "Importação", icon: FileSpreadsheet },
   { to: "/qualidade", label: "Qualidade da base", icon: ShieldCheck },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { to: "/usuarios", label: "Usuários", icon: User },
 ] as const;
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
