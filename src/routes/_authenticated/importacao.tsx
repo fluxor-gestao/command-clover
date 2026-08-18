@@ -108,7 +108,8 @@ function ImportPage() {
         `Importação concluída: ${outcome.operations} operações, ${outcome.installments} parcelas, ${outcome.receipts} recebimentos.`,
       );
       
-      // Limpar caches e recarregar dados
+      // Limpar caches e recarregar dados agressivamente
+      console.log("Invalidating caches...");
       await invalidate();
       
       // Forçar um delay pequeno para garantir que o Supabase processou as views
