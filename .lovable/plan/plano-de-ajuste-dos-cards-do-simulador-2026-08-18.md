@@ -1,23 +1,22 @@
 # Plano de Ajuste dos Cards do Simulador
 
-O usuário relatou que os cards do simulador estão desalinhados e com números "vazando" ou fora do lugar. Analisando o código em `src/routes/_authenticated/simulador.tsx`, identificamos que os cards de KPI utilizam um grid fixo que pode causar sobreposição ou corte de texto em telas menores ou com valores monetários longos.
+O usuário relatou que os números nos cards do simulador estão "quebrando" (começam em cima e terminam embaixo) e solicitou um design mais minimalista e ajustado.
 
-## Alterações propostas
+## Mudanças propostas
 
 ### Frontend
 
-- **Ajuste de Layout dos KPIs**:
-  - Modificar o componente `Kpi` em `src/routes/_authenticated/simulador.tsx` para garantir que o conteúdo não vaze.
-  - Aumentar o espaçamento interno (padding) se necessário.
-  - Ajustar o tamanho da fonte do valor (de `text-xl` para `text-lg` ou similar se necessário, ou usar `break-words`).
-  - Melhorar a responsividade do grid de KPIs para evitar que os cards fiquem muito estreitos.
-
-- **Ajuste de Alinhamento**:
-  - Garantir que os rótulos e valores dentro dos cards de KPI estejam bem centralizados ou alinhados consistentemente.
-  - Verificar o alinhamento da tabela de cronograma em relação aos cards superiores.
+- **Ajuste do Componente KPI em `src/routes/_authenticated/simulador.tsx`**:
+    - Alterar a estrutura de empilhamento vertical (`flex-col`) para permitir que o valor se ajuste melhor ao espaço disponível.
+    - Reduzir o tamanho da fonte do valor (`text-lg`) para evitar quebras em telas pequenas.
+    - Remover `break-words` que força a quebra do número no meio, usando `whitespace-nowrap` ou `shrink-0` para manter a integridade do valor monetário.
+    - Ajustar o padding e a altura mínima para um visual mais "limpo" e minimalista.
+    - Usar um layout que aproveite melhor a largura em dispositivos móveis.
 
 ## Detalhes técnicos
 
-- Arquivo afetado: `src/routes/_authenticated/simulador.tsx`.
-- Utilizar classes utilitárias do Tailwind CSS para controle de overflow e responsividade (`min-w-0`, `truncate`, `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`).
-- Adicionar `p-4` ou `p-5` explícito no `CardContent` dos KPIs para prevenir que o texto encoste nas bordas.
+- **CSS/Tailwind**:
+    - Substituir `break-words` por `truncate` ou garantir que o contêiner tenha `overflow-hidden`.
+    - Ajustar os breakpoints de grid para evitar que os cards fiquem muito estreitos em resoluções intermediárias.
+    - Aumentar levemente o contraste do label para melhorar a legibilidade em tamanhos reduzidos.
+
