@@ -378,8 +378,10 @@ class OperationIndex {
 function upsertInstallment(op: ParsedOperation, inst: ParsedInstallment) {
   const existing = op.installments.find((i) => i.competence === inst.competence);
   if (existing) {
+    // No layout V3, Operações gera o cronograma e Recebimentos abate.
+    // Não devemos somar expected, mas sim manter o maior ou o do contrato.
     existing.expected = Math.max(existing.expected, inst.expected);
-    existing.received = Math.max(existing.received, inst.received);
+    existing.received = round2(existing.received + inst.received);
     existing.overdue = Math.max(existing.overdue, inst.overdue);
   } else {
     op.installments.push(inst);
@@ -562,7 +564,8 @@ function generateSchedule(op: ParsedOperation, sheetName: string, baseline: Pars
     const dueDate = addMonthsClamped(op.firstDueDate, i, op.dueDay);
     if (op.lastDueDate && dueDate > op.lastDueDate) break;
     const competence = `${dueDate.slice(0, 7)}-01`;
-    if (competence.slice(0, 7) < MIN_COMPETENCE) continue;
+    const compMonth = competence.slice(0, 7);
+    if (compMonth < MIN_COMPETENCE) continue;
 
     upsertInstallment(op, {
       competence,
@@ -781,11 +784,13 @@ function parsePanelBaseline(sheet: Worksheet, baseline: ParseBaseline) {
   const received = get("TOTAL RECEBIDO");
   const toReceive = get("CAPITAL A RECEBER");
   const overdue = get("SALDO INADIMPLENTE");
+  const expected = get("PREVISTO EXCEL") || get("TOTAL PREVISTO");
 
   if (invested !== null) baseline.capitalTotal = invested;
   if (received !== null) baseline.receivedTotal = received;
   if (toReceive !== null) baseline.toReceiveTotal = toReceive;
   if (overdue !== null) baseline.overdueTotal = overdue;
+  if (expected !== null) baseline.monthlyTotal = expected;
 }
 
 /* ------------------------------------------------------------------ */
