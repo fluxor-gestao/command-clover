@@ -496,14 +496,15 @@ function parseV3(workbook: Workbook, index: OperationIndex, result: ParseResult,
   }
 }
 
+  for (const op of index.all()) {
+    op.installments.sort((a, b) => a.competence.localeCompare(b.competence));
+
     for (const inst of op.installments) {
       const pending = round2(Math.max(inst.expected - inst.received, 0));
       const informed = op.delinquency?.[inst.competence] ?? 0;
       inst.overdue = informed > 0 ? round2(Math.min(informed, Math.max(pending, informed))) : 0;
     }
-
   }
-}
 
 /** Aba Operações: fonte oficial do contrato. Gera o cronograma completo. */
 function parseOperationsSheet(sheet: Worksheet, index: OperationIndex, result: ParseResult) {
