@@ -269,6 +269,35 @@ function InstallmentsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(partialRow)} onOpenChange={(open) => !open && setPartialRow(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recebimento parcial</DialogTitle>
+            <DialogDescription>
+              {partialRow?.reference} · parcela {partialRow?.installment_number} · previsto{" "}
+              {brl(partialRow?.expected_amount)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="partial-amount">Valor recebido</Label>
+            <Input
+              id="partial-amount"
+              inputMode="decimal"
+              value={partialValue}
+              onChange={(event) => setPartialValue(event.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPartialRow(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={savePartial} disabled={updateStatus.isPending}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
