@@ -843,6 +843,8 @@ export type Database = {
           financial_status: string | null
           future_receivable: number | null
           initial_capital: number | null
+          installment_count: number | null
+          installment_value: number | null
           last_installment_due: string | null
           operation_id: string | null
           outstanding_amount: number | null
