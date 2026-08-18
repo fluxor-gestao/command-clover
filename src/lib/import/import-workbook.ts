@@ -74,6 +74,38 @@ export async function importParseResult(
   if (categoryError) throw new Error(categoryError.message);
   const categoryId = (name: string) => categories?.find((c) => c.name === name)?.id ?? null;
 
+  /**
+   * Garante o cadastro do ativo/imóvel (investment_references) e devolve seu id,
+   * para que as operações importadas apareçam vinculadas na Carteira.
+   */
+  const referenceCache = new Map<string, string | null>();
+  const ensureReferenceId = async (name: string, category: string | null): Promise<string | null> => {
+    const key = name.trim();
+    if (!key) return null;
+    if (referenceCache.has(key)) return referenceCache.get(key) ?? null;
+
+    const { data: found } = await supabase
+      .from("investment_references")
+      .select("id")
+      .eq("name", key)
+      .maybeSingle();
+
+    let id = found?.id ?? null;
+    if (!id) {
+      const { data: created, error } = await supabase
+        .from("investment_references")
+        .insert({ name: key, category_id: category ? categoryId(category) : null, source: "IMPORTADO", active: true })
+        .select("id")
+        .single();
+      if (error) console.warn(`[SYNC] Falha ao cadastrar referência ${key}:`, error.message);
+      id = created?.id ?? null;
+    }
+
+    referenceCache.set(key, id);
+    return id;
+  };
+
+
   let installmentsCount = 0;
   let receiptsCount = 0;
   let rentalsCount = 0;
@@ -216,9 +248,12 @@ export async function importParseResult(
     const needsUpdate = syncStatus !== "INALTERADO" || isForced;
 
     if (needsUpdate) {
+      const referenceId = await ensureReferenceId(op.reference, op.category ?? null);
       const payload = {
         reference: op.reference,
+        reference_id: referenceId,
         category_id: categoryId(op.category),
+
         due_day: op.dueDay,
         initial_capital: op.initialCapital ?? 0,
         first_due_date: op.firstDueDate,

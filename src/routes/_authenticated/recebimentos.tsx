@@ -92,7 +92,7 @@ function ReceiptsPage() {
     <div className="space-y-8">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-success-foreground">
             <Receipt className="size-5" />
           </div>
           <div>
@@ -245,7 +245,7 @@ function ReceiptsPage() {
                   type="submit" 
                   className={cn(
                     "w-full h-11 rounded-xl font-bold transition-all",
-                    totalAllocated > 0 ? "bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20" : ""
+                    totalAllocated > 0 ? "bg-success hover:bg-success/90 text-success-foreground shadow-lg shadow-success/20" : ""
                   )} 
                   disabled={register.isPending || totalAllocated === 0}
                 >
