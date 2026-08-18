@@ -1,13 +1,34 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Receipt, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
 import { useInstallments } from "@/lib/data/hooks";
 import { brl, dateBR } from "@/lib/format";
 
@@ -40,6 +61,38 @@ function InstallmentsPage() {
   const navigate = useNavigate();
   const searchParams = Route.useSearch();
   const installments = useInstallments();
+  const queryClient = useQueryClient();
+
+  const [partialRow, setPartialRow] = useState<any | null>(null);
+  const [partialValue, setPartialValue] = useState("");
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, receivedAmount }: { id: string; receivedAmount: number }) => {
+      const { error } = await supabase
+        .from("investment_installments")
+        .update({ received_amount: receivedAmount })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      toast.success("Situação da parcela atualizada");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const savePartial = () => {
+    if (!partialRow) return;
+    const parsed = Number(partialValue.replace(/\./g, "").replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      toast.error("Informe um valor recebido válido");
+      return;
+    }
+    updateStatus.mutate({ id: partialRow.id, receivedAmount: parsed });
+    setPartialRow(null);
+  };
+
+
   
   const search = searchParams.search || "";
   const status = searchParams.status || "TODAS";
@@ -100,9 +153,9 @@ function InstallmentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="TODAS">Todas as situações</SelectItem>
-                <SelectItem value="A_VENCER">A vencer</SelectItem>
-                <SelectItem value="VENCIDA">Vencida</SelectItem>
-                <SelectItem value="PAGA">Paga</SelectItem>
+                <SelectItem value="A_RECEBER">A vencer</SelectItem>
+                <SelectItem value="INADIMPLENTE">Inadimplente</SelectItem>
+                <SelectItem value="RECEBIDO">Recebida</SelectItem>
                 <SelectItem value="PARCIAL">Parcial</SelectItem>
               </SelectContent>
             </Select>
@@ -152,7 +205,7 @@ function InstallmentsPage() {
                       {(row.days_overdue ?? 0) > 0 ? `${row.days_overdue} dias` : "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={row.financial_status === "VENCIDA" ? "destructive" : "secondary"}>
+                      <Badge variant={row.financial_status === "INADIMPLENTE" ? "destructive" : "secondary"}>
                         {row.financial_status}
                       </Badge>
                     </TableCell>
@@ -166,6 +219,40 @@ function InstallmentsPage() {
                         >
                           <Receipt className="h-4 w-4" />
                         </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" title="Alterar situação">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Alterar situação</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                updateStatus.mutate({
+                                  id: row.id!,
+                                  receivedAmount: Number(row.expected_amount ?? 0),
+                                })
+                              }
+                            >
+                              Marcar como Paga
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => updateStatus.mutate({ id: row.id!, receivedAmount: 0 })}
+                            >
+                              Marcar como Em aberto
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setPartialRow(row);
+                                setPartialValue(String(row.received_amount ?? 0));
+                              }}
+                            >
+                              Marcar como Parcial…
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -182,6 +269,35 @@ function InstallmentsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(partialRow)} onOpenChange={(open) => !open && setPartialRow(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recebimento parcial</DialogTitle>
+            <DialogDescription>
+              {partialRow?.reference} · parcela {partialRow?.installment_number} · previsto{" "}
+              {brl(partialRow?.expected_amount)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="partial-amount">Valor recebido</Label>
+            <Input
+              id="partial-amount"
+              inputMode="decimal"
+              value={partialValue}
+              onChange={(event) => setPartialValue(event.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPartialRow(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={savePartial} disabled={updateStatus.isPending}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

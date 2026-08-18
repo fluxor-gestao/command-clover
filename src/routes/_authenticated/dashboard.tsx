@@ -105,6 +105,14 @@ function DashboardPage() {
     {},
   );
 
+  const contractedTotal = scopedInstallments.reduce(
+    (acc, row) => acc + Number(row.expected_amount ?? 0),
+    0,
+  );
+  const investedCapital = Number(s?.invested_capital ?? 0);
+  const projectedProfit = contractedTotal - investedCapital;
+  const totalValue = investedCapital + projectedProfit;
+
   const scopedOperations = (operations.data ?? []).filter(
     (op) => year === null || (op.operation_id != null && scopedOperationIds.has(op.operation_id)),
   );
@@ -181,9 +189,9 @@ function DashboardPage() {
           onClick={() => (navigate as any)({ to: "/operacoes", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
-          title="Total a Receber"
-          value={brl(s?.total_to_receive)}
-          hint="Saldo aberto (Inad. + Futuro)"
+          title="Lucro Real Projetado"
+          value={brl(projectedProfit)}
+          hint="Total contratado − capital investido"
           icon={<TrendingUp className="size-4" />}
           primary
           onClick={() => navigate({ to: "/parcelas" })}
@@ -208,12 +216,12 @@ function DashboardPage() {
           value={brl(s?.overdue_amount)}
           hint="Parcelas vencidas em aberto"
           tone="destructive"
-          onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "VENCIDA" } })}
+          onClick={() => (navigate as any)({ to: "/parcelas", search: { status: "INADIMPLENTE" } })}
         />
         <Kpi
-          title="A Receber Futuro"
-          value={brl(s?.future_amount)}
-          hint={`Recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
+          title="Valor Total"
+          value={brl(totalValue)}
+          hint={`Capital investido + lucro projetado · recebido no mês: ${brl(receivedInMonth.data ?? 0)}`}
           onClick={() => navigate({ to: "/relatorios" })}
         />
       </section>
