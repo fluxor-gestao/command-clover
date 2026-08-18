@@ -832,19 +832,16 @@ function computeStats(result: ParseResult) {
     for (const inst of op.installments) {
       const year = inst.competence.slice(0, 4);
       const bucket = byYear.get(year) ?? { year, operations: 0, rentals: 0, installments: 0, expected: 0, received: 0, overdue: 0 };
-      const pending = round2(Math.max(inst.expected - inst.received, 0));
+      const currentPending = round2(Math.max(inst.expected - inst.received, 0));
 
       stats.installments += 1;
       stats.expectedTotal = round2(stats.expectedTotal + inst.expected);
       stats.receivedTotal = round2(stats.receivedTotal + inst.received);
       
-      const pending = round2(Math.max(inst.expected - inst.received, 0));
-      const isOverdue = inst.overdue > 0;
-      
       stats.overdueTotal = round2(stats.overdueTotal + inst.overdue);
-      stats.toReceiveTotal = round2(stats.toReceiveTotal + pending);
+      stats.toReceiveTotal = round2(stats.toReceiveTotal + currentPending);
       if (inst.received > 0) stats.receivedInstallments += 1;
-      if (isOverdue) stats.overdueInstallments += 1;
+      if (inst.overdue > 0) stats.overdueInstallments += 1;
 
       bucket.installments += 1;
       bucket.expected = round2(bucket.expected + inst.expected);
