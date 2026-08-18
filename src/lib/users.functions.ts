@@ -128,3 +128,29 @@ export const adminUpdateUserRole = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const adminListUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+
+    // Verify if caller is admin using supabaseAdmin
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (roleError || !roleData) {
+      throw new Error("Forbidden: Admin role required");
+    }
+
+    const { data: users, error: usersError } = await supabaseAdmin.rpc("list_users_with_roles");
+
+    if (usersError) {
+      throw new Error(`Database error: ${usersError.message}`);
+    }
+
+    return users as any[];
+  });
