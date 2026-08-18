@@ -956,9 +956,18 @@ function computeStats(result: ParseResult) {
 
   result.baseline.toReceiveTotal = stats.futureReceivableTotal;
   result.baseline.futureReceivableTotal = stats.futureReceivableTotal;
-  if (!result.baseline.capitalToRecoverTotal) {
-    result.baseline.capitalToRecoverTotal = round2(Math.max(result.baseline.capitalTotal - result.baseline.receivedTotal, 0));
+  
+  // No V3, o Excel manda o Capital Investido e Total Recebido no Painel.
+  // Se eles foram lidos, preservamos. Se não, calculamos pelo sistema.
+  if (result.baseline.capitalTotal === 0) {
+    result.baseline.capitalTotal = stats.investedTotal;
   }
+  if (result.baseline.receivedTotal === 0) {
+    result.baseline.receivedTotal = stats.receivedTotal;
+  }
+  
+  result.baseline.capitalToRecoverTotal = round2(Math.max(result.baseline.capitalTotal - result.baseline.receivedTotal, 0));
+
 
   result.readiness.critical = result.issues.filter((i) => i.severity === "CRITICO").length;
   result.readiness.ignored = result.baseline.ignoredRows;
