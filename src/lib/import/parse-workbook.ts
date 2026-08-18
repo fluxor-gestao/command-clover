@@ -903,6 +903,8 @@ function computeStats(result: ParseResult) {
   stats.receivedTotal = 0;
   stats.overdueTotal = 0;
   stats.toReceiveTotal = 0;
+  stats.futureReceivableTotal = 0;
+  stats.capitalToRecoverTotal = 0;
   stats.investedTotal = 0;
   // stats.expectedTotal, stats.receivedTotal e stats.overdueTotal serão calculados pelas parcelas
   result.readiness = { ready: 0, pending: 0, ignored: 0, critical: 0 };
@@ -922,9 +924,13 @@ function computeStats(result: ParseResult) {
       stats.installments += 1;
       stats.expectedTotal = round2(stats.expectedTotal + inst.expected);
       stats.receivedTotal = round2(stats.receivedTotal + inst.received);
-      
+
       stats.overdueTotal = round2(stats.overdueTotal + inst.overdue);
       stats.toReceiveTotal = round2(stats.toReceiveTotal + currentPending);
+      // A Receber Futuro (regra do Excel): saldo aberto de competências >= corte.
+      if (inst.competence.slice(0, 7) >= CUTOFF_COMPETENCE) {
+        stats.futureReceivableTotal = round2(stats.futureReceivableTotal + currentPending);
+      }
       if (inst.received > 0) stats.receivedInstallments += 1;
       if (inst.overdue > 0) stats.overdueInstallments += 1;
 
@@ -942,10 +948,21 @@ function computeStats(result: ParseResult) {
     }
   }
 
+  stats.capitalToRecoverTotal = round2(Math.max(stats.investedTotal - stats.receivedTotal, 0));
+
+  // Baseline (lado Excel): previsto e futuro derivados da janela contratual lida.
+  result.baseline.monthlyTotal = stats.expectedTotal;
+  result.baseline.toReceiveTotal = stats.futureReceivableTotal;
+  result.baseline.futureReceivableTotal = stats.futureReceivableTotal;
+  if (!result.baseline.capitalToRecoverTotal) {
+    result.baseline.capitalToRecoverTotal = round2(Math.max(result.baseline.capitalTotal - result.baseline.receivedTotal, 0));
+  }
+
   result.readiness.critical = result.issues.filter((i) => i.severity === "CRITICO").length;
   result.readiness.ignored = result.baseline.ignoredRows;
   stats.byYear = [...byYear.values()].sort((a, b) => a.year.localeCompare(b.year));
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Layout legado                                                       */
