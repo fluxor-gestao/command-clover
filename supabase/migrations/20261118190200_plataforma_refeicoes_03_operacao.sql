@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS public.provider_payouts (
   net_amount numeric(14,2) NOT NULL DEFAULT 0, -- valor efetivamente depositado
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.provider_payouts TO authenticated;
+GRANT ALL ON public.provider_payouts TO service_role;
+ALTER TABLE public.provider_payouts ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   ALTER TABLE public.payments ADD CONSTRAINT payments_payout_fk FOREIGN KEY (payout_id) REFERENCES public.provider_payouts(id);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -40,6 +43,9 @@ CREATE TABLE IF NOT EXISTS public.financial_entries (
   created_by uuid DEFAULT auth.uid(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.financial_entries TO authenticated;
+GRANT ALL ON public.financial_entries TO service_role;
+ALTER TABLE public.financial_entries ENABLE ROW LEVEL SECURITY;
 -- Um único registro financeiro de venda por pagamento/pedido, mesmo com reenvio do provedor.
 CREATE UNIQUE INDEX IF NOT EXISTS fin_one_per_payment_kind ON public.financial_entries (payment_id, kind) WHERE payment_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS fin_one_sale_per_order ON public.financial_entries (order_id) WHERE kind = 'receita_venda';
@@ -56,6 +62,9 @@ CREATE TABLE IF NOT EXISTS public.payment_events (
   received_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (provider, event_id)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.payment_events TO authenticated;
+GRANT ALL ON public.payment_events TO service_role;
+ALTER TABLE public.payment_events ENABLE ROW LEVEL SECURITY;
 
 -- ---------------------------------------------------------------------
 -- 2. Processamento idempotente de eventos de pagamento
@@ -449,6 +458,9 @@ CREATE TABLE IF NOT EXISTS public.production_batches (
   completed_at timestamptz,
   UNIQUE (cycle_day_id, dish_id)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.production_batches TO authenticated;
+GRANT ALL ON public.production_batches TO service_role;
+ALTER TABLE public.production_batches ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   ALTER TABLE public.order_items ADD CONSTRAINT order_items_batch_fk FOREIGN KEY (production_batch_id) REFERENCES public.production_batches(id);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -460,6 +472,9 @@ CREATE TABLE IF NOT EXISTS public.batch_ingredient_lots (
   quantity numeric(14,4) NOT NULL,
   PRIMARY KEY (batch_id, lot_id)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.batch_ingredient_lots TO authenticated;
+GRANT ALL ON public.batch_ingredient_lots TO service_role;
+ALTER TABLE public.batch_ingredient_lots ENABLE ROW LEVEL SECURITY;
 
 -- Plano de produção consolidado (pedidos confirmados).
 CREATE OR REPLACE VIEW public.v_production_plan WITH (security_invoker = on) AS
@@ -705,6 +720,9 @@ CREATE TABLE IF NOT EXISTS public.nutrition_parameters (
   updated_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (goal, activity_level)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.nutrition_parameters TO authenticated;
+GRANT ALL ON public.nutrition_parameters TO service_role;
+ALTER TABLE public.nutrition_parameters ENABLE ROW LEVEL SECURITY;
 -- Valores iniciais de exemplo: o nutricionista responsável deve revisar antes do uso.
 INSERT INTO public.nutrition_parameters (goal, activity_level, kcal_per_kg, protein_g_per_kg, carbs_pct, fat_pct) VALUES
   ('manutencao','baixo',28,1.4,0.45,0.30), ('manutencao','moderado',31,1.6,0.47,0.28), ('manutencao','alto',35,1.8,0.50,0.25),
@@ -714,7 +732,7 @@ ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS public.nutrition_plans (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_id uuid NOT NULL,
   version int NOT NULL,
   status text NOT NULL DEFAULT 'proposta' CHECK (status IN ('proposta','em_revisao','publicado','substituido','descartado')),
   origin text NOT NULL DEFAULT 'solicitacao',
@@ -730,6 +748,9 @@ CREATE TABLE IF NOT EXISTS public.nutrition_plans (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (customer_id, version)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.nutrition_plans TO authenticated;
+GRANT ALL ON public.nutrition_plans TO service_role;
+ALTER TABLE public.nutrition_plans ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public._generate_plan_proposal(p_customer_id uuid, p_origin text)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -835,7 +856,7 @@ CREATE TRIGGER customer_profiles_plan_review AFTER UPDATE ON public.customer_pro
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.privacy_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_id uuid NOT NULL,
   kind text NOT NULL CHECK (kind IN ('acesso','correcao','exclusao')),
   details text,
   status text NOT NULL DEFAULT 'aberta' CHECK (status IN ('aberta','em_atendimento','concluida','recusada')),
@@ -844,6 +865,9 @@ CREATE TABLE IF NOT EXISTS public.privacy_requests (
   resolved_at timestamptz,
   resolved_by uuid
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.privacy_requests TO authenticated;
+GRANT ALL ON public.privacy_requests TO service_role;
+ALTER TABLE public.privacy_requests ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.export_my_data()
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$

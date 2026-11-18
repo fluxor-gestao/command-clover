@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795033907214,
+      "tag": "0000_plataforma_refeicoes_01_base",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795034068092,
+      "tag": "0001_plataforma_refeicoes_02_vendas",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795034233762,
+      "tag": "0002_plataforma_refeicoes_03_operacao",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795034319799,
+      "tag": "0003_plataforma_refeicoes_04_acessos",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795034334847,
+      "tag": "0004_plataforma_refeicoes_05_admin_bootstrap",
+      "breakpoints": true
+    }
+  ]
+}

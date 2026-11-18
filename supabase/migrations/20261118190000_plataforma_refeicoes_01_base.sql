@@ -15,11 +15,14 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS public.platform_user_roles (
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL,
   role public.platform_role NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, role)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.platform_user_roles TO authenticated;
+GRANT ALL ON public.platform_user_roles TO service_role;
+ALTER TABLE public.platform_user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_user_roles ENABLE ROW LEVEL SECURITY;
 
 -- Admin da plataforma tem todos os papéis implicitamente.
@@ -82,6 +85,9 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
   release_reservation_on_failure boolean NOT NULL DEFAULT true,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.platform_settings TO authenticated;
+GRANT ALL ON public.platform_settings TO service_role;
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.platform_settings (id) VALUES (true) ON CONFLICT DO NOTHING;
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "settings_read" ON public.platform_settings;
@@ -95,7 +101,7 @@ CREATE POLICY "settings_admin" ON public.platform_settings FOR UPDATE TO authent
 -- 2. Clientes: dados de contato (operação) x perfil alimentar (restrito)
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.customer_accounts (
-  customer_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_id uuid PRIMARY KEY,
   full_name text,
   phone text,
   address text,
@@ -104,12 +110,18 @@ CREATE TABLE IF NOT EXISTS public.customer_accounts (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_accounts TO authenticated;
+GRANT ALL ON public.customer_accounts TO service_role;
+ALTER TABLE public.customer_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customer_accounts ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.allergens (
   code text PRIMARY KEY,
   name text NOT NULL
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.allergens TO authenticated;
+GRANT ALL ON public.allergens TO service_role;
+ALTER TABLE public.allergens ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.allergens (code, name) VALUES
   ('gluten', 'Glúten (trigo, centeio, cevada, aveia)'),
   ('crustaceos', 'Crustáceos'),
@@ -132,7 +144,7 @@ CREATE POLICY "allergens_admin" ON public.allergens FOR ALL TO authenticated
   WITH CHECK (public.has_any_role(ARRAY['admin','nutricionista']::public.platform_role[]));
 
 CREATE TABLE IF NOT EXISTS public.customer_profiles (
-  customer_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_id uuid PRIMARY KEY,
   weight_kg numeric(5,1),
   height_cm numeric(5,1),
   age_range text,
@@ -150,6 +162,9 @@ CREATE TABLE IF NOT EXISTS public.customer_profiles (
   consent_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_profiles TO authenticated;
+GRANT ALL ON public.customer_profiles TO service_role;
+ALTER TABLE public.customer_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customer_profiles ENABLE ROW LEVEL SECURITY;
 
 -- Contato: o próprio cliente, operação e admin.
@@ -208,6 +223,11 @@ CREATE TABLE IF NOT EXISTS public.audit_log (
   old_data jsonb,
   new_data jsonb
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.audit_log TO authenticated;
+GRANT ALL ON public.audit_log TO service_role;
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+GRANT USAGE, SELECT ON SEQUENCE public.audit_log_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.audit_log_id_seq TO service_role;
 ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "audit_admin_read" ON public.audit_log;
 CREATE POLICY "audit_admin_read" ON public.audit_log FOR SELECT TO authenticated
@@ -241,6 +261,9 @@ CREATE TABLE IF NOT EXISTS public.suppliers (
   contact text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.suppliers TO authenticated;
+GRANT ALL ON public.suppliers TO service_role;
+ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.ingredients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -266,6 +289,9 @@ CREATE TABLE IF NOT EXISTS public.ingredients (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.ingredients TO authenticated;
+GRANT ALL ON public.ingredients TO service_role;
+ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS ingredients_name_idx ON public.ingredients (lower(name));
 
 CREATE TABLE IF NOT EXISTS public.supplier_item_map (
@@ -275,6 +301,9 @@ CREATE TABLE IF NOT EXISTS public.supplier_item_map (
   conversion_factor numeric(14,4) NOT NULL CHECK (conversion_factor > 0),
   PRIMARY KEY (supplier_id, supplier_code)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.supplier_item_map TO authenticated;
+GRANT ALL ON public.supplier_item_map TO service_role;
+ALTER TABLE public.supplier_item_map ENABLE ROW LEVEL SECURITY;
 
 -- ---------------------------------------------------------------------
 -- 5. Fichas técnicas (pratos)
@@ -303,6 +332,9 @@ CREATE TABLE IF NOT EXISTS public.dishes (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.dishes TO authenticated;
+GRANT ALL ON public.dishes TO service_role;
+ALTER TABLE public.dishes ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.dish_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -312,6 +344,9 @@ CREATE TABLE IF NOT EXISTS public.dish_items (
   prep_loss_pct numeric(6,4) CHECK (prep_loss_pct >= 0 AND prep_loss_pct < 1),
   UNIQUE (dish_id, ingredient_id)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.dish_items TO authenticated;
+GRANT ALL ON public.dish_items TO service_role;
+ALTER TABLE public.dish_items ENABLE ROW LEVEL SECURITY;
 
 -- Ficha aprovada que muda volta para aprovação (não fica disponível ao cliente até reaprovar).
 CREATE OR REPLACE FUNCTION public.dish_requires_reapproval()
@@ -351,7 +386,7 @@ CREATE OR REPLACE FUNCTION public.approve_dish(p_dish_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   IF NOT public.has_any_role(ARRAY['nutricionista','operacao']::public.platform_role[]) THEN
-    RAISE EXCEPTION 'Sem permissão para aprovar fichas técnicas';
+    RAISE EXCEPTION 'Sem permissão para aprovarvar fichas técnicas';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.dish_items WHERE dish_id = p_dish_id) THEN
     RAISE EXCEPTION 'A ficha técnica não tem ingredientes';
@@ -449,6 +484,9 @@ CREATE TABLE IF NOT EXISTS public.purchase_orders (
   created_by uuid DEFAULT auth.uid(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.purchase_orders TO authenticated;
+GRANT ALL ON public.purchase_orders TO service_role;
+ALTER TABLE public.purchase_orders ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS public.purchase_order_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   purchase_order_id uuid NOT NULL REFERENCES public.purchase_orders(id) ON DELETE CASCADE,
@@ -457,6 +495,9 @@ CREATE TABLE IF NOT EXISTS public.purchase_order_items (
   quantity_received numeric(14,4) NOT NULL DEFAULT 0,
   unit_cost numeric(16,6) NOT NULL DEFAULT 0
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.purchase_order_items TO authenticated;
+GRANT ALL ON public.purchase_order_items TO service_role;
+ALTER TABLE public.purchase_order_items ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.nfe_imports (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -476,6 +517,9 @@ CREATE TABLE IF NOT EXISTS public.nfe_imports (
   checked_by uuid,
   checked_at timestamptz
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.nfe_imports TO authenticated;
+GRANT ALL ON public.nfe_imports TO service_role;
+ALTER TABLE public.nfe_imports ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS public.nfe_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   import_id uuid NOT NULL REFERENCES public.nfe_imports(id) ON DELETE CASCADE,
@@ -494,6 +538,9 @@ CREATE TABLE IF NOT EXISTS public.nfe_items (
   divergence_note text,
   UNIQUE (import_id, item_number)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.nfe_items TO authenticated;
+GRANT ALL ON public.nfe_items TO service_role;
+ALTER TABLE public.nfe_items ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.ingredient_lots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -513,6 +560,9 @@ CREATE TABLE IF NOT EXISTS public.ingredient_lots (
   created_by uuid DEFAULT auth.uid(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.ingredient_lots TO authenticated;
+GRANT ALL ON public.ingredient_lots TO service_role;
+ALTER TABLE public.ingredient_lots ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS ingredient_lots_fefo_idx ON public.ingredient_lots (ingredient_id, expires_at);
 
 CREATE TABLE IF NOT EXISTS public.stock_movements (
@@ -527,3 +577,8 @@ CREATE TABLE IF NOT EXISTS public.stock_movements (
   created_by uuid DEFAULT auth.uid(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.stock_movements TO authenticated;
+GRANT ALL ON public.stock_movements TO service_role;
+ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
+GRANT USAGE, SELECT ON SEQUENCE public.stock_movements_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.stock_movements_id_seq TO service_role;

@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS public.menu_cycles (
   created_at timestamptz NOT NULL DEFAULT now(),
   CHECK (cutoff_at > sales_start)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.menu_cycles TO authenticated;
+GRANT ALL ON public.menu_cycles TO service_role;
+ALTER TABLE public.menu_cycles ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS public.menu_cycle_days (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   cycle_id uuid NOT NULL REFERENCES public.menu_cycles(id) ON DELETE CASCADE,
@@ -24,6 +27,9 @@ CREATE TABLE IF NOT EXISTS public.menu_cycle_days (
   UNIQUE (cycle_id, delivery_date),
   CHECK (delivery_date >= production_date)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.menu_cycle_days TO authenticated;
+GRANT ALL ON public.menu_cycle_days TO service_role;
+ALTER TABLE public.menu_cycle_days ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS public.menu_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   cycle_id uuid NOT NULL REFERENCES public.menu_cycles(id) ON DELETE CASCADE,
@@ -31,6 +37,9 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
   max_portions int CHECK (max_portions >= 0),
   UNIQUE (cycle_id, dish_id)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.menu_items TO authenticated;
+GRANT ALL ON public.menu_items TO service_role;
+ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
 
 -- ---------------------------------------------------------------------
 -- 2. Preços (aprovados pelo gestor) e planos
@@ -48,6 +57,9 @@ CREATE TABLE IF NOT EXISTS public.dish_prices (
   approved_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.dish_prices TO authenticated;
+GRANT ALL ON public.dish_prices TO service_role;
+ALTER TABLE public.dish_prices ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS dish_prices_lookup_idx ON public.dish_prices (dish_id, status, valid_from DESC);
 
 CREATE TABLE IF NOT EXISTS public.subscription_plans (
@@ -59,6 +71,9 @@ CREATE TABLE IF NOT EXISTS public.subscription_plans (
   active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscription_plans TO authenticated;
+GRANT ALL ON public.subscription_plans TO service_role;
+ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.subscription_plans (name, description, meal_types, discount_pct)
 SELECT * FROM (VALUES
   ('Avulso', 'Kit da semana sem recorrência', '{almoco,jantar,lanche}'::text[], 0::numeric),
@@ -156,7 +171,7 @@ SELECT p.dish_id, d.name AS dish_name, p.price AS new_price, p.valid_from,
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.subscriptions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_id uuid NOT NULL,
   plan_id uuid NOT NULL REFERENCES public.subscription_plans(id),
   status text NOT NULL DEFAULT 'ativa' CHECK (status IN ('ativa','pausada','cancelada','inadimplente')),
   payment_method text NOT NULL DEFAULT 'cartao' CHECK (payment_method IN ('cartao','pix','pix_automatico')),
@@ -167,6 +182,9 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   cancelled_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscriptions TO authenticated;
+GRANT ALL ON public.subscriptions TO service_role;
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_one_active_idx ON public.subscriptions (customer_id)
   WHERE status IN ('ativa','pausada','inadimplente');
 
@@ -176,7 +194,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_one_active_idx ON public.subscri
 CREATE TABLE IF NOT EXISTS public.orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE NOT NULL DEFAULT ('PED-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
-  customer_id uuid NOT NULL REFERENCES auth.users(id),
+  customer_id uuid NOT NULL,
   cycle_id uuid NOT NULL REFERENCES public.menu_cycles(id),
   subscription_id uuid REFERENCES public.subscriptions(id),
   status text NOT NULL DEFAULT 'aguardando_pagamento' CHECK (status IN (
@@ -194,6 +212,9 @@ CREATE TABLE IF NOT EXISTS public.orders (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO authenticated;
+GRANT ALL ON public.orders TO service_role;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 -- Um único pedido válido por ciclo de assinatura.
 CREATE UNIQUE INDEX IF NOT EXISTS orders_one_per_subscription_cycle ON public.orders (subscription_id, cycle_id)
   WHERE subscription_id IS NOT NULL AND status NOT IN ('cancelado','expirado');
@@ -208,6 +229,9 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   unit_price numeric(12,2) NOT NULL,
   production_batch_id uuid
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.order_items TO authenticated;
+GRANT ALL ON public.order_items TO service_role;
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS order_items_day_dish_idx ON public.order_items (cycle_day_id, dish_id);
 
 CREATE TABLE IF NOT EXISTS public.subscription_cycles (
@@ -220,6 +244,9 @@ CREATE TABLE IF NOT EXISTS public.subscription_cycles (
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (subscription_id, cycle_id)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscription_cycles TO authenticated;
+GRANT ALL ON public.subscription_cycles TO service_role;
+ALTER TABLE public.subscription_cycles ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.stock_reservations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -235,17 +262,23 @@ CREATE TABLE IF NOT EXISTS public.stock_reservations (
   released_at timestamptz,
   CHECK (lot_id IS NOT NULL OR purchase_item_id IS NOT NULL)
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.stock_reservations TO authenticated;
+GRANT ALL ON public.stock_reservations TO service_role;
+ALTER TABLE public.stock_reservations ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS stock_reservations_lot_idx ON public.stock_reservations (lot_id) WHERE status = 'ativa';
 CREATE INDEX IF NOT EXISTS stock_reservations_po_idx ON public.stock_reservations (purchase_item_id) WHERE status = 'ativa';
 
 CREATE TABLE IF NOT EXISTS public.notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_id uuid NOT NULL,
   kind text NOT NULL,
   message text NOT NULL,
   read_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.notifications TO authenticated;
+GRANT ALL ON public.notifications TO service_role;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Saldos por lote: físico, reservado e disponível.
 CREATE OR REPLACE VIEW public.v_stock_lots WITH (security_invoker = on) AS
@@ -464,7 +497,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid NOT NULL REFERENCES public.orders(id),
   subscription_id uuid REFERENCES public.subscriptions(id),
-  customer_id uuid NOT NULL REFERENCES auth.users(id),
+  customer_id uuid NOT NULL,
   provider text NOT NULL DEFAULT 'simulado',
   provider_charge_id text NOT NULL UNIQUE,
   method text NOT NULL CHECK (method IN ('cartao','pix','pix_automatico')),
@@ -482,6 +515,9 @@ CREATE TABLE IF NOT EXISTS public.payments (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.payments TO authenticated;
+GRANT ALL ON public.payments TO service_role;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS payments_order_idx ON public.payments (order_id);
 
 -- Núcleo de criação de pedido (usado pelo cliente e pela renovação de assinaturas).
