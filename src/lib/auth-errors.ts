@@ -1,7 +1,7 @@
 type AuthErrorDetails = {
   message: string;
-  code?: string;
-  reasons?: string[];
+  code?: string | undefined;
+  reasons?: string[] | undefined;
 };
 
 export function translateAuthError(error: AuthErrorDetails): string {
