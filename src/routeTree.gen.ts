@@ -12,19 +12,34 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedAlugueisRouteImport } from './routes/_authenticated/alugueis'
-import { Route as AuthenticatedAportesRouteImport } from './routes/_authenticated/aportes'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
-import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
-import { Route as AuthenticatedParcelasRouteImport } from './routes/_authenticated/parcelas'
-import { Route as AuthenticatedQualidadeRouteImport } from './routes/_authenticated/qualidade'
-import { Route as AuthenticatedRecebimentosRouteImport } from './routes/_authenticated/recebimentos'
-import { Route as AuthenticatedReferenciasRouteImport } from './routes/_authenticated/referencias'
-import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
-import { Route as AuthenticatedSimuladorRouteImport } from './routes/_authenticated/simulador'
-import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
-import { Route as AuthenticatedOperacoesIdRouteImport } from './routes/_authenticated/operacoes.$id'
+import { Route as AuthenticatedClienteRouteRouteImport } from './routes/_authenticated/cliente/route'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
+import { Route as AuthenticatedNutriRouteRouteImport } from './routes/_authenticated/nutri/route'
+import { Route as AuthenticatedOpRouteRouteImport } from './routes/_authenticated/op/route'
+import { Route as AuthenticatedClienteAssinaturaRouteImport } from './routes/_authenticated/cliente/assinatura'
+import { Route as AuthenticatedClienteKitRouteImport } from './routes/_authenticated/cliente/kit'
+import { Route as AuthenticatedClientePedidosRouteImport } from './routes/_authenticated/cliente/pedidos'
+import { Route as AuthenticatedClientePerfilRouteImport } from './routes/_authenticated/cliente/perfil'
+import { Route as AuthenticatedClientePlanoRouteImport } from './routes/_authenticated/cliente/plano'
+import { Route as AuthenticatedClientePrivacidadeRouteImport } from './routes/_authenticated/cliente/privacidade'
+import { Route as AuthenticatedNutriParametrosRouteImport } from './routes/_authenticated/nutri/parametros'
+import { Route as AuthenticatedNutriPlanosRouteImport } from './routes/_authenticated/nutri/planos'
+import { Route as AuthenticatedOpCardapioRouteImport } from './routes/_authenticated/op/cardapio'
+import { Route as AuthenticatedOpConfiguracoesRouteImport } from './routes/_authenticated/op/configuracoes'
+import { Route as AuthenticatedOpEstoqueRouteImport } from './routes/_authenticated/op/estoque'
+import { Route as AuthenticatedOpEtiquetasRouteImport } from './routes/_authenticated/op/etiquetas'
+import { Route as AuthenticatedOpFichasRouteImport } from './routes/_authenticated/op/fichas'
+import { Route as AuthenticatedOpFinanceiroRouteImport } from './routes/_authenticated/op/financeiro'
+import { Route as AuthenticatedOpIngredientesRouteImport } from './routes/_authenticated/op/ingredientes'
+import { Route as AuthenticatedOpPagamentosRouteImport } from './routes/_authenticated/op/pagamentos'
+import { Route as AuthenticatedOpPainelRouteImport } from './routes/_authenticated/op/painel'
+import { Route as AuthenticatedOpPedidosRouteImport } from './routes/_authenticated/op/pedidos'
+import { Route as AuthenticatedOpPrecosRouteImport } from './routes/_authenticated/op/precos'
+import { Route as AuthenticatedOpProducaoRouteImport } from './routes/_authenticated/op/producao'
+import { Route as AuthenticatedOpRastreabilidadeRouteImport } from './routes/_authenticated/op/rastreabilidade'
+import { Route as AuthenticatedOpRecebimentoRouteImport } from './routes/_authenticated/op/recebimento'
+import { Route as AuthenticatedOpUsuariosRouteImport } from './routes/_authenticated/op/usuarios'
+import { Route as ApiPagamentosWebhookRouteImport } from './routes/api/pagamentos/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,187 +55,365 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAlugueisRoute = AuthenticatedAlugueisRouteImport.update({
-  id: '/alugueis',
-  path: '/alugueis',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAportesRoute = AuthenticatedAportesRouteImport.update({
-  id: '/aportes',
-  path: '/aportes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedImportacaoRoute = AuthenticatedImportacaoRouteImport.update({
-  id: '/importacao',
-  path: '/importacao',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
-  id: '/operacoes',
-  path: '/operacoes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedParcelasRoute = AuthenticatedParcelasRouteImport.update({
-  id: '/parcelas',
-  path: '/parcelas',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedQualidadeRoute = AuthenticatedQualidadeRouteImport.update({
-  id: '/qualidade',
-  path: '/qualidade',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRecebimentosRoute =
-  AuthenticatedRecebimentosRouteImport.update({
-    id: '/recebimentos',
-    path: '/recebimentos',
+const AuthenticatedClienteRouteRoute =
+  AuthenticatedClienteRouteRouteImport.update({
+    id: '/cliente',
+    path: '/cliente',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedReferenciasRoute =
-  AuthenticatedReferenciasRouteImport.update({
-    id: '/referencias',
-    path: '/referencias',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNutriRouteRoute = AuthenticatedNutriRouteRouteImport.update({
+  id: '/nutri',
+  path: '/nutri',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOpRouteRoute = AuthenticatedOpRouteRouteImport.update({
+  id: '/op',
+  path: '/op',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClienteAssinaturaRoute =
+  AuthenticatedClienteAssinaturaRouteImport.update({
+    id: '/assinatura',
+    path: '/assinatura',
+    getParentRoute: () => AuthenticatedClienteRouteRoute,
   } as any)
-const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedClienteKitRoute = AuthenticatedClienteKitRouteImport.update({
+  id: '/kit',
+  path: '/kit',
+  getParentRoute: () => AuthenticatedClienteRouteRoute,
 } as any)
-const AuthenticatedSimuladorRoute = AuthenticatedSimuladorRouteImport.update({
-  id: '/simulador',
-  path: '/simulador',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedClientePedidosRoute =
+  AuthenticatedClientePedidosRouteImport.update({
+    id: '/pedidos',
+    path: '/pedidos',
+    getParentRoute: () => AuthenticatedClienteRouteRoute,
+  } as any)
+const AuthenticatedClientePerfilRoute =
+  AuthenticatedClientePerfilRouteImport.update({
+    id: '/perfil',
+    path: '/perfil',
+    getParentRoute: () => AuthenticatedClienteRouteRoute,
+  } as any)
+const AuthenticatedClientePlanoRoute =
+  AuthenticatedClientePlanoRouteImport.update({
+    id: '/plano',
+    path: '/plano',
+    getParentRoute: () => AuthenticatedClienteRouteRoute,
+  } as any)
+const AuthenticatedClientePrivacidadeRoute =
+  AuthenticatedClientePrivacidadeRouteImport.update({
+    id: '/privacidade',
+    path: '/privacidade',
+    getParentRoute: () => AuthenticatedClienteRouteRoute,
+  } as any)
+const AuthenticatedNutriParametrosRoute =
+  AuthenticatedNutriParametrosRouteImport.update({
+    id: '/parametros',
+    path: '/parametros',
+    getParentRoute: () => AuthenticatedNutriRouteRoute,
+  } as any)
+const AuthenticatedNutriPlanosRoute =
+  AuthenticatedNutriPlanosRouteImport.update({
+    id: '/planos',
+    path: '/planos',
+    getParentRoute: () => AuthenticatedNutriRouteRoute,
+  } as any)
+const AuthenticatedOpCardapioRoute = AuthenticatedOpCardapioRouteImport.update({
+  id: '/cardapio',
+  path: '/cardapio',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
 } as any)
-const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+const AuthenticatedOpConfiguracoesRoute =
+  AuthenticatedOpConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpEstoqueRoute = AuthenticatedOpEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
+} as any)
+const AuthenticatedOpEtiquetasRoute =
+  AuthenticatedOpEtiquetasRouteImport.update({
+    id: '/etiquetas',
+    path: '/etiquetas',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpFichasRoute = AuthenticatedOpFichasRouteImport.update({
+  id: '/fichas',
+  path: '/fichas',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
+} as any)
+const AuthenticatedOpFinanceiroRoute =
+  AuthenticatedOpFinanceiroRouteImport.update({
+    id: '/financeiro',
+    path: '/financeiro',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpIngredientesRoute =
+  AuthenticatedOpIngredientesRouteImport.update({
+    id: '/ingredientes',
+    path: '/ingredientes',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpPagamentosRoute =
+  AuthenticatedOpPagamentosRouteImport.update({
+    id: '/pagamentos',
+    path: '/pagamentos',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpPainelRoute = AuthenticatedOpPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
+} as any)
+const AuthenticatedOpPedidosRoute = AuthenticatedOpPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
+} as any)
+const AuthenticatedOpPrecosRoute = AuthenticatedOpPrecosRouteImport.update({
+  id: '/precos',
+  path: '/precos',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
+} as any)
+const AuthenticatedOpProducaoRoute = AuthenticatedOpProducaoRouteImport.update({
+  id: '/producao',
+  path: '/producao',
+  getParentRoute: () => AuthenticatedOpRouteRoute,
+} as any)
+const AuthenticatedOpRastreabilidadeRoute =
+  AuthenticatedOpRastreabilidadeRouteImport.update({
+    id: '/rastreabilidade',
+    path: '/rastreabilidade',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpRecebimentoRoute =
+  AuthenticatedOpRecebimentoRouteImport.update({
+    id: '/recebimento',
+    path: '/recebimento',
+    getParentRoute: () => AuthenticatedOpRouteRoute,
+  } as any)
+const AuthenticatedOpUsuariosRoute = AuthenticatedOpUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => AuthenticatedOpRouteRoute,
 } as any)
-const AuthenticatedOperacoesIdRoute =
-  AuthenticatedOperacoesIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedOperacoesRoute,
-  } as any)
+const ApiPagamentosWebhookRoute = ApiPagamentosWebhookRouteImport.update({
+  id: '/api/pagamentos/webhook',
+  path: '/api/pagamentos/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/alugueis': typeof AuthenticatedAlugueisRoute
-  '/aportes': typeof AuthenticatedAportesRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/importacao': typeof AuthenticatedImportacaoRoute
-  '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
-  '/parcelas': typeof AuthenticatedParcelasRoute
-  '/qualidade': typeof AuthenticatedQualidadeRoute
-  '/recebimentos': typeof AuthenticatedRecebimentosRoute
-  '/referencias': typeof AuthenticatedReferenciasRoute
-  '/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/simulador': typeof AuthenticatedSimuladorRoute
-  '/usuarios': typeof AuthenticatedUsuariosRoute
-  '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
+  '/cliente': typeof AuthenticatedClienteRouteRouteWithChildren
+  '/nutri': typeof AuthenticatedNutriRouteRouteWithChildren
+  '/op': typeof AuthenticatedOpRouteRouteWithChildren
+  '/inicio': typeof AuthenticatedInicioRoute
+  '/cliente/assinatura': typeof AuthenticatedClienteAssinaturaRoute
+  '/cliente/kit': typeof AuthenticatedClienteKitRoute
+  '/cliente/pedidos': typeof AuthenticatedClientePedidosRoute
+  '/cliente/perfil': typeof AuthenticatedClientePerfilRoute
+  '/cliente/plano': typeof AuthenticatedClientePlanoRoute
+  '/cliente/privacidade': typeof AuthenticatedClientePrivacidadeRoute
+  '/nutri/parametros': typeof AuthenticatedNutriParametrosRoute
+  '/nutri/planos': typeof AuthenticatedNutriPlanosRoute
+  '/op/cardapio': typeof AuthenticatedOpCardapioRoute
+  '/op/configuracoes': typeof AuthenticatedOpConfiguracoesRoute
+  '/op/estoque': typeof AuthenticatedOpEstoqueRoute
+  '/op/etiquetas': typeof AuthenticatedOpEtiquetasRoute
+  '/op/fichas': typeof AuthenticatedOpFichasRoute
+  '/op/financeiro': typeof AuthenticatedOpFinanceiroRoute
+  '/op/ingredientes': typeof AuthenticatedOpIngredientesRoute
+  '/op/pagamentos': typeof AuthenticatedOpPagamentosRoute
+  '/op/painel': typeof AuthenticatedOpPainelRoute
+  '/op/pedidos': typeof AuthenticatedOpPedidosRoute
+  '/op/precos': typeof AuthenticatedOpPrecosRoute
+  '/op/producao': typeof AuthenticatedOpProducaoRoute
+  '/op/rastreabilidade': typeof AuthenticatedOpRastreabilidadeRoute
+  '/op/recebimento': typeof AuthenticatedOpRecebimentoRoute
+  '/op/usuarios': typeof AuthenticatedOpUsuariosRoute
+  '/api/pagamentos/webhook': typeof ApiPagamentosWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/alugueis': typeof AuthenticatedAlugueisRoute
-  '/aportes': typeof AuthenticatedAportesRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/importacao': typeof AuthenticatedImportacaoRoute
-  '/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
-  '/parcelas': typeof AuthenticatedParcelasRoute
-  '/qualidade': typeof AuthenticatedQualidadeRoute
-  '/recebimentos': typeof AuthenticatedRecebimentosRoute
-  '/referencias': typeof AuthenticatedReferenciasRoute
-  '/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/simulador': typeof AuthenticatedSimuladorRoute
-  '/usuarios': typeof AuthenticatedUsuariosRoute
-  '/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
+  '/cliente': typeof AuthenticatedClienteRouteRouteWithChildren
+  '/nutri': typeof AuthenticatedNutriRouteRouteWithChildren
+  '/op': typeof AuthenticatedOpRouteRouteWithChildren
+  '/inicio': typeof AuthenticatedInicioRoute
+  '/cliente/assinatura': typeof AuthenticatedClienteAssinaturaRoute
+  '/cliente/kit': typeof AuthenticatedClienteKitRoute
+  '/cliente/pedidos': typeof AuthenticatedClientePedidosRoute
+  '/cliente/perfil': typeof AuthenticatedClientePerfilRoute
+  '/cliente/plano': typeof AuthenticatedClientePlanoRoute
+  '/cliente/privacidade': typeof AuthenticatedClientePrivacidadeRoute
+  '/nutri/parametros': typeof AuthenticatedNutriParametrosRoute
+  '/nutri/planos': typeof AuthenticatedNutriPlanosRoute
+  '/op/cardapio': typeof AuthenticatedOpCardapioRoute
+  '/op/configuracoes': typeof AuthenticatedOpConfiguracoesRoute
+  '/op/estoque': typeof AuthenticatedOpEstoqueRoute
+  '/op/etiquetas': typeof AuthenticatedOpEtiquetasRoute
+  '/op/fichas': typeof AuthenticatedOpFichasRoute
+  '/op/financeiro': typeof AuthenticatedOpFinanceiroRoute
+  '/op/ingredientes': typeof AuthenticatedOpIngredientesRoute
+  '/op/pagamentos': typeof AuthenticatedOpPagamentosRoute
+  '/op/painel': typeof AuthenticatedOpPainelRoute
+  '/op/pedidos': typeof AuthenticatedOpPedidosRoute
+  '/op/precos': typeof AuthenticatedOpPrecosRoute
+  '/op/producao': typeof AuthenticatedOpProducaoRoute
+  '/op/rastreabilidade': typeof AuthenticatedOpRastreabilidadeRoute
+  '/op/recebimento': typeof AuthenticatedOpRecebimentoRoute
+  '/op/usuarios': typeof AuthenticatedOpUsuariosRoute
+  '/api/pagamentos/webhook': typeof ApiPagamentosWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/alugueis': typeof AuthenticatedAlugueisRoute
-  '/_authenticated/aportes': typeof AuthenticatedAportesRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
-  '/_authenticated/operacoes': typeof AuthenticatedOperacoesRouteWithChildren
-  '/_authenticated/parcelas': typeof AuthenticatedParcelasRoute
-  '/_authenticated/qualidade': typeof AuthenticatedQualidadeRoute
-  '/_authenticated/recebimentos': typeof AuthenticatedRecebimentosRoute
-  '/_authenticated/referencias': typeof AuthenticatedReferenciasRoute
-  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
-  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
-  '/_authenticated/operacoes/$id': typeof AuthenticatedOperacoesIdRoute
+  '/_authenticated/cliente': typeof AuthenticatedClienteRouteRouteWithChildren
+  '/_authenticated/nutri': typeof AuthenticatedNutriRouteRouteWithChildren
+  '/_authenticated/op': typeof AuthenticatedOpRouteRouteWithChildren
+  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
+  '/_authenticated/cliente/assinatura': typeof AuthenticatedClienteAssinaturaRoute
+  '/_authenticated/cliente/kit': typeof AuthenticatedClienteKitRoute
+  '/_authenticated/cliente/pedidos': typeof AuthenticatedClientePedidosRoute
+  '/_authenticated/cliente/perfil': typeof AuthenticatedClientePerfilRoute
+  '/_authenticated/cliente/plano': typeof AuthenticatedClientePlanoRoute
+  '/_authenticated/cliente/privacidade': typeof AuthenticatedClientePrivacidadeRoute
+  '/_authenticated/nutri/parametros': typeof AuthenticatedNutriParametrosRoute
+  '/_authenticated/nutri/planos': typeof AuthenticatedNutriPlanosRoute
+  '/_authenticated/op/cardapio': typeof AuthenticatedOpCardapioRoute
+  '/_authenticated/op/configuracoes': typeof AuthenticatedOpConfiguracoesRoute
+  '/_authenticated/op/estoque': typeof AuthenticatedOpEstoqueRoute
+  '/_authenticated/op/etiquetas': typeof AuthenticatedOpEtiquetasRoute
+  '/_authenticated/op/fichas': typeof AuthenticatedOpFichasRoute
+  '/_authenticated/op/financeiro': typeof AuthenticatedOpFinanceiroRoute
+  '/_authenticated/op/ingredientes': typeof AuthenticatedOpIngredientesRoute
+  '/_authenticated/op/pagamentos': typeof AuthenticatedOpPagamentosRoute
+  '/_authenticated/op/painel': typeof AuthenticatedOpPainelRoute
+  '/_authenticated/op/pedidos': typeof AuthenticatedOpPedidosRoute
+  '/_authenticated/op/precos': typeof AuthenticatedOpPrecosRoute
+  '/_authenticated/op/producao': typeof AuthenticatedOpProducaoRoute
+  '/_authenticated/op/rastreabilidade': typeof AuthenticatedOpRastreabilidadeRoute
+  '/_authenticated/op/recebimento': typeof AuthenticatedOpRecebimentoRoute
+  '/_authenticated/op/usuarios': typeof AuthenticatedOpUsuariosRoute
+  '/api/pagamentos/webhook': typeof ApiPagamentosWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
-    | '/alugueis'
-    | '/aportes'
-    | '/dashboard'
-    | '/importacao'
-    | '/operacoes'
-    | '/parcelas'
-    | '/qualidade'
-    | '/recebimentos'
-    | '/referencias'
-    | '/relatorios'
-    | '/simulador'
-    | '/usuarios'
-    | '/operacoes/$id'
+    | '/cliente'
+    | '/nutri'
+    | '/op'
+    | '/inicio'
+    | '/cliente/assinatura'
+    | '/cliente/kit'
+    | '/cliente/pedidos'
+    | '/cliente/perfil'
+    | '/cliente/plano'
+    | '/cliente/privacidade'
+    | '/nutri/parametros'
+    | '/nutri/planos'
+    | '/op/cardapio'
+    | '/op/configuracoes'
+    | '/op/estoque'
+    | '/op/etiquetas'
+    | '/op/fichas'
+    | '/op/financeiro'
+    | '/op/ingredientes'
+    | '/op/pagamentos'
+    | '/op/painel'
+    | '/op/pedidos'
+    | '/op/precos'
+    | '/op/producao'
+    | '/op/rastreabilidade'
+    | '/op/recebimento'
+    | '/op/usuarios'
+    | '/api/pagamentos/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/alugueis'
-    | '/aportes'
-    | '/dashboard'
-    | '/importacao'
-    | '/operacoes'
-    | '/parcelas'
-    | '/qualidade'
-    | '/recebimentos'
-    | '/referencias'
-    | '/relatorios'
-    | '/simulador'
-    | '/usuarios'
-    | '/operacoes/$id'
+    | '/cliente'
+    | '/nutri'
+    | '/op'
+    | '/inicio'
+    | '/cliente/assinatura'
+    | '/cliente/kit'
+    | '/cliente/pedidos'
+    | '/cliente/perfil'
+    | '/cliente/plano'
+    | '/cliente/privacidade'
+    | '/nutri/parametros'
+    | '/nutri/planos'
+    | '/op/cardapio'
+    | '/op/configuracoes'
+    | '/op/estoque'
+    | '/op/etiquetas'
+    | '/op/fichas'
+    | '/op/financeiro'
+    | '/op/ingredientes'
+    | '/op/pagamentos'
+    | '/op/painel'
+    | '/op/pedidos'
+    | '/op/precos'
+    | '/op/producao'
+    | '/op/rastreabilidade'
+    | '/op/recebimento'
+    | '/op/usuarios'
+    | '/api/pagamentos/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/_authenticated/alugueis'
-    | '/_authenticated/aportes'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/importacao'
-    | '/_authenticated/operacoes'
-    | '/_authenticated/parcelas'
-    | '/_authenticated/qualidade'
-    | '/_authenticated/recebimentos'
-    | '/_authenticated/referencias'
-    | '/_authenticated/relatorios'
-    | '/_authenticated/simulador'
-    | '/_authenticated/usuarios'
-    | '/_authenticated/operacoes/$id'
+    | '/_authenticated/cliente'
+    | '/_authenticated/nutri'
+    | '/_authenticated/op'
+    | '/_authenticated/inicio'
+    | '/_authenticated/cliente/assinatura'
+    | '/_authenticated/cliente/kit'
+    | '/_authenticated/cliente/pedidos'
+    | '/_authenticated/cliente/perfil'
+    | '/_authenticated/cliente/plano'
+    | '/_authenticated/cliente/privacidade'
+    | '/_authenticated/nutri/parametros'
+    | '/_authenticated/nutri/planos'
+    | '/_authenticated/op/cardapio'
+    | '/_authenticated/op/configuracoes'
+    | '/_authenticated/op/estoque'
+    | '/_authenticated/op/etiquetas'
+    | '/_authenticated/op/fichas'
+    | '/_authenticated/op/financeiro'
+    | '/_authenticated/op/ingredientes'
+    | '/_authenticated/op/pagamentos'
+    | '/_authenticated/op/painel'
+    | '/_authenticated/op/pedidos'
+    | '/_authenticated/op/precos'
+    | '/_authenticated/op/producao'
+    | '/_authenticated/op/rastreabilidade'
+    | '/_authenticated/op/recebimento'
+    | '/_authenticated/op/usuarios'
+    | '/api/pagamentos/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPagamentosWebhookRoute: typeof ApiPagamentosWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -246,142 +439,296 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/alugueis': {
-      id: '/_authenticated/alugueis'
-      path: '/alugueis'
-      fullPath: '/alugueis'
-      preLoaderRoute: typeof AuthenticatedAlugueisRouteImport
+    '/_authenticated/cliente': {
+      id: '/_authenticated/cliente'
+      path: '/cliente'
+      fullPath: '/cliente'
+      preLoaderRoute: typeof AuthenticatedClienteRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/aportes': {
-      id: '/_authenticated/aportes'
-      path: '/aportes'
-      fullPath: '/aportes'
-      preLoaderRoute: typeof AuthenticatedAportesRouteImport
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/nutri': {
+      id: '/_authenticated/nutri'
+      path: '/nutri'
+      fullPath: '/nutri'
+      preLoaderRoute: typeof AuthenticatedNutriRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/importacao': {
-      id: '/_authenticated/importacao'
-      path: '/importacao'
-      fullPath: '/importacao'
-      preLoaderRoute: typeof AuthenticatedImportacaoRouteImport
+    '/_authenticated/op': {
+      id: '/_authenticated/op'
+      path: '/op'
+      fullPath: '/op'
+      preLoaderRoute: typeof AuthenticatedOpRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/operacoes': {
-      id: '/_authenticated/operacoes'
-      path: '/operacoes'
-      fullPath: '/operacoes'
-      preLoaderRoute: typeof AuthenticatedOperacoesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/cliente/assinatura': {
+      id: '/_authenticated/cliente/assinatura'
+      path: '/assinatura'
+      fullPath: '/cliente/assinatura'
+      preLoaderRoute: typeof AuthenticatedClienteAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedClienteRouteRoute
     }
-    '/_authenticated/parcelas': {
-      id: '/_authenticated/parcelas'
-      path: '/parcelas'
-      fullPath: '/parcelas'
-      preLoaderRoute: typeof AuthenticatedParcelasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/cliente/kit': {
+      id: '/_authenticated/cliente/kit'
+      path: '/kit'
+      fullPath: '/cliente/kit'
+      preLoaderRoute: typeof AuthenticatedClienteKitRouteImport
+      parentRoute: typeof AuthenticatedClienteRouteRoute
     }
-    '/_authenticated/qualidade': {
-      id: '/_authenticated/qualidade'
-      path: '/qualidade'
-      fullPath: '/qualidade'
-      preLoaderRoute: typeof AuthenticatedQualidadeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/cliente/pedidos': {
+      id: '/_authenticated/cliente/pedidos'
+      path: '/pedidos'
+      fullPath: '/cliente/pedidos'
+      preLoaderRoute: typeof AuthenticatedClientePedidosRouteImport
+      parentRoute: typeof AuthenticatedClienteRouteRoute
     }
-    '/_authenticated/recebimentos': {
-      id: '/_authenticated/recebimentos'
-      path: '/recebimentos'
-      fullPath: '/recebimentos'
-      preLoaderRoute: typeof AuthenticatedRecebimentosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/cliente/perfil': {
+      id: '/_authenticated/cliente/perfil'
+      path: '/perfil'
+      fullPath: '/cliente/perfil'
+      preLoaderRoute: typeof AuthenticatedClientePerfilRouteImport
+      parentRoute: typeof AuthenticatedClienteRouteRoute
     }
-    '/_authenticated/referencias': {
-      id: '/_authenticated/referencias'
-      path: '/referencias'
-      fullPath: '/referencias'
-      preLoaderRoute: typeof AuthenticatedReferenciasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/cliente/plano': {
+      id: '/_authenticated/cliente/plano'
+      path: '/plano'
+      fullPath: '/cliente/plano'
+      preLoaderRoute: typeof AuthenticatedClientePlanoRouteImport
+      parentRoute: typeof AuthenticatedClienteRouteRoute
     }
-    '/_authenticated/relatorios': {
-      id: '/_authenticated/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/cliente/privacidade': {
+      id: '/_authenticated/cliente/privacidade'
+      path: '/privacidade'
+      fullPath: '/cliente/privacidade'
+      preLoaderRoute: typeof AuthenticatedClientePrivacidadeRouteImport
+      parentRoute: typeof AuthenticatedClienteRouteRoute
     }
-    '/_authenticated/simulador': {
-      id: '/_authenticated/simulador'
-      path: '/simulador'
-      fullPath: '/simulador'
-      preLoaderRoute: typeof AuthenticatedSimuladorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/nutri/parametros': {
+      id: '/_authenticated/nutri/parametros'
+      path: '/parametros'
+      fullPath: '/nutri/parametros'
+      preLoaderRoute: typeof AuthenticatedNutriParametrosRouteImport
+      parentRoute: typeof AuthenticatedNutriRouteRoute
     }
-    '/_authenticated/usuarios': {
-      id: '/_authenticated/usuarios'
+    '/_authenticated/nutri/planos': {
+      id: '/_authenticated/nutri/planos'
+      path: '/planos'
+      fullPath: '/nutri/planos'
+      preLoaderRoute: typeof AuthenticatedNutriPlanosRouteImport
+      parentRoute: typeof AuthenticatedNutriRouteRoute
+    }
+    '/_authenticated/op/cardapio': {
+      id: '/_authenticated/op/cardapio'
+      path: '/cardapio'
+      fullPath: '/op/cardapio'
+      preLoaderRoute: typeof AuthenticatedOpCardapioRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/configuracoes': {
+      id: '/_authenticated/op/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/op/configuracoes'
+      preLoaderRoute: typeof AuthenticatedOpConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/estoque': {
+      id: '/_authenticated/op/estoque'
+      path: '/estoque'
+      fullPath: '/op/estoque'
+      preLoaderRoute: typeof AuthenticatedOpEstoqueRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/etiquetas': {
+      id: '/_authenticated/op/etiquetas'
+      path: '/etiquetas'
+      fullPath: '/op/etiquetas'
+      preLoaderRoute: typeof AuthenticatedOpEtiquetasRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/fichas': {
+      id: '/_authenticated/op/fichas'
+      path: '/fichas'
+      fullPath: '/op/fichas'
+      preLoaderRoute: typeof AuthenticatedOpFichasRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/financeiro': {
+      id: '/_authenticated/op/financeiro'
+      path: '/financeiro'
+      fullPath: '/op/financeiro'
+      preLoaderRoute: typeof AuthenticatedOpFinanceiroRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/ingredientes': {
+      id: '/_authenticated/op/ingredientes'
+      path: '/ingredientes'
+      fullPath: '/op/ingredientes'
+      preLoaderRoute: typeof AuthenticatedOpIngredientesRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/pagamentos': {
+      id: '/_authenticated/op/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/op/pagamentos'
+      preLoaderRoute: typeof AuthenticatedOpPagamentosRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/painel': {
+      id: '/_authenticated/op/painel'
+      path: '/painel'
+      fullPath: '/op/painel'
+      preLoaderRoute: typeof AuthenticatedOpPainelRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/pedidos': {
+      id: '/_authenticated/op/pedidos'
+      path: '/pedidos'
+      fullPath: '/op/pedidos'
+      preLoaderRoute: typeof AuthenticatedOpPedidosRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/precos': {
+      id: '/_authenticated/op/precos'
+      path: '/precos'
+      fullPath: '/op/precos'
+      preLoaderRoute: typeof AuthenticatedOpPrecosRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/producao': {
+      id: '/_authenticated/op/producao'
+      path: '/producao'
+      fullPath: '/op/producao'
+      preLoaderRoute: typeof AuthenticatedOpProducaoRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/rastreabilidade': {
+      id: '/_authenticated/op/rastreabilidade'
+      path: '/rastreabilidade'
+      fullPath: '/op/rastreabilidade'
+      preLoaderRoute: typeof AuthenticatedOpRastreabilidadeRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/recebimento': {
+      id: '/_authenticated/op/recebimento'
+      path: '/recebimento'
+      fullPath: '/op/recebimento'
+      preLoaderRoute: typeof AuthenticatedOpRecebimentoRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
+    }
+    '/_authenticated/op/usuarios': {
+      id: '/_authenticated/op/usuarios'
       path: '/usuarios'
-      fullPath: '/usuarios'
-      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      fullPath: '/op/usuarios'
+      preLoaderRoute: typeof AuthenticatedOpUsuariosRouteImport
+      parentRoute: typeof AuthenticatedOpRouteRoute
     }
-    '/_authenticated/operacoes/$id': {
-      id: '/_authenticated/operacoes/$id'
-      path: '/$id'
-      fullPath: '/operacoes/$id'
-      preLoaderRoute: typeof AuthenticatedOperacoesIdRouteImport
-      parentRoute: typeof AuthenticatedOperacoesRoute
+    '/api/pagamentos/webhook': {
+      id: '/api/pagamentos/webhook'
+      path: '/api/pagamentos/webhook'
+      fullPath: '/api/pagamentos/webhook'
+      preLoaderRoute: typeof ApiPagamentosWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AuthenticatedOperacoesRouteChildren {
-  AuthenticatedOperacoesIdRoute: typeof AuthenticatedOperacoesIdRoute
+interface AuthenticatedClienteRouteRouteChildren {
+  AuthenticatedClienteAssinaturaRoute: typeof AuthenticatedClienteAssinaturaRoute
+  AuthenticatedClienteKitRoute: typeof AuthenticatedClienteKitRoute
+  AuthenticatedClientePedidosRoute: typeof AuthenticatedClientePedidosRoute
+  AuthenticatedClientePerfilRoute: typeof AuthenticatedClientePerfilRoute
+  AuthenticatedClientePlanoRoute: typeof AuthenticatedClientePlanoRoute
+  AuthenticatedClientePrivacidadeRoute: typeof AuthenticatedClientePrivacidadeRoute
 }
 
-const AuthenticatedOperacoesRouteChildren: AuthenticatedOperacoesRouteChildren =
+const AuthenticatedClienteRouteRouteChildren: AuthenticatedClienteRouteRouteChildren =
   {
-    AuthenticatedOperacoesIdRoute: AuthenticatedOperacoesIdRoute,
+    AuthenticatedClienteAssinaturaRoute: AuthenticatedClienteAssinaturaRoute,
+    AuthenticatedClienteKitRoute: AuthenticatedClienteKitRoute,
+    AuthenticatedClientePedidosRoute: AuthenticatedClientePedidosRoute,
+    AuthenticatedClientePerfilRoute: AuthenticatedClientePerfilRoute,
+    AuthenticatedClientePlanoRoute: AuthenticatedClientePlanoRoute,
+    AuthenticatedClientePrivacidadeRoute: AuthenticatedClientePrivacidadeRoute,
   }
 
-const AuthenticatedOperacoesRouteWithChildren =
-  AuthenticatedOperacoesRoute._addFileChildren(
-    AuthenticatedOperacoesRouteChildren,
+const AuthenticatedClienteRouteRouteWithChildren =
+  AuthenticatedClienteRouteRoute._addFileChildren(
+    AuthenticatedClienteRouteRouteChildren,
   )
 
+interface AuthenticatedNutriRouteRouteChildren {
+  AuthenticatedNutriParametrosRoute: typeof AuthenticatedNutriParametrosRoute
+  AuthenticatedNutriPlanosRoute: typeof AuthenticatedNutriPlanosRoute
+}
+
+const AuthenticatedNutriRouteRouteChildren: AuthenticatedNutriRouteRouteChildren =
+  {
+    AuthenticatedNutriParametrosRoute: AuthenticatedNutriParametrosRoute,
+    AuthenticatedNutriPlanosRoute: AuthenticatedNutriPlanosRoute,
+  }
+
+const AuthenticatedNutriRouteRouteWithChildren =
+  AuthenticatedNutriRouteRoute._addFileChildren(
+    AuthenticatedNutriRouteRouteChildren,
+  )
+
+interface AuthenticatedOpRouteRouteChildren {
+  AuthenticatedOpCardapioRoute: typeof AuthenticatedOpCardapioRoute
+  AuthenticatedOpConfiguracoesRoute: typeof AuthenticatedOpConfiguracoesRoute
+  AuthenticatedOpEstoqueRoute: typeof AuthenticatedOpEstoqueRoute
+  AuthenticatedOpEtiquetasRoute: typeof AuthenticatedOpEtiquetasRoute
+  AuthenticatedOpFichasRoute: typeof AuthenticatedOpFichasRoute
+  AuthenticatedOpFinanceiroRoute: typeof AuthenticatedOpFinanceiroRoute
+  AuthenticatedOpIngredientesRoute: typeof AuthenticatedOpIngredientesRoute
+  AuthenticatedOpPagamentosRoute: typeof AuthenticatedOpPagamentosRoute
+  AuthenticatedOpPainelRoute: typeof AuthenticatedOpPainelRoute
+  AuthenticatedOpPedidosRoute: typeof AuthenticatedOpPedidosRoute
+  AuthenticatedOpPrecosRoute: typeof AuthenticatedOpPrecosRoute
+  AuthenticatedOpProducaoRoute: typeof AuthenticatedOpProducaoRoute
+  AuthenticatedOpRastreabilidadeRoute: typeof AuthenticatedOpRastreabilidadeRoute
+  AuthenticatedOpRecebimentoRoute: typeof AuthenticatedOpRecebimentoRoute
+  AuthenticatedOpUsuariosRoute: typeof AuthenticatedOpUsuariosRoute
+}
+
+const AuthenticatedOpRouteRouteChildren: AuthenticatedOpRouteRouteChildren = {
+  AuthenticatedOpCardapioRoute: AuthenticatedOpCardapioRoute,
+  AuthenticatedOpConfiguracoesRoute: AuthenticatedOpConfiguracoesRoute,
+  AuthenticatedOpEstoqueRoute: AuthenticatedOpEstoqueRoute,
+  AuthenticatedOpEtiquetasRoute: AuthenticatedOpEtiquetasRoute,
+  AuthenticatedOpFichasRoute: AuthenticatedOpFichasRoute,
+  AuthenticatedOpFinanceiroRoute: AuthenticatedOpFinanceiroRoute,
+  AuthenticatedOpIngredientesRoute: AuthenticatedOpIngredientesRoute,
+  AuthenticatedOpPagamentosRoute: AuthenticatedOpPagamentosRoute,
+  AuthenticatedOpPainelRoute: AuthenticatedOpPainelRoute,
+  AuthenticatedOpPedidosRoute: AuthenticatedOpPedidosRoute,
+  AuthenticatedOpPrecosRoute: AuthenticatedOpPrecosRoute,
+  AuthenticatedOpProducaoRoute: AuthenticatedOpProducaoRoute,
+  AuthenticatedOpRastreabilidadeRoute: AuthenticatedOpRastreabilidadeRoute,
+  AuthenticatedOpRecebimentoRoute: AuthenticatedOpRecebimentoRoute,
+  AuthenticatedOpUsuariosRoute: AuthenticatedOpUsuariosRoute,
+}
+
+const AuthenticatedOpRouteRouteWithChildren =
+  AuthenticatedOpRouteRoute._addFileChildren(AuthenticatedOpRouteRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAlugueisRoute: typeof AuthenticatedAlugueisRoute
-  AuthenticatedAportesRoute: typeof AuthenticatedAportesRoute
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
-  AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRouteWithChildren
-  AuthenticatedParcelasRoute: typeof AuthenticatedParcelasRoute
-  AuthenticatedQualidadeRoute: typeof AuthenticatedQualidadeRoute
-  AuthenticatedRecebimentosRoute: typeof AuthenticatedRecebimentosRoute
-  AuthenticatedReferenciasRoute: typeof AuthenticatedReferenciasRoute
-  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
-  AuthenticatedSimuladorRoute: typeof AuthenticatedSimuladorRoute
-  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
+  AuthenticatedClienteRouteRoute: typeof AuthenticatedClienteRouteRouteWithChildren
+  AuthenticatedNutriRouteRoute: typeof AuthenticatedNutriRouteRouteWithChildren
+  AuthenticatedOpRouteRoute: typeof AuthenticatedOpRouteRouteWithChildren
+  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAlugueisRoute: AuthenticatedAlugueisRoute,
-  AuthenticatedAportesRoute: AuthenticatedAportesRoute,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
-  AuthenticatedOperacoesRoute: AuthenticatedOperacoesRouteWithChildren,
-  AuthenticatedParcelasRoute: AuthenticatedParcelasRoute,
-  AuthenticatedQualidadeRoute: AuthenticatedQualidadeRoute,
-  AuthenticatedRecebimentosRoute: AuthenticatedRecebimentosRoute,
-  AuthenticatedReferenciasRoute: AuthenticatedReferenciasRoute,
-  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
-  AuthenticatedSimuladorRoute: AuthenticatedSimuladorRoute,
-  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
+  AuthenticatedClienteRouteRoute: AuthenticatedClienteRouteRouteWithChildren,
+  AuthenticatedNutriRouteRoute: AuthenticatedNutriRouteRouteWithChildren,
+  AuthenticatedOpRouteRoute: AuthenticatedOpRouteRouteWithChildren,
+  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -391,6 +738,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPagamentosWebhookRoute: ApiPagamentosWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

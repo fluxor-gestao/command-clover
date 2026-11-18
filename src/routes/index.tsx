@@ -1,21 +1,18 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-
-const TITLE = "Nova Era · Gestão de Investimentos";
-const DESCRIPTION =
-  "Sistema de gestão e controle de investimentos da Imobiliária Nova Era.";
+import { APP_NAME, APP_TAGLINE } from "@/lib/platform/labels";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESCRIPTION },
+      { title: `${APP_NAME} · ${APP_TAGLINE}` },
+      {
+        name: "description",
+        content:
+          "Kits semanais de refeições fitness com cardápio personalizado pelo seu perfil alimentar.",
+      },
+      { property: "og:title", content: `${APP_NAME} · ${APP_TAGLINE}` },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://novaerainvestimentos.fluxorbi.com/" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://novaerainvestimentos.fluxorbi.com/" }],
   }),
-  component: () => <Navigate to="/auth" replace />,
+  component: () => <Navigate to="/inicio" replace />,
 });

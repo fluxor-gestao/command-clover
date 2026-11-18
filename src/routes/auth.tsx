@@ -8,24 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import logoAsset from "@/assets/logo.png.asset.json";
+import { Salad } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { APP_NAME, APP_TAGLINE } from "@/lib/platform/labels";
+import { db } from "@/lib/platform/db";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Acesso · Nova Era Gestão de Investimentos" },
+      { title: `Entrar · ${APP_NAME}` },
       {
         name: "description",
         content:
-          "Entre no sistema Nova Era para acompanhar operações, recebimentos, inadimplência e retorno da carteira de investimentos.",
+          "Acesse sua conta para montar o kit da semana, acompanhar a assinatura e as entregas.",
       },
-      { property: "og:title", content: "Acesso · Nova Era Gestão de Investimentos" },
-      {
-        property: "og:description",
-        content: "Área restrita do sistema de gestão de investimentos Nova Era.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
@@ -34,7 +30,8 @@ export const Route = createFileRoute("/auth")({
 function translateAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
-  if (m.includes("email not confirmed")) return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
+  if (m.includes("email not confirmed"))
+    return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
   if (m.includes("already registered") || m.includes("already been registered"))
     return "Este e-mail já possui conta. Use a aba Entrar.";
   if (m.includes("rate limit") || m.includes("too many"))
@@ -49,12 +46,22 @@ function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState<{ kind: "error" | "success"; text: string } | null>(
+    null,
+  );
+
+  const goHome = () => {
+    queryClient.removeQueries({ queryKey: ["session"] });
+    navigate({ to: "/inicio" });
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) goHome();
     });
   }, [navigate]);
 
@@ -79,17 +86,27 @@ function AuthPage() {
       toast.error(text);
       return;
     }
-    navigate({ to: "/dashboard" });
+    goHome();
   };
 
   const signUp = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!consent) {
+      setFeedback({
+        kind: "error",
+        text: "Para criar a conta, aceite o uso dos seus dados para a prestação do serviço.",
+      });
+      return;
+    }
     setLoading(true);
     setFeedback(null);
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/inicio`,
+        data: { full_name: fullName.trim(), lgpd_consent: true },
+      },
     });
     setLoading(false);
     if (error) {
@@ -99,10 +116,21 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      navigate({ to: "/dashboard" });
+      if (data.user) {
+        await db.rpc("ensure_my_customer_records");
+        await db
+          .from("customer_accounts")
+          .update({ full_name: fullName.trim() })
+          .eq("customer_id", data.user.id);
+        await db
+          .from("customer_profiles")
+          .update({ consent_at: new Date().toISOString() })
+          .eq("customer_id", data.user.id);
+      }
+      goHome();
       return;
     }
-    const text = "Conta criada. Confirme seu e-mail para acessar o sistema.";
+    const text = "Conta criada. Confirme seu e-mail para entrar.";
     setFeedback({ kind: "success", text });
     toast.success(text);
   };
@@ -111,32 +139,59 @@ function AuthPage() {
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
       <Card className="w-full max-w-[400px] border-none shadow-2xl bg-card/80 backdrop-blur-xl">
         <CardHeader className="items-center text-center pt-10 pb-6">
-          <div className="mb-6 flex h-24 w-24 items-center justify-center transition-transform hover:scale-105 duration-300">
-            <img
-              src={logoAsset.url}
-              alt="Nova Era Imóveis e Seguros"
-              className="h-24 w-24 object-contain drop-shadow-xl"
-            />
+          <div className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
+            <Salad className="size-8" />
           </div>
-
           <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            NOVA ERA
+            {APP_NAME}
           </CardTitle>
-          <CardDescription className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mt-2">
-            GESTÃO DE INVESTIMENTOS
+          <CardDescription className="mt-1 text-sm text-muted-foreground">
+            {APP_TAGLINE}
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-10">
           <Tabs defaultValue="entrar" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/50 rounded-xl">
-              <TabsTrigger value="entrar" className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:shadow-sm">Entrar</TabsTrigger>
-              <TabsTrigger value="criar" className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:shadow-sm">Criar conta</TabsTrigger>
+              <TabsTrigger
+                value="entrar"
+                className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger
+                value="criar"
+                className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                Criar conta
+              </TabsTrigger>
             </TabsList>
             {(["entrar", "criar"] as const).map((tab) => (
               <TabsContent key={tab} value={tab}>
                 <form className="space-y-4" onSubmit={tab === "entrar" ? signIn : signUp}>
+                  {tab === "criar" && (
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="nome"
+                        className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80"
+                      >
+                        Nome
+                      </Label>
+                      <Input
+                        id="nome"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="h-11 border-none bg-muted/50 focus:ring-1 rounded-xl px-4"
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
-                    <Label htmlFor={`email-${tab}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">E-mail</Label>
+                    <Label
+                      htmlFor={`email-${tab}`}
+                      className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80"
+                    >
+                      E-mail
+                    </Label>
                     <Input
                       id={`email-${tab}`}
                       type="email"
@@ -148,7 +203,12 @@ function AuthPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`senha-${tab}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Senha</Label>
+                    <Label
+                      htmlFor={`senha-${tab}`}
+                      className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80"
+                    >
+                      Senha
+                    </Label>
                     <Input
                       id={`senha-${tab}`}
                       type="password"
@@ -160,6 +220,21 @@ function AuthPage() {
                       className="h-11 border-none bg-muted/50 focus:ring-1 rounded-xl px-4"
                     />
                   </div>
+                  {tab === "criar" && (
+                    <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(e) => setConsent(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        Autorizo o uso do meu perfil alimentar (peso, altura, objetivos, alergias)
+                        apenas para montar meu cardápio e prestar o serviço, conforme a LGPD. Posso
+                        pedir acesso, correção ou exclusão a qualquer momento.
+                      </span>
+                    </label>
+                  )}
                   {feedback && (
                     <p
                       role="alert"
@@ -172,8 +247,12 @@ function AuthPage() {
                       {feedback.text}
                     </p>
                   )}
-                  <Button type="submit" className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={loading}>
-                    {loading ? "Processando..." : tab === "entrar" ? "Acessar Sistema" : "Cadastrar Agora"}
+                  <Button
+                    type="submit"
+                    className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                    disabled={loading}
+                  >
+                    {loading ? "Processando..." : tab === "entrar" ? "Entrar" : "Criar conta"}
                   </Button>
                 </form>
               </TabsContent>
