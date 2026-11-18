@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Translate authentication errors in the shared auth-errors helper using returned codes and reasons; never infer every password rejection is a length error.

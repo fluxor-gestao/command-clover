@@ -12,6 +12,7 @@ import { Salad } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { APP_NAME, APP_TAGLINE } from "@/lib/platform/labels";
 import { db } from "@/lib/platform/db";
+import { translateAuthError } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -22,25 +23,14 @@ export const Route = createFileRoute("/auth")({
         content:
           "Acesse sua conta para montar o kit da semana, acompanhar a assinatura e as entregas.",
       },
+      { property: "og:title", content: `Entrar · ${APP_NAME}` },
+      { property: "og:description", content: "Acesse sua conta para montar o kit da semana, acompanhar a assinatura e as entregas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
 });
-
-function translateAuthError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
-  if (m.includes("email not confirmed"))
-    return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
-  if (m.includes("already registered") || m.includes("already been registered"))
-    return "Este e-mail já possui conta. Use a aba Entrar.";
-  if (m.includes("rate limit") || m.includes("too many"))
-    return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
-  if (m.includes("password")) return "Senha inválida: use ao menos 6 caracteres.";
-  if (m.includes("failed to fetch") || m.includes("network"))
-    return "Falha de conexão com o servidor. Verifique sua internet.";
-  return message;
-}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -75,7 +65,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
-      const text = translateAuthError(error.message);
+      const text = translateAuthError(error);
       setFeedback({ kind: "error", text });
       toast.error(text);
       return;
@@ -110,7 +100,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
-      const text = translateAuthError(error.message);
+      const text = translateAuthError(error);
       setFeedback({ kind: "error", text });
       toast.error(text);
       return;
