@@ -83,6 +83,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Kits semanais de refeições fitness: cardápio pelo seu perfil, assinatura e entrega.",
       },
+      { name: "theme-color", content: "#072b1c" },
       { property: "og:site_name", content: "Kit Fit" },
       { property: "og:title", content: "Kit Fit · Refeições fitness por assinatura" },
       {
@@ -91,14 +92,43 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Kits semanais de refeições fitness: cardápio pelo seu perfil, assinatura e entrega.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://command-clover.lovable.app/" },
+      { property: "og:locale", content: "pt_BR" },
+      {
+        property: "og:image",
+        content: "https://command-clover.lovable.app/og-kit-fit.png",
+      },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:type", content: "image/png" },
+      {
+        property: "og:image:alt",
+        content: "Kit Fit — Refeições fitness por assinatura",
+      },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Kit Fit · Refeições fitness por assinatura" },
+      {
+        name: "twitter:description",
+        content:
+          "Kits semanais de refeições fitness: cardápio pelo seu perfil, assinatura e entrega.",
+      },
+      {
+        name: "twitter:image",
+        content: "https://command-clover.lovable.app/og-kit-fit.png",
+      },
+      {
+        name: "twitter:image:alt",
+        content: "Kit Fit — Refeições fitness por assinatura",
+      },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "512x512" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,

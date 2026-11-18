@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#007e46"/>
+  <!-- tigela -->
+  <path d="M111 296a145 145 0 0 0 290 0z" fill="#ffffff"/>
+  <rect x="97" y="268" width="318" height="40" rx="14" fill="#ffffff"/>
+  <!-- alimentos -->
+  <circle cx="212" cy="212" r="52" fill="#00bc7d"/>
+  <circle cx="292" cy="196" r="48" fill="#a3e635"/>
+  <circle cx="252" cy="228" r="28" fill="#ffffff"/>
+</svg>
